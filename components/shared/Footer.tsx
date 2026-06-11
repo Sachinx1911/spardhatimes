@@ -66,16 +66,24 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Links: Admin */}
+          {/* Links: Account */}
           <div>
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Administrators</h4>
-            <ul className="space-y-2 text-sm text-slate-400">
+            <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Account</h4>
+            <ul className="space-y-2 text-sm">
               <li>
-                Standard Credentials:
+                <Link href="/login" className="hover:text-primary transition-colors">
+                  Sign In
+                </Link>
               </li>
-              <li className="font-mono text-xs bg-slate-800 p-2 rounded text-slate-300">
-                admin@quizplatform.com<br />
-                Password: Admin@123
+              <li>
+                <Link href="/register" className="hover:text-primary transition-colors">
+                  Create Account
+                </Link>
+              </li>
+              <li>
+                <Link href="/dashboard" className="hover:text-primary transition-colors">
+                  My Dashboard
+                </Link>
               </li>
             </ul>
           </div>
