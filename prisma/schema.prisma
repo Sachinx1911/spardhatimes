@@ -1,0 +1,203 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+  SUPERADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuizStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  passwordHash  String
+  role          Role           @default(STUDENT)
+  isBlocked     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  attempts      QuizAttempt[]
+  bookmarks     Bookmark[]
+  certificates  Certificate[]
+  notifications Notification[]
+  adminLogs     AdminLog[]
+}
+
+model Category {
+  id             String    @id @default(cuid())
+  name           String    @unique
+  slug           String    @unique
+  icon           String?   // URL or icon identifier
+  totalTests     Int       @default(0)
+  totalQuestions Int       @default(0)
+  metaTitle      String?
+  metaDescription String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  quizzes        Quiz[]
+}
+
+model Quiz {
+  id             String         @id @default(cuid())
+  title          String
+  slug           String         @unique
+  description    String?
+  duration       Int            // in minutes
+  marks          Float          // total marks
+  negativeMarks  Float          @default(0.0)
+  passingMarks   Float
+  difficulty     Difficulty     @default(MEDIUM)
+  status         QuizStatus     @default(DRAFT)
+  instructions   String?
+  categoryId     String
+  category       Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  questions      Question[]
+  attempts       QuizAttempt[]
+  bookmarks      Bookmark[]
+  certificates   Certificate[]
+}
+
+model Question {
+  id            String         @id @default(cuid())
+  quizId        String
+  quiz          Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  text          String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctAnswer String         // "A", "B", "C", or "D" (or list of options for multiple choice, or boolean "TRUE"/"FALSE")
+  explanation   String?
+  difficulty    Difficulty     @default(MEDIUM)
+  marks         Float          @default(1.0)
+  categoryName  String?        // sub-topic category
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  responses     QuestionResponse[]
+  bookmarks     Bookmark[]
+}
+
+model QuizAttempt {
+  id               String             @id @default(cuid())
+  userId           String
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId           String
+  quiz             Quiz               @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  score            Float              @default(0.0)
+  percentage       Float              @default(0.0)
+  correctAnswers   Int                @default(0)
+  wrongAnswers     Int                @default(0)
+  skippedQuestions Int                @default(0)
+  timeTaken        Int                @default(0) // in seconds
+  rank             Int?
+  percentile       Float?
+  status           AttemptStatus      @default(IN_PROGRESS)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  responses        QuestionResponse[]
+
+  @@index([userId])
+  @@index([quizId])
+}
+
+model QuestionResponse {
+  id           String      @id @default(cuid())
+  attemptId    String
+  attempt      QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  chosenOption String?     // "A", "B", "C", "D"
+  isCorrect    Boolean     @default(false)
+  timeSpent    Int         @default(0) // in seconds
+  createdAt    DateTime    @default(now())
+
+  @@unique([attemptId, questionId])
+}
+
+model Bookmark {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId     String
+  quiz       Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+
+  @@unique([userId, questionId])
+}
+
+model Certificate {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId          String
+  quiz            Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  certificateCode String   @unique
+  issueDate       DateTime @default(now())
+  downloadUrl     String?
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  type      String   @default("info") // e.g. "test_completed", "quiz_published", "certificate_generated"
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Setting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model AdminLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+}
