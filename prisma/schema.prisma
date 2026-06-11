@@ -39,6 +39,7 @@ model User {
   id            String         @id @default(cuid())
   name          String?
   email         String         @unique
+  phone         String?        // optional mobile number, editable from profile settings
   passwordHash  String
   role          Role           @default(STUDENT)
   isBlocked     Boolean        @default(false)

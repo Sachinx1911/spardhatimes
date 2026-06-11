@@ -385,6 +385,8 @@ export default async function StudentDashboardPage() {
                   name={user?.name || ""}
                   email={user?.email || ""}
                   role={user?.role || "STUDENT"}
+                  phone={user?.phone || ""}
+                  joinedAt={user?.createdAt || null}
                 />
               </CardContent>
             </Card>

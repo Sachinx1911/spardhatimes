@@ -53,7 +53,7 @@ export async function registerUser(prevState: any, formData: FormData) {
   }
 }
 
-// Update the logged-in user's display name.
+// Update the logged-in user's display name and mobile number.
 export async function updateProfile(formData: FormData) {
   const session = await getSession();
   if (!session?.user?.id) {
@@ -68,10 +68,22 @@ export async function updateProfile(formData: FormData) {
     return { error: "Display name is too long." };
   }
 
+  // Mobile number is optional; when provided it must be 10-15 digits
+  // (an optional leading + country code is allowed).
+  const phoneRaw = String(formData.get("phone") || "").trim();
+  let phone: string | null = null;
+  if (phoneRaw) {
+    const normalized = phoneRaw.replace(/[\s-]/g, "");
+    if (!/^\+?\d{10,15}$/.test(normalized)) {
+      return { error: "Enter a valid mobile number (10-15 digits, optional +country code)." };
+    }
+    phone = normalized;
+  }
+
   try {
     await db.user.update({
       where: { id: session.user.id },
-      data: { name },
+      data: { name, phone },
     });
     revalidatePath("/dashboard");
     return { success: true, message: "Profile updated." };
