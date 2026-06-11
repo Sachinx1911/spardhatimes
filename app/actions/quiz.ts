@@ -1,13 +1,25 @@
 "use server";
 
 import db from "@/lib/db";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import { AttemptStatus } from "@prisma/client";
 
 interface AnswerInput {
   questionId: string;
-  chosenOption: string | null; // "A", "B", "C", "D" or null
+  chosenOption: string | null; // "A".."D", or comma list for multiple choice, or null
   timeSpent: number; // in seconds
+}
+
+// Normalize an answer to a canonical sorted comma list ("C,A" -> "A,C") so
+// multiple-choice selections compare equal regardless of click order.
+function normalizeAnswer(answer: string): string {
+  return answer
+    .toUpperCase()
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => ["A", "B", "C", "D"].includes(s))
+    .sort()
+    .join(",");
 }
 
 export async function submitQuizAttempt(
@@ -15,7 +27,7 @@ export async function submitQuizAttempt(
   answers: AnswerInput[],
   timeTakenSeconds: number
 ) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) {
     return { error: "You must be logged in to attempt tests." };
   }
@@ -46,7 +58,11 @@ export async function submitQuizAttempt(
       const chosenOption = answer?.chosenOption || null;
       const timeSpent = answer?.timeSpent || 0;
 
-      if (!chosenOption) {
+      // Normalize both sides so multiple-choice answers ("C,A" vs "A,C")
+      // compare equal; single-choice and true/false reduce to one letter.
+      const normalizedChosen = chosenOption ? normalizeAnswer(chosenOption) : "";
+
+      if (!normalizedChosen) {
         skippedQuestionsCount++;
         questionResponsesData.push({
           questionId: question.id,
@@ -55,7 +71,7 @@ export async function submitQuizAttempt(
           timeSpent,
         });
       } else {
-        const isCorrect = chosenOption === question.correctAnswer;
+        const isCorrect = normalizedChosen === normalizeAnswer(question.correctAnswer);
         if (isCorrect) {
           correctAnswersCount++;
           computedScore += question.marks;
@@ -66,7 +82,7 @@ export async function submitQuizAttempt(
 
         questionResponsesData.push({
           questionId: question.id,
-          chosenOption,
+          chosenOption: normalizedChosen,
           isCorrect,
           timeSpent,
         });
@@ -190,7 +206,7 @@ export async function submitQuizAttempt(
 
 // Toggle Bookmark Action
 export async function toggleQuestionBookmark(questionId: string, quizId: string) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) {
     return { error: "You must be logged in to bookmark questions." };
   }

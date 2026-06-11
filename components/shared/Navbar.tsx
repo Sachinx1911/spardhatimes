@@ -6,14 +6,22 @@ import { useSession, signOut } from "next-auth/react";
 import { useTheme } from "./ThemeContext";
 import { Menu, X, Sun, Moon, LogIn, LogOut, User, LayoutDashboard, Shield, Award } from "lucide-react";
 import { Button } from "../ui/button";
+import { NotificationBell } from "./NotificationBell";
+
+// Dev-mode auth bypass: when NEXT_PUBLIC_DEV_BYPASS_AUTH=true the navbar
+// pretends an admin is signed in so protected links are reachable without
+// the login module. Remove the flag from .env to restore real sessions.
+const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "true";
 
 export function Navbar() {
   const { data: session, status } = useSession();
   const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const isLoggedIn = status === "authenticated";
-  const user = session?.user as any;
+  const isLoggedIn = DEV_BYPASS || status === "authenticated";
+  const user = (DEV_BYPASS && !session?.user)
+    ? { name: "Dev Mode", role: process.env.NEXT_PUBLIC_DEV_BYPASS_ROLE === "STUDENT" ? "STUDENT" : "SUPERADMIN" }
+    : (session?.user as any);
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
 
   return (
@@ -61,6 +69,7 @@ export function Navbar() {
 
             {isLoggedIn ? (
               <div className="flex items-center space-x-3">
+                <NotificationBell />
                 {isAdmin ? (
                   <Link href="/admin/dashboard">
                     <Button variant="secondary" size="sm" className="flex items-center gap-1.5">
@@ -105,6 +114,7 @@ export function Navbar() {
 
           {/* Mobile menu toggle */}
           <div className="flex items-center md:hidden space-x-2">
+            {isLoggedIn && <NotificationBell />}
             <button
               onClick={toggleTheme}
               className="rounded-full p-2 text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"

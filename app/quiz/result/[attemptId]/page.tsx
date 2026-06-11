@@ -1,6 +1,6 @@
 import React from "react";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import db from "@/lib/db";
 import { ResultAnalytics } from "@/components/quiz/ResultAnalytics";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +16,7 @@ interface PageProps {
 
 export default async function ResultPage({ params }: PageProps) {
   // 1. Enforce Authentication
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) {
     redirect("/login");
   }
@@ -138,10 +138,28 @@ export default async function ResultPage({ params }: PageProps) {
     );
   }
 
+  // Aggregate stats across everyone who took this quiz, for the comparison chart.
+  let comparison = null;
+  try {
+    const agg = await db.quizAttempt.aggregate({
+      where: { quizId: attempt.quiz.id, status: "COMPLETED" },
+      _avg: { percentage: true },
+      _max: { percentage: true },
+      _count: { _all: true },
+    });
+    comparison = {
+      average: Math.round((agg._avg.percentage || 0) * 10) / 10,
+      top: Math.round((agg._max.percentage || 0) * 10) / 10,
+      count: agg._count._all,
+    };
+  } catch (err) {
+    console.error("Error computing comparison stats:", err);
+  }
+
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 py-10">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ResultAnalytics attempt={attempt as any} />
+        <ResultAnalytics attempt={attempt as any} comparison={comparison} />
       </div>
     </div>
   );

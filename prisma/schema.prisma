@@ -19,6 +19,12 @@ enum Difficulty {
   HARD
 }
 
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+}
+
 enum QuizStatus {
   DRAFT
   PUBLISHED
@@ -88,12 +94,13 @@ model Question {
   id            String         @id @default(cuid())
   quizId        String
   quiz          Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  type          QuestionType   @default(SINGLE_CHOICE)
   text          String
   optionA       String
   optionB       String
   optionC       String
   optionD       String
-  correctAnswer String         // "A", "B", "C", or "D" (or list of options for multiple choice, or boolean "TRUE"/"FALSE")
+  correctAnswer String         // SINGLE_CHOICE/TRUE_FALSE: "A".."D"; MULTIPLE_CHOICE: sorted comma list e.g. "A,C"
   explanation   String?
   difficulty    Difficulty     @default(MEDIUM)
   marks         Float          @default(1.0)

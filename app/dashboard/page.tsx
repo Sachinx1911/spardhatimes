@@ -1,6 +1,6 @@
 import React from "react";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import db from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -21,13 +21,14 @@ import {
   FileText
 } from "lucide-react";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
+import { SettingsForm } from "@/components/dashboard/SettingsForm";
+import { PerformanceCharts } from "@/components/dashboard/PerformanceCharts";
 
 export const revalidate = 0; // Dynamic student dashboard data
 
 export default async function StudentDashboardPage() {
   // 1. Enforce Authentication
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) {
     redirect("/login");
   }
@@ -54,6 +55,7 @@ export default async function StudentDashboardPage() {
             title: true,
             slug: true,
             marks: true,
+            category: { select: { name: true } },
           }
         }
       },
@@ -84,22 +86,6 @@ export default async function StudentDashboardPage() {
     console.error("Error loading student dashboard:", err);
   }
 
-  // Fallbacks for seeding during development
-  if (attempts.length === 0 && user) {
-    attempts = [];
-    bookmarks = [];
-    certificates = [];
-    notifications = [
-      {
-        id: "n-default",
-        title: "Welcome! 👋",
-        message: "Welcome to QuizPlatform Pro. Start exploring tests in the Quizzes section to begin.",
-        read: false,
-        createdAt: new Date()
-      }
-    ];
-  }
-
   // Computed Stats
   const totalAttempts = attempts.length;
   
@@ -109,6 +95,32 @@ export default async function StudentDashboardPage() {
 
   const totalPassingAttempts = attempts.filter(a => a.score >= 5).length; // simple pass check
   const totalCertificates = certificates.length;
+
+  // Analytics chart series (oldest -> newest)
+  const chronological = [...attempts].reverse();
+  const attemptSeries = chronological.map((a, i) => {
+    const answered = a.correctAnswers + a.wrongAnswers;
+    const d = new Date(a.createdAt);
+    return {
+      label: `T${i + 1} (${d.getDate()}/${d.getMonth() + 1})`,
+      percentage: Math.max(0, Math.round(a.percentage)),
+      accuracy: answered > 0 ? Math.round((a.correctAnswers / answered) * 100) : 0,
+    };
+  });
+
+  const catMap = new Map<string, { total: number; count: number }>();
+  for (const a of attempts) {
+    const name = a.quiz.category?.name || "General";
+    const entry = catMap.get(name) || { total: 0, count: 0 };
+    entry.total += a.percentage;
+    entry.count += 1;
+    catMap.set(name, entry);
+  }
+  const categoryPerf = Array.from(catMap.entries()).map(([label, { total, count }]) => ({
+    label,
+    avgPercentage: Math.max(0, Math.round(total / count)),
+    attempts: count,
+  }));
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 py-10">
@@ -162,8 +174,9 @@ export default async function StudentDashboardPage() {
 
         {/* Tabs Content */}
         <Tabs defaultValue="attempts" className="w-full">
-          <TabsList className="grid grid-cols-5 w-full bg-white dark:bg-slate-900 border border-border/40 p-1 rounded-lg">
+          <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full bg-white dark:bg-slate-900 border border-border/40 p-1 rounded-lg">
             <TabsTrigger value="attempts">Attempt History</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
             <TabsTrigger value="certificates">Certificates</TabsTrigger>
             <TabsTrigger value="notifications">Alerts</TabsTrigger>
@@ -232,6 +245,21 @@ export default async function StudentDashboardPage() {
             </Card>
           </TabsContent>
 
+          {/* Tab: Performance Analytics */}
+          <TabsContent value="analytics">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" /> Performance Analytics
+                </CardTitle>
+                <CardDescription>Track score trends, accuracy, and category-wise strengths.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PerformanceCharts attemptSeries={attemptSeries} categoryPerf={categoryPerf} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Tab 2: Bookmarks */}
           <TabsContent value="bookmarks">
             <Card>
@@ -292,7 +320,7 @@ export default async function StudentDashboardPage() {
                           <p className="text-xs text-muted-foreground">Code: {cert.certificateCode} | Issued on {new Date(cert.issueDate).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <a href={`/quiz/result/${cert.quizId}`} className="w-full sm:w-auto">
+                      <a href={cert.downloadUrl || `/api/certificates/${cert.certificateCode}/pdf`} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
                         <Button variant="secondary" size="sm" className="w-full flex items-center justify-center gap-1 font-semibold text-xs">
                           <Download className="h-4 w-4" /> Download Certificate
                         </Button>
@@ -353,23 +381,11 @@ export default async function StudentDashboardPage() {
                 <CardDescription>Update your display name, password credentials, or view your user role.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form className="space-y-4 max-w-md">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">User Name</label>
-                    <Input type="text" placeholder={user?.name || "Display name"} defaultValue={user?.name || ""} />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email Address (Read-only)</label>
-                    <Input type="email" value={user?.email || ""} disabled className="bg-slate-100 dark:bg-slate-800 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">User Role</label>
-                    <Input type="text" value={user?.role || "STUDENT"} disabled className="bg-slate-100 dark:bg-slate-800 text-muted-foreground" />
-                  </div>
-                  <Button type="button" className="font-semibold text-xs mt-2">
-                    Save Changes
-                  </Button>
-                </form>
+                <SettingsForm
+                  name={user?.name || ""}
+                  email={user?.email || ""}
+                  role={user?.role || "STUDENT"}
+                />
               </CardContent>
             </Card>
           </TabsContent>

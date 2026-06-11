@@ -34,6 +34,15 @@ interface ParsedRow {
   Explanation?: string;
   Category?: string;
   Difficulty?: string;
+  Type?: string; // SINGLE (default) / MULTIPLE / TRUEFALSE
+}
+
+// Mirrors the server-side Type mapping in bulkImportQuestions.
+function resolveRowType(raw?: string): "SINGLE" | "MULTIPLE" | "TRUEFALSE" {
+  const t = String(raw || "").toUpperCase().replace(/[^A-Z]/g, "");
+  if (t.startsWith("MULTI")) return "MULTIPLE";
+  if (t.startsWith("TRUE")) return "TRUEFALSE";
+  return "SINGLE";
 }
 
 interface ValidatedRow {
@@ -68,18 +77,32 @@ export function QuestionImporter({ quizzes }: { quizzes: Quiz[] }) {
         "Correct Answer": "C",
         "Explanation": "Paris is the capital and largest city of France.",
         "Category": "Geography",
-        "Difficulty": "EASY"
+        "Difficulty": "EASY",
+        "Type": "SINGLE"
       },
       {
-        "Question": "Which planet is known as the Red Planet?",
-        "Option A": "Venus",
-        "Option B": "Mars",
-        "Option C": "Jupiter",
-        "Option D": "Saturn",
-        "Correct Answer": "B",
-        "Explanation": "Mars is referred to as the Red Planet due to the iron oxide prevalent on its surface.",
+        "Question": "Which of the following are prime numbers?",
+        "Option A": "2",
+        "Option B": "4",
+        "Option C": "7",
+        "Option D": "9",
+        "Correct Answer": "A,C",
+        "Explanation": "2 and 7 are prime; 4 and 9 are composite.",
+        "Category": "Mathematics",
+        "Difficulty": "MEDIUM",
+        "Type": "MULTIPLE"
+      },
+      {
+        "Question": "The Sun rises in the east.",
+        "Option A": "",
+        "Option B": "",
+        "Option C": "",
+        "Option D": "",
+        "Correct Answer": "TRUE",
+        "Explanation": "Due to Earth's west-to-east rotation, the Sun appears to rise in the east.",
         "Category": "Science",
-        "Difficulty": "EASY"
+        "Difficulty": "EASY",
+        "Type": "TRUEFALSE"
       },
       {
         "Question": "Invalid Question Sample (This will show as error)",
@@ -90,7 +113,8 @@ export function QuestionImporter({ quizzes }: { quizzes: Quiz[] }) {
         "Correct Answer": "",
         "Explanation": "Demonstration row.",
         "Category": "",
-        "Difficulty": "MEDIUM"
+        "Difficulty": "MEDIUM",
+        "Type": "SINGLE"
       }
     ];
 
@@ -141,22 +165,35 @@ export function QuestionImporter({ quizzes }: { quizzes: Quiz[] }) {
     for (const r of rows) {
       const errors: string[] = [];
       const questionText = String(r.Question || "").trim();
+      const rowType = resolveRowType(r.Type);
 
       // Check empty question
       if (!questionText) {
         errors.push("Empty Question field");
       }
 
-      // Check options
-      if (!r["Option A"]) errors.push("Missing Option A");
-      if (!r["Option B"]) errors.push("Missing Option B");
-      if (!r["Option C"]) errors.push("Missing Option C");
-      if (!r["Option D"]) errors.push("Missing Option D");
+      // Check options (True/False rows auto-fill True/False options)
+      if (rowType !== "TRUEFALSE") {
+        if (!r["Option A"]) errors.push("Missing Option A");
+        if (!r["Option B"]) errors.push("Missing Option B");
+        if (!r["Option C"]) errors.push("Missing Option C");
+        if (!r["Option D"]) errors.push("Missing Option D");
+      }
 
-      // Check answer key
+      // Check answer key per question type
       const ans = String(r["Correct Answer"] || "").toUpperCase().trim();
       if (!ans) {
         errors.push("Missing Correct Answer");
+      } else if (rowType === "TRUEFALSE") {
+        if (!["TRUE", "FALSE", "A", "B"].includes(ans)) {
+          errors.push(`Invalid True/False answer: "${ans}" (Must be TRUE or FALSE)`);
+        }
+      } else if (rowType === "MULTIPLE") {
+        const letters = ans.split(",").map((s) => s.trim()).filter(Boolean);
+        const invalid = letters.filter((l) => !["A", "B", "C", "D"].includes(l));
+        if (letters.length === 0 || invalid.length > 0) {
+          errors.push(`Invalid multi-choice answer: "${ans}" (Use comma list like "A,C")`);
+        }
       } else if (!["A", "B", "C", "D"].includes(ans)) {
         errors.push(`Invalid Correct Answer: "${ans}" (Must be A, B, C, or D)`);
       }

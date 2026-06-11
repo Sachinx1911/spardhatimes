@@ -21,6 +21,7 @@ import {
   User
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { formatDate } from "@/lib/utils";
 
 interface UserItem {
   id: string;
@@ -60,6 +61,10 @@ export function UserManager({ initialUsers }: { initialUsers: UserItem[] }) {
       matchesStatus = u.isBlocked === true;
     } else if (statusFilter === "ACTIVE") {
       matchesStatus = u.isBlocked === false;
+    } else if (statusFilter === "NEW") {
+      // Registered within the last 7 days.
+      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      matchesStatus = new Date(u.createdAt).getTime() >= sevenDaysAgo;
     }
 
     return matchesSearch && matchesRole && matchesStatus;
@@ -149,7 +154,7 @@ export function UserManager({ initialUsers }: { initialUsers: UserItem[] }) {
       Email: u.email,
       Role: u.role,
       Status: u.isBlocked ? "Blocked" : "Active",
-      Created_At: new Date(u.createdAt).toLocaleDateString()
+      Created_At: formatDate(u.createdAt)
     }));
 
     // Create sheet
@@ -202,6 +207,7 @@ export function UserManager({ initialUsers }: { initialUsers: UserItem[] }) {
           <option value="">All Statuses</option>
           <option value="ACTIVE">Active Users</option>
           <option value="BLOCKED">Blocked Users</option>
+          <option value="NEW">New (last 7 days)</option>
         </Select>
       </Card>
 
@@ -236,7 +242,7 @@ export function UserManager({ initialUsers }: { initialUsers: UserItem[] }) {
                     </span>
                   </td>
                   <td className="p-4 text-muted-foreground text-xs">
-                    {new Date(u.createdAt).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                    {formatDate(u.createdAt)}
                   </td>
                   <td className="p-4 text-center">
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${

@@ -1,20 +1,19 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  Legend 
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import { ChartBox } from "../shared/ChartBox";
 import { Button } from "../ui/button";
 import { 
   Trophy, 
@@ -34,6 +33,7 @@ import {
 
 interface Question {
   id: string;
+  type?: string; // SINGLE_CHOICE | MULTIPLE_CHOICE | TRUE_FALSE
   text: string;
   optionA: string;
   optionB: string;
@@ -41,7 +41,19 @@ interface Question {
   optionD: string;
   correctAnswer: string;
   explanation: string | null;
+  categoryName?: string | null;
 }
+
+interface Comparison {
+  average: number;
+  top: number;
+  count: number;
+}
+
+// Answers are stored as comma lists for multiple choice ("A,C"); membership
+// checks work uniformly for single answers too.
+const answerIncludes = (answer: string | null | undefined, letter: string) =>
+  (answer || "").split(",").includes(letter);
 
 interface QuestionResponse {
   id: string;
@@ -61,6 +73,7 @@ interface Attempt {
   timeTaken: number;
   rank: number | null;
   percentile: number | null;
+  createdAt?: string | Date;
   quiz: {
     id: string;
     title: string;
@@ -73,8 +86,17 @@ interface Attempt {
   responses: QuestionResponse[];
 }
 
-export function ResultAnalytics({ attempt }: { attempt: Attempt }) {
-  
+export function ResultAnalytics({ attempt, comparison }: { attempt: Attempt; comparison?: Comparison | null }) {
+
+  // Format the attempt date on the client only. Locale-dependent date strings
+  // differ between the Node server and the browser, which causes a hydration
+  // mismatch, so we render it after mount instead.
+  const [attemptedOn, setAttemptedOn] = useState("");
+  useEffect(() => {
+    const date = attempt.createdAt ? new Date(attempt.createdAt) : new Date();
+    setAttemptedOn(date.toLocaleDateString(undefined, { dateStyle: "long" }));
+  }, [attempt.createdAt]);
+
   // 1. Data for Pie Chart
   const pieData = [
     { name: "Correct", value: attempt.correctAnswers, color: "#10B981" },
@@ -88,6 +110,31 @@ export function ResultAnalytics({ attempt }: { attempt: Attempt }) {
     timeSpent: res.timeSpent,
     isCorrect: res.isCorrect ? "Correct" : res.chosenOption ? "Incorrect" : "Skipped"
   }));
+
+  // 2b. Topic-wise accuracy from each question's sub-topic (categoryName)
+  const topicMap = new Map<string, { correct: number; total: number }>();
+  for (const res of attempt.responses) {
+    const topic = res.question.categoryName?.trim() || "General";
+    const entry = topicMap.get(topic) || { correct: 0, total: 0 };
+    entry.total += 1;
+    if (res.isCorrect) entry.correct += 1;
+    topicMap.set(topic, entry);
+  }
+  const topicData = Array.from(topicMap.entries()).map(([topic, { correct, total }]) => ({
+    topic: topic.length > 14 ? topic.slice(0, 13) + "…" : topic,
+    accuracy: Math.round((correct / total) * 100),
+    questions: total,
+  }));
+  const showTopicChart = topicData.length > 1;
+
+  // 2c. You vs class average vs topper (percentage)
+  const comparisonData = comparison
+    ? [
+        { name: "You", value: Math.max(0, attempt.percentage) },
+        { name: "Average", value: Math.max(0, comparison.average) },
+        { name: "Topper", value: Math.max(0, comparison.top) },
+      ]
+    : [];
 
   // 3. Print PDF Handler
   const handlePrint = () => {
@@ -148,8 +195,8 @@ export function ResultAnalytics({ attempt }: { attempt: Attempt }) {
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
             {attempt.quiz.title} Result
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Attempted on {new Date().toLocaleDateString(undefined, { dateStyle: "long" })}
+          <p className="text-sm text-muted-foreground" suppressHydrationWarning>
+            {attemptedOn ? `Attempted on ${attemptedOn}` : " "}
           </p>
         </div>
 
@@ -209,25 +256,27 @@ export function ResultAnalytics({ attempt }: { attempt: Attempt }) {
             <CardTitle className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">Answer Distribution</CardTitle>
           </CardHeader>
           <CardContent className="p-0 flex flex-col sm:flex-row items-center gap-4">
-            <div className="h-48 w-full sm:w-1/2">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="w-full sm:w-1/2 min-w-0">
+              <ChartBox height={180}>
+                {({ width, height }) => (
+                  <PieChart width={width} height={height}>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                )}
+              </ChartBox>
             </div>
             <div className="space-y-3 shrink-0">
               <div className="flex items-center gap-2 text-sm font-semibold">
@@ -251,18 +300,77 @@ export function ResultAnalytics({ attempt }: { attempt: Attempt }) {
           <CardHeader className="p-0 mb-4">
             <CardTitle className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">Time Spent Per Question</CardTitle>
           </CardHeader>
-          <CardContent className="p-0 h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#888888" fontSize={11} tickLine={false} axisLine={false} unit="s" />
-                <Tooltip formatter={(value) => [`${value}s`, "Time Spent"]} />
-                <Bar dataKey="timeSpent" fill="#2563eb" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <CardContent className="p-0 min-w-0">
+            <ChartBox height={192}>
+              {({ width, height }) => (
+                <BarChart width={width} height={height} data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <XAxis dataKey="name" stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888888" fontSize={11} tickLine={false} axisLine={false} unit="s" />
+                  <Tooltip formatter={(value) => [`${value}s`, "Time Spent"]} />
+                  <Bar dataKey="timeSpent" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              )}
+            </ChartBox>
           </CardContent>
         </Card>
       </div>
+
+      {/* Topic-wise & Comparison Charts Row */}
+      {(showTopicChart || comparisonData.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {showTopicChart && (
+            <Card className="p-6">
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">Topic-Wise Performance</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 min-w-0">
+                <ChartBox height={192}>
+                  {({ width, height }) => (
+                    <BarChart width={width} height={height} data={topicData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <XAxis dataKey="topic" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} interval={0} />
+                      <YAxis stroke="#888888" fontSize={11} tickLine={false} axisLine={false} unit="%" domain={[0, 100]} />
+                      <Tooltip formatter={(value, _name, item) => [`${value}% (${item?.payload?.questions} Qs)`, "Accuracy"]} />
+                      <Bar dataKey="accuracy" fill="#10B981" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  )}
+                </ChartBox>
+              </CardContent>
+            </Card>
+          )}
+
+          {comparisonData.length > 0 && (
+            <Card className={`p-6 ${!showTopicChart ? "md:col-span-2" : ""}`}>
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-sm font-extrabold uppercase tracking-wide text-muted-foreground">
+                  Score Comparison
+                  <span className="ml-2 normal-case font-normal text-[10px]">
+                    vs {comparison!.count} attempt{comparison!.count === 1 ? "" : "s"} on this quiz
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 min-w-0">
+                <ChartBox height={192}>
+                  {({ width, height }) => (
+                    <BarChart width={width} height={height} data={comparisonData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <XAxis dataKey="name" stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#888888" fontSize={11} tickLine={false} axisLine={false} unit="%" domain={[0, 100]} />
+                      <Tooltip formatter={(value) => [`${value}%`, "Score"]} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                        {comparisonData.map((entry, index) => (
+                          <Cell
+                            key={`comp-${index}`}
+                            fill={entry.name === "You" ? "#2563EB" : entry.name === "Average" ? "#64748B" : "#F59E0B"}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  )}
+                </ChartBox>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Answer Key & Explanations Details */}
       <Card>
@@ -311,9 +419,11 @@ export function ResultAnalytics({ attempt }: { attempt: Attempt }) {
                     { key: "B", val: q.optionB },
                     { key: "C", val: q.optionC },
                     { key: "D", val: q.optionD }
-                  ].map((opt) => {
-                    const isChosen = res.chosenOption === opt.key;
-                    const isRight = q.correctAnswer === opt.key;
+                  ]
+                    .filter((opt) => q.type !== "TRUE_FALSE" || ["A", "B"].includes(opt.key))
+                    .map((opt) => {
+                    const isChosen = answerIncludes(res.chosenOption, opt.key);
+                    const isRight = answerIncludes(q.correctAnswer, opt.key);
 
                     return (
                       <div

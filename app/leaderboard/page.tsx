@@ -1,32 +1,43 @@
 import React from "react";
 import db from "@/lib/db";
+import { getSetting } from "@/lib/settings";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Trophy, Award, Medal, User, Percent, Star, Target } from "lucide-react";
 
 export const revalidate = 30; // short cache for active score updates
 
+export const metadata = {
+  title: "Global Leaderboard",
+  description:
+    "Daily, weekly, monthly, and all-time rankings of top mock test performers. Compare your score and accuracy against the best.",
+  alternates: { canonical: "/leaderboard" },
+};
+
 export default async function LeaderboardPage() {
-  
-  // Helper to fetch leaderboard data for a time window
+  // Admin-configurable number of rows per leaderboard tab.
+  const leaderboardSize = Math.min(100, Math.max(1, parseInt(await getSetting("leaderboard_size"), 10) || 20));
+
+  // Helper to fetch leaderboard data for a time window. We aggregate per user
+  // so each student appears once with their best-scoring attempt in the window.
   const getLeaderboardData = async (sinceDate?: Date) => {
     try {
       const where: any = {
         status: "COMPLETED"
       };
-      
+
       if (sinceDate) {
         where.createdAt = {
           gte: sinceDate
         };
       }
 
-      // We group by user, sum their score, count their attempts, and average their percentage
       const attempts = await db.quizAttempt.findMany({
         where,
         include: {
           user: {
             select: {
+              id: true,
               name: true,
               email: true
             }
@@ -34,18 +45,32 @@ export default async function LeaderboardPage() {
         },
         orderBy: {
           score: "desc"
-        },
-        take: 20
+        }
       });
 
-      // Map attempts into leaderboard items
-      return attempts.map((a, index) => ({
-        rank: index + 1,
-        name: a.user.name || "Anonymous Student",
-        score: a.score,
-        percentage: a.percentage,
-        accuracy: Math.round(a.percentage) // mock accuracy based on score percentage
-      }));
+      // Reduce to each user's single best attempt (attempts are score-desc, so
+      // the first one we see per user is their best).
+      const bestByUser = new Map<string, { name: string; score: number; percentage: number }>();
+      for (const a of attempts) {
+        if (!bestByUser.has(a.user.id)) {
+          bestByUser.set(a.user.id, {
+            name: a.user.name || "Anonymous Student",
+            score: a.score,
+            percentage: a.percentage,
+          });
+        }
+      }
+
+      return Array.from(bestByUser.values())
+        .sort((x, y) => y.score - x.score)
+        .slice(0, leaderboardSize)
+        .map((u, index) => ({
+          rank: index + 1,
+          name: u.name,
+          score: u.score,
+          percentage: u.percentage,
+          accuracy: Math.max(0, Math.round(u.percentage)),
+        }));
     } catch (err) {
       console.error("Error fetching leaderboard data:", err);
       return [];
@@ -61,26 +86,19 @@ export default async function LeaderboardPage() {
   // Monthly: last 30 days
   const monthlyDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const daily = await getLeaderboardData(dailyDate);
-  const weekly = await getLeaderboardData(weeklyDate);
-  const monthly = await getLeaderboardData(monthlyDate);
-  const allTime = await getLeaderboardData();
-
-  // Seed fallback if DB has no attempts
-  const generateMockData = () => [
-    { rank: 1, name: "Rahul Sharma", score: 98.4, percentage: 98.4, accuracy: 98 },
-    { rank: 2, name: "Sneha Patel", score: 95.2, percentage: 95.2, accuracy: 96 },
-    { rank: 3, name: "Vikram Singh", score: 92.0, percentage: 92.0, accuracy: 94 },
-    { rank: 4, name: "Aarav Mehta", score: 89.5, percentage: 89.5, accuracy: 90 },
-    { rank: 5, name: "Priya Das", score: 86.2, percentage: 86.2, accuracy: 88 }
-  ];
-
-  const dailyList = daily.length > 0 ? daily : generateMockData();
-  const weeklyList = weekly.length > 0 ? weekly : generateMockData();
-  const monthlyList = monthly.length > 0 ? monthly : generateMockData();
-  const allTimeList = allTime.length > 0 ? allTime : generateMockData();
+  const dailyList = await getLeaderboardData(dailyDate);
+  const weeklyList = await getLeaderboardData(weeklyDate);
+  const monthlyList = await getLeaderboardData(monthlyDate);
+  const allTimeList = await getLeaderboardData();
 
   const renderLeaderboardTable = (list: any[]) => {
+    if (list.length === 0) {
+      return (
+        <div className="border border-border/40 rounded-lg bg-white dark:bg-slate-900 mt-4 p-10 text-center text-sm text-muted-foreground">
+          No ranked attempts in this period yet. Be the first to top the board!
+        </div>
+      );
+    }
     return (
       <div className="overflow-x-auto w-full border border-border/40 rounded-lg bg-white dark:bg-slate-900 mt-4">
         <table className="w-full text-left border-collapse text-sm">

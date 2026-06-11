@@ -1,15 +1,18 @@
 import React from "react";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import Link from "next/link";
-import { 
-  ShieldCheck, 
-  BarChart3, 
-  Layers, 
-  FileText, 
-  Users, 
-  FileSpreadsheet, 
-  Home 
+import {
+  ShieldCheck,
+  BarChart3,
+  Layers,
+  FileText,
+  Users,
+  FileSpreadsheet,
+  ClipboardList,
+  ScrollText,
+  Settings,
+  Home
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -18,7 +21,7 @@ interface AdminLayoutProps {
 
 export default async function AdminLayout({ children }: AdminLayoutProps) {
   // 1. Enforce Admin Session
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user) {
     redirect("/login");
   }
@@ -74,17 +77,35 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
           >
             <FileText className="h-4 w-4 text-primary" /> Quizzes & Tests
           </Link>
-          <Link 
-            href="/admin/users" 
+          <Link
+            href="/admin/users"
             className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             <Users className="h-4 w-4 text-primary" /> User Directory
+          </Link>
+          <Link
+            href="/admin/results"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            <ClipboardList className="h-4 w-4 text-primary" /> Results
           </Link>
           <Link 
             href="/admin/questions/import" 
             className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             <FileSpreadsheet className="h-4 w-4 text-primary" /> Excel Import
+          </Link>
+          <Link
+            href="/admin/logs"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            <ScrollText className="h-4 w-4 text-primary" /> Activity Logs
+          </Link>
+          <Link
+            href="/admin/settings"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            <Settings className="h-4 w-4 text-primary" /> Settings
           </Link>
           <div className="h-px bg-border/40 my-4" />
           <Link 

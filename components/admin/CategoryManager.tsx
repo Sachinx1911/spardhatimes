@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { createCategory, updateCategory, deleteCategory } from "@/app/actions/admin";
+import { createCategory, updateCategory, deleteCategory, uploadCategoryIcon } from "@/app/actions/admin";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Input } from "../ui/input";
 import { Dialog } from "../ui/dialog";
 import { Select } from "../ui/select";
+import { CategoryIcon } from "../shared/CategoryIcon";
 import { 
   Plus, 
   Edit, 
@@ -22,7 +23,8 @@ import {
   Languages, 
   Laptop,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  UploadCloud
 } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -65,6 +67,31 @@ export function CategoryManager({ initialCategories }: { initialCategories: Cate
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
+  const [iconUploadError, setIconUploadError] = useState("");
+
+  // Upload a custom icon image; on success the icon field stores its URL.
+  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingIcon(true);
+    setIconUploadError("");
+    try {
+      const fd = new FormData();
+      fd.append("icon", file);
+      const res = await uploadCategoryIcon(fd);
+      if (res.error) {
+        setIconUploadError(res.error);
+      } else if (res.url) {
+        setIcon(res.url);
+      }
+    } catch {
+      setIconUploadError("Upload failed. Check your connection.");
+    } finally {
+      setUploadingIcon(false);
+    }
+  };
 
   const openCreateDialog = () => {
     setSelectedCat(null);
@@ -190,12 +217,11 @@ export function CategoryManager({ initialCategories }: { initialCategories: Cate
             </thead>
             <tbody className="divide-y divide-border/40">
               {categories.map((cat) => {
-                const IconComponent = iconMap[cat.icon || "Brain"] || Brain;
                 return (
                   <tr key={cat.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 text-sm">
                     <td className="p-4">
-                      <div className="h-8 w-8 rounded bg-blue-100 dark:bg-blue-950 text-primary flex items-center justify-center">
-                        <IconComponent className="h-4 w-4" />
+                      <div className="h-8 w-8 rounded bg-blue-100 dark:bg-blue-950 text-primary flex items-center justify-center overflow-hidden">
+                        <CategoryIcon icon={cat.icon} className="h-4 w-4" />
                       </div>
                     </td>
                     <td className="p-4 font-bold text-foreground">{cat.name}</td>
@@ -270,18 +296,43 @@ export function CategoryManager({ initialCategories }: { initialCategories: Cate
 
           <div className="space-y-1">
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Icon</label>
-            <Select value={icon} onChange={(e) => setIcon(e.target.value)}>
-              <option value="Brain">Brain (General Knowledge)</option>
-              <option value="Globe">Globe (Current Affairs)</option>
-              <option value="BookOpen">BookOpen (History)</option>
-              <option value="Map">Map (Geography)</option>
-              <option value="Atom">Atom (Science)</option>
-              <option value="Percent">Percent (Mathematics)</option>
-              <option value="GitBranch">GitBranch (Reasoning)</option>
-              <option value="PenTool">PenTool (Marathi Grammar)</option>
-              <option value="Languages">Languages (English Grammar)</option>
-              <option value="Laptop">Laptop (Computer Knowledge)</option>
-            </Select>
+            {icon.startsWith("/") || icon.startsWith("http") ? (
+              <div className="flex items-center gap-3 p-2 border border-border/60 rounded-md">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={icon} alt="Category icon" className="h-9 w-9 rounded object-cover" />
+                <span className="text-xs text-muted-foreground truncate flex-1">{icon}</span>
+                <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setIcon("Brain")}>
+                  Remove
+                </Button>
+              </div>
+            ) : (
+              <Select value={icon} onChange={(e) => setIcon(e.target.value)}>
+                <option value="Brain">Brain (General Knowledge)</option>
+                <option value="Globe">Globe (Current Affairs)</option>
+                <option value="BookOpen">BookOpen (History)</option>
+                <option value="Map">Map (Geography)</option>
+                <option value="Atom">Atom (Science)</option>
+                <option value="Percent">Percent (Mathematics)</option>
+                <option value="GitBranch">GitBranch (Reasoning)</option>
+                <option value="PenTool">PenTool (Marathi Grammar)</option>
+                <option value="Languages">Languages (English Grammar)</option>
+                <option value="Laptop">Laptop (Computer Knowledge)</option>
+              </Select>
+            )}
+            <div className="pt-1">
+              <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary cursor-pointer hover:underline">
+                <UploadCloud className="h-3.5 w-3.5" />
+                {uploadingIcon ? "Uploading…" : "Upload custom icon (PNG/JPG/SVG/WebP, max 1 MB)"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  className="hidden"
+                  disabled={uploadingIcon}
+                  onChange={handleIconUpload}
+                />
+              </label>
+              {iconUploadError && <p className="text-xs text-danger mt-1">{iconUploadError}</p>}
+            </div>
           </div>
 
           <div className="h-px bg-border/40 my-4" />

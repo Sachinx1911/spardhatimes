@@ -10,14 +10,32 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const siteUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     template: "%s | QuizPlatform Pro",
     default: "QuizPlatform Pro - Online Test Series & Competitive Exams Mock Tests",
   },
   description: "Attempt online mock tests for General Knowledge, Current Affairs, Science, Mathematics, Grammar, and computer technology. Instantly check results, review performance analytics, and download certificates.",
-  keywords: ["quiz platform", "competitive exams", "test series", "mock test", "GK quiz", "online exams", "SheetJS import", "result analysis"],
+  keywords: ["quiz platform", "competitive exams", "test series", "mock test", "GK quiz", "online exams", "MPSC mock test", "result analysis"],
   manifest: "/manifest.webmanifest",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "QuizPlatform Pro",
+    title: "QuizPlatform Pro - Online Test Series & Competitive Exams Mock Tests",
+    description: "Real-time mock tests with instant results, performance analytics, leaderboards, and certificates.",
+    url: siteUrl,
+    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "QuizPlatform Pro" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "QuizPlatform Pro - Online Mock Tests",
+    description: "Real-time mock tests with instant results, analytics, and certificates.",
+    images: ["/icon-512.png"],
+  },
   icons: {
     icon: "/icon-192.png",
     apple: "/apple-touch-icon.png",

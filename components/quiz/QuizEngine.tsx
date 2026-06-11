@@ -23,6 +23,7 @@ import {
 
 interface Question {
   id: string;
+  type?: string; // SINGLE_CHOICE | MULTIPLE_CHOICE | TRUE_FALSE
   text: string;
   optionA: string;
   optionB: string;
@@ -127,12 +128,31 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
   }, [hasStarted, currentIdx, currentQuestion?.id]);
 
   // 4. Handle Option Selection
+  // Single choice / true-false replace the answer; multiple choice toggles the
+  // option in a sorted comma list ("A,C") so grading is order-independent.
   const handleSelectOption = (option: string) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [currentQuestion.id]: option
-    }));
+    setAnswers((prev) => {
+      if (currentQuestion.type !== "MULTIPLE_CHOICE") {
+        return { ...prev, [currentQuestion.id]: option };
+      }
+      const current = prev[currentQuestion.id]
+        ? prev[currentQuestion.id].split(",")
+        : [];
+      const next = current.includes(option)
+        ? current.filter((o) => o !== option)
+        : [...current, option].sort();
+      const updated = { ...prev };
+      if (next.length === 0) {
+        delete updated[currentQuestion.id];
+      } else {
+        updated[currentQuestion.id] = next.join(",");
+      }
+      return updated;
+    });
   };
+
+  const isOptionSelected = (option: string) =>
+    (answers[currentQuestion.id] || "").split(",").includes(option);
 
   // 5. Toggle Flag for Review
   const handleToggleFlag = () => {
@@ -198,9 +218,17 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
         // Clear local storage
         localStorage.removeItem(`quiz_answers_${quiz.id}`);
         localStorage.removeItem(`quiz_flagged_${quiz.id}`);
-        
-        router.push(`/quiz/result/${result.attemptId}`);
-        router.refresh();
+
+        // Navigate to the result page. Use replace() so the back button does
+        // not return to the (now finished) attempt. A hard-navigation fallback
+        // guarantees the transition commits even if the client router stalls.
+        const resultUrl = `/quiz/result/${result.attemptId}`;
+        router.replace(resultUrl);
+        setTimeout(() => {
+          if (window.location.pathname !== resultUrl) {
+            window.location.assign(resultUrl);
+          }
+        }, 600);
       }
     } catch (err) {
       setError("Failed to submit attempt. Check your network connection.");
@@ -361,9 +389,21 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
             </CardHeader>
             <CardContent className="p-6 space-y-6">
               {/* Question Text */}
-              <h3 className="text-base sm:text-lg font-bold text-foreground leading-relaxed">
-                {currentQuestion.text}
-              </h3>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-foreground leading-relaxed">
+                  {currentQuestion.text}
+                </h3>
+                {currentQuestion.type === "MULTIPLE_CHOICE" && (
+                  <p className="mt-1.5 text-xs font-semibold text-primary">
+                    Multiple answers — select all that apply.
+                  </p>
+                )}
+                {currentQuestion.type === "TRUE_FALSE" && (
+                  <p className="mt-1.5 text-xs font-semibold text-muted-foreground">
+                    True / False — choose one.
+                  </p>
+                )}
+              </div>
 
               {/* Options Grid */}
               <div className="grid grid-cols-1 gap-3">
@@ -372,29 +412,35 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
                   { key: "B", text: currentQuestion.optionB },
                   { key: "C", text: currentQuestion.optionC },
                   { key: "D", text: currentQuestion.optionD }
-                ].map((opt) => {
-                  const isSelected = answers[currentQuestion.id] === opt.key;
-                  return (
-                    <button
-                      key={opt.key}
-                      onClick={() => handleSelectOption(opt.key)}
-                      className={`flex items-center text-left w-full p-4 rounded-lg border transition-all cursor-pointer text-sm sm:text-base ${
-                        isSelected
-                          ? "border-primary bg-primary/5 text-primary font-semibold ring-1 ring-primary"
-                          : "border-border/60 hover:bg-slate-50 dark:hover:bg-slate-900 text-foreground"
-                      }`}
-                    >
-                      <span className={`h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 mr-3 border ${
-                        isSelected 
-                          ? "bg-primary text-white border-primary" 
-                          : "bg-slate-100 dark:bg-slate-800 border-border text-muted-foreground"
-                      }`}>
-                        {opt.key}
-                      </span>
-                      {opt.text}
-                    </button>
-                  );
-                })}
+                ]
+                  // True/False questions only carry two options (A=True, B=False)
+                  .filter((opt) => currentQuestion.type !== "TRUE_FALSE" || ["A", "B"].includes(opt.key))
+                  .map((opt) => {
+                    const isSelected = isOptionSelected(opt.key);
+                    const isMulti = currentQuestion.type === "MULTIPLE_CHOICE";
+                    return (
+                      <button
+                        key={opt.key}
+                        onClick={() => handleSelectOption(opt.key)}
+                        className={`flex items-center text-left w-full p-4 rounded-lg border transition-all cursor-pointer text-sm sm:text-base ${
+                          isSelected
+                            ? "border-primary bg-primary/5 text-primary font-semibold ring-1 ring-primary"
+                            : "border-border/60 hover:bg-slate-50 dark:hover:bg-slate-900 text-foreground"
+                        }`}
+                      >
+                        <span className={`h-6 w-6 flex items-center justify-center font-bold text-xs shrink-0 mr-3 border ${
+                          isMulti ? "rounded-md" : "rounded-full"
+                        } ${
+                          isSelected
+                            ? "bg-primary text-white border-primary"
+                            : "bg-slate-100 dark:bg-slate-800 border-border text-muted-foreground"
+                        }`}>
+                          {isSelected && isMulti ? <CheckCircle2 className="h-4 w-4" /> : opt.key}
+                        </span>
+                        {opt.text}
+                      </button>
+                    );
+                  })}
               </div>
             </CardContent>
           </Card>

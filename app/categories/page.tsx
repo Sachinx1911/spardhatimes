@@ -19,6 +19,15 @@ import {
   FileText
 } from "lucide-react";
 
+import { CategoryIcon } from "@/components/shared/CategoryIcon";
+
+export const metadata = {
+  title: "All Test Categories",
+  description:
+    "Explore every quiz category — General Knowledge, Current Affairs, History, Geography, Science, Mathematics, Reasoning, Marathi Grammar, English Grammar, and Computer Knowledge.",
+  alternates: { canonical: "/categories" },
+};
+
 const iconMap: Record<string, React.ComponentType<any>> = {
   Brain: Brain,
   Globe: Globe,
@@ -68,12 +77,11 @@ export default async function CategoriesPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.map((cat) => {
-            const IconComponent = iconMap[cat.icon || "Brain"] || Brain;
             return (
               <Card key={cat.id} className="hover:border-primary/50 transition-all shadow-sm hover:shadow-md">
                 <CardHeader className="flex flex-row items-center space-x-4 pb-2">
                   <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-950 text-primary">
-                    <IconComponent className="h-6 w-6" />
+                    <CategoryIcon icon={cat.icon} className="h-6 w-6" />
                   </div>
                   <div>
                     <CardTitle className="text-lg font-bold">{cat.name}</CardTitle>

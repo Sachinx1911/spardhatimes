@@ -19,19 +19,30 @@ import {
 
 export const revalidate = 10; // short cache for listing updates
 
+export const metadata = {
+  title: "Mock Quizzes Directory",
+  description:
+    "Browse all published mock tests by category and difficulty. Free online test series for MPSC, banking, railways, grammar, and general knowledge.",
+  alternates: { canonical: "/quizzes" },
+};
+
 interface PageProps {
   searchParams: Promise<{
     category?: string;
     difficulty?: string;
     search?: string;
+    page?: string;
   }>;
 }
+
+const PAGE_SIZE = 9;
 
 export default async function QuizzesPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const selectedCategory = params.category || "";
   const selectedDifficulty = params.difficulty || "";
   const searchQuery = params.search || "";
+  const currentPage = Math.max(1, parseInt(params.page || "1", 10) || 1);
 
   // 1. Fetch Categories for Filters
   let categories: any[] = [];
@@ -45,6 +56,7 @@ export default async function QuizzesPage({ searchParams }: PageProps) {
 
   // 2. Fetch Quizzes with Filters
   let quizzes: any[] = [];
+  let totalQuizzes = 0;
   try {
     const whereClause: any = {
       status: "PUBLISHED"
@@ -67,6 +79,8 @@ export default async function QuizzesPage({ searchParams }: PageProps) {
       ];
     }
 
+    totalQuizzes = await db.quiz.count({ where: whereClause });
+
     quizzes = await db.quiz.findMany({
       where: whereClause,
       include: {
@@ -74,45 +88,26 @@ export default async function QuizzesPage({ searchParams }: PageProps) {
         questions: { select: { id: true } },
         _count: { select: { attempts: true } }
       },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
     });
   } catch (err) {
     console.error("Error fetching quizzes:", err);
   }
 
-  // Fallback
-  if (quizzes.length === 0 && !selectedCategory && !selectedDifficulty && !searchQuery) {
-    quizzes = [
-      {
-        id: "1",
-        title: "World Capitals Challenge",
-        slug: "world-capitals-challenge",
-        description: "Test your knowledge of major world capitals from different continents.",
-        duration: 10,
-        marks: 10.0,
-        negativeMarks: 0.25,
-        passingMarks: 5.0,
-        difficulty: "EASY",
-        category: { name: "General Knowledge" },
-        questions: Array(5),
-        _count: { attempts: 12 }
-      },
-      {
-        id: "2",
-        title: "General Physics Mock Test",
-        slug: "general-physics-mock-test",
-        description: "Evaluate your understanding of classical mechanics, light, and thermodynamics.",
-        duration: 15,
-        marks: 15.0,
-        negativeMarks: 0.5,
-        passingMarks: 7.5,
-        difficulty: "MEDIUM",
-        category: { name: "Science" },
-        questions: Array(5),
-        _count: { attempts: 4 }
-      }
-    ];
-  }
+  const totalPages = Math.max(1, Math.ceil(totalQuizzes / PAGE_SIZE));
+
+  // Preserve active filters in pagination links
+  const pageHref = (page: number) => {
+    const qp = new URLSearchParams();
+    if (selectedCategory) qp.set("category", selectedCategory);
+    if (selectedDifficulty) qp.set("difficulty", selectedDifficulty);
+    if (searchQuery) qp.set("search", searchQuery);
+    if (page > 1) qp.set("page", String(page));
+    const qs = qp.toString();
+    return qs ? `/quizzes?${qs}` : "/quizzes";
+  };
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 py-10">
@@ -293,6 +288,39 @@ export default async function QuizzesPage({ searchParams }: PageProps) {
                   </CardContent>
                 </Card>
               ))
+            )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4">
+                <p className="text-xs text-muted-foreground">
+                  Page {currentPage} of {totalPages} ({totalQuizzes} tests)
+                </p>
+                <div className="flex items-center gap-2">
+                  {currentPage > 1 ? (
+                    <Link href={pageHref(currentPage - 1)}>
+                      <Button variant="outline" size="sm" className="font-semibold text-xs">
+                        ← Previous
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button variant="outline" size="sm" className="font-semibold text-xs" disabled>
+                      ← Previous
+                    </Button>
+                  )}
+                  {currentPage < totalPages ? (
+                    <Link href={pageHref(currentPage + 1)}>
+                      <Button variant="outline" size="sm" className="font-semibold text-xs">
+                        Next →
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button variant="outline" size="sm" className="font-semibold text-xs" disabled>
+                      Next →
+                    </Button>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </div>

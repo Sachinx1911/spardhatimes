@@ -1,6 +1,6 @@
 import React from "react";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import db from "@/lib/db";
 import { QuizEngine } from "@/components/quiz/QuizEngine";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,9 +14,44 @@ interface PageProps {
   }>;
 }
 
+// Dynamic SEO metadata sourced from the quiz and its category's SEO fields.
+export async function generateMetadata({ params }: PageProps) {
+  const { slug } = await params;
+  try {
+    const quiz = await db.quiz.findUnique({
+      where: { slug },
+      select: {
+        title: true,
+        description: true,
+        difficulty: true,
+        duration: true,
+        category: { select: { name: true, metaTitle: true, metaDescription: true } },
+        _count: { select: { questions: true } },
+      },
+    });
+    if (!quiz) return { title: "Quiz Not Found" };
+
+    const title = `${quiz.title} - ${quiz.category.name} Mock Test`;
+    const description =
+      quiz.description ||
+      quiz.category.metaDescription ||
+      `Attempt the ${quiz.title} mock test: ${quiz._count.questions} questions, ${quiz.duration} minutes, ${quiz.difficulty.toLowerCase()} difficulty. Instant results with detailed explanations.`;
+
+    return {
+      title,
+      description,
+      alternates: { canonical: `/quiz/${slug}/attempt` },
+      openGraph: { title, description, type: "website" },
+      twitter: { card: "summary", title, description },
+    };
+  } catch {
+    return { title: "Mock Test" };
+  }
+}
+
 export default async function QuizAttemptPage({ params }: PageProps) {
   // 1. Enforce Authentication
-  const session = await auth();
+  const session = await getSession();
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
 
@@ -33,6 +68,7 @@ export default async function QuizAttemptPage({ params }: PageProps) {
         questions: {
           select: {
             id: true,
+            type: true,
             text: true,
             optionA: true,
             optionB: true,
@@ -48,45 +84,6 @@ export default async function QuizAttemptPage({ params }: PageProps) {
     });
   } catch (err) {
     console.error("Error fetching quiz:", err);
-  }
-
-  // 3. Fallback mock if database query fails or returns empty during development
-  if (!quiz && slug === "world-capitals-challenge") {
-    quiz = {
-      id: "mock-gk",
-      title: "World Capitals Challenge",
-      slug: "world-capitals-challenge",
-      duration: 10,
-      marks: 10.0,
-      passingMarks: 5.0,
-      instructions: "Answer all capital questions. Negative marks of 0.25 points apply for wrong answers.",
-      questions: [
-        {
-          id: "gk-1",
-          text: "What is the capital of France?",
-          optionA: "Berlin",
-          optionB: "Madrid",
-          optionC: "Paris",
-          optionD: "Rome",
-          correctAnswer: "C",
-          explanation: "Paris is the capital of France.",
-          difficulty: "EASY",
-          marks: 2.0
-        },
-        {
-          id: "gk-2",
-          text: "What is the capital of Australia?",
-          optionA: "Sydney",
-          optionB: "Melbourne",
-          optionC: "Brisbane",
-          optionD: "Canberra",
-          correctAnswer: "D",
-          explanation: "Canberra is the capital of Australia.",
-          difficulty: "MEDIUM",
-          marks: 2.0
-        }
-      ]
-    };
   }
 
   if (!quiz) {

@@ -1,12 +1,13 @@
 import React from "react";
 import db from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { 
-  Users, 
-  Layers, 
-  FileText, 
-  HelpCircle, 
-  History, 
+import { AdminCharts, TrendPoint } from "@/components/admin/AdminCharts";
+import {
+  Users,
+  Layers,
+  FileText,
+  HelpCircle,
+  History,
   Calendar,
   Activity
 } from "lucide-react";
@@ -22,17 +23,22 @@ export default async function AdminDashboardPage() {
   let dailyAttempts = 0;
   let monthlyAttempts = 0;
   let recentAttempts: any[] = [];
+  let userGrowth: TrendPoint[] = [];
+  let attemptTrend: TrendPoint[] = [];
+  let popularCategories: TrendPoint[] = [];
 
   const now = new Date();
   const dailyDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const monthlyDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const fortnightDate = new Date(now.getTime() - 13 * 24 * 60 * 60 * 1000);
+  fortnightDate.setHours(0, 0, 0, 0);
 
   try {
     userCount = await db.user.count();
     categoryCount = await db.category.count();
     quizCount = await db.quiz.count();
     questionCount = await db.question.count();
-    
+
     dailyAttempts = await db.quizAttempt.count({
       where: {
         createdAt: { gte: dailyDate },
@@ -55,6 +61,48 @@ export default async function AdminDashboardPage() {
       },
       orderBy: { createdAt: "desc" }
     });
+
+    // 2. Build chart series (last 14 days, bucketed per day in JS — the row
+    // counts here are small enough that DB-side grouping isn't needed yet).
+    const [users, recentAttemptRows, categoryAttempts] = await Promise.all([
+      db.user.findMany({ select: { createdAt: true } }),
+      db.quizAttempt.findMany({
+        where: { status: "COMPLETED", createdAt: { gte: fortnightDate } },
+        select: { createdAt: true },
+      }),
+      db.quizAttempt.findMany({
+        where: { status: "COMPLETED" },
+        select: { quiz: { select: { category: { select: { name: true } } } } },
+      }),
+    ]);
+
+    const dayKeys: string[] = [];
+    const dayLabels: string[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      dayKeys.push(d.toISOString().slice(0, 10));
+      dayLabels.push(`${d.getDate()}/${d.getMonth() + 1}`);
+    }
+
+    userGrowth = dayKeys.map((key, i) => ({
+      label: dayLabels[i],
+      value: users.filter((u) => u.createdAt.toISOString().slice(0, 10) <= key).length,
+    }));
+
+    attemptTrend = dayKeys.map((key, i) => ({
+      label: dayLabels[i],
+      value: recentAttemptRows.filter((a) => a.createdAt.toISOString().slice(0, 10) === key).length,
+    }));
+
+    const catCounts = new Map<string, number>();
+    for (const a of categoryAttempts) {
+      const name = a.quiz.category.name;
+      catCounts.set(name, (catCounts.get(name) || 0) + 1);
+    }
+    popularCategories = Array.from(catCounts.entries())
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
   } catch (err) {
     console.error("Error loading admin stats:", err);
   }
@@ -134,6 +182,13 @@ export default async function AdminDashboardPage() {
           <p className="text-xs text-muted-foreground mt-2">Completed quiz attempts</p>
         </Card>
       </div>
+
+      {/* Analytics Graphs */}
+      <AdminCharts
+        userGrowth={userGrowth}
+        attemptTrend={attemptTrend}
+        popularCategories={popularCategories}
+      />
 
       {/* Recent Activities */}
       <Card>

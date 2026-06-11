@@ -1,23 +1,25 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { createQuiz, updateQuiz, deleteQuiz } from "@/app/actions/admin";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Input } from "../ui/input";
 import { Dialog } from "../ui/dialog";
 import { Select } from "../ui/select";
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Clock, 
-  Award, 
-  AlertCircle, 
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Clock,
+  Award,
+  AlertCircle,
   CheckCircle,
   FileText,
   HelpCircle,
-  Activity
+  Activity,
+  ListChecks
 } from "lucide-react";
 
 interface Category {
@@ -241,6 +243,13 @@ export function QuizManager({
                     </span>
                   </td>
                   <td className="p-4 text-right space-x-2">
+                    <Link
+                      href={`/admin/quizzes/${quiz.id}/questions`}
+                      className="inline-flex p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-primary cursor-pointer align-middle"
+                      title="Manage questions"
+                    >
+                      <ListChecks className="h-4 w-4" />
+                    </Link>
                     <button
                       onClick={() => openEditDialog(quiz)}
                       className="inline-flex p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-foreground cursor-pointer"
