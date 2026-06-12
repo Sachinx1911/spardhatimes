@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Tailwind v4 defaults the dark: variant to prefers-color-scheme (the OS
+   setting). Our navbar toggle switches a .dark class on <html>, so rebind
+   the variant to that class — otherwise dark: utilities ignore the toggle. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
