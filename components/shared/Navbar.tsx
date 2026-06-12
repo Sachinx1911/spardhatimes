@@ -167,7 +167,7 @@ export function Navbar() {
             {isLoggedIn ? (
               <div className="space-y-2">
                 <div className="px-3 py-1.5 text-sm font-semibold text-foreground flex items-center gap-1.5">
-                  <User className="h-4 w-4 text-primary" /> {user?.name || "User"} ({user?.role})
+                  <User className="h-4 w-4 text-primary" /> {user?.name || "User"}
                 </div>
                 {isAdmin ? (
                   <Link
@@ -183,7 +183,7 @@ export function Navbar() {
                     onClick={() => setIsMenuOpen(false)}
                     className="block px-3 py-2 rounded-md text-base font-medium bg-slate-100 dark:bg-slate-800 text-foreground"
                   >
-                    My Student Dashboard
+                    My Dashboard
                   </Link>
                 )}
                 <button

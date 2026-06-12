@@ -1,8 +1,13 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
-import { Laptop } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 export function Footer() {
+  const { status } = useSession();
+  const isLoggedIn = status === "authenticated";
+
   return (
     <footer className="bg-slate-900 text-slate-300 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
@@ -66,25 +71,36 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Links: Account */}
+          {/* Links: Account (login/register hidden once signed in) */}
           <div>
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Account</h4>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/login" className="hover:text-primary transition-colors">
-                  Sign In
-                </Link>
-              </li>
-              <li>
-                <Link href="/register" className="hover:text-primary transition-colors">
-                  Create Account
-                </Link>
-              </li>
+              {!isLoggedIn && (
+                <>
+                  <li>
+                    <Link href="/login" className="hover:text-primary transition-colors">
+                      Sign In
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/register" className="hover:text-primary transition-colors">
+                      Create Account
+                    </Link>
+                  </li>
+                </>
+              )}
               <li>
                 <Link href="/dashboard" className="hover:text-primary transition-colors">
                   My Dashboard
                 </Link>
               </li>
+              {isLoggedIn && (
+                <li>
+                  <Link href="/quizzes" className="hover:text-primary transition-colors">
+                    Attempt a Test
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
         </div>
