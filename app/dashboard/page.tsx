@@ -174,7 +174,7 @@ export default async function StudentDashboardPage() {
 
         {/* Tabs Content */}
         <Tabs defaultValue="attempts" className="w-full">
-          <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full bg-white dark:bg-slate-900 border border-border/40 p-1 rounded-lg">
+          <TabsList className="grid h-auto grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1 w-full bg-white dark:bg-slate-900 border border-border/40 p-1 rounded-lg">
             <TabsTrigger value="attempts">Attempt History</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>

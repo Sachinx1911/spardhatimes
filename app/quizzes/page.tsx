@@ -4,18 +4,18 @@ import db from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Search, 
-  Clock, 
-  HelpCircle, 
-  Award, 
-  ShieldAlert, 
-  Bookmark, 
-  Eye, 
+import {
+  Search,
+  Clock,
+  HelpCircle,
+  Award,
+  ShieldAlert,
+  Bookmark,
+  Eye,
   UserCheck,
-  ChevronRight,
-  SlidersHorizontal
+  ChevronRight
 } from "lucide-react";
+import { FilterCollapse } from "@/components/quiz/FilterCollapse";
 
 export const revalidate = 10; // short cache for listing updates
 
@@ -123,11 +123,7 @@ export default async function QuizzesPage({ searchParams }: PageProps) {
           {/* Filters Sidebar */}
           <div className="lg:col-span-1 space-y-6">
             <Card className="p-5">
-              <div className="flex items-center gap-2 mb-4 border-b border-border/40 pb-3">
-                <SlidersHorizontal className="h-4 w-4 text-primary" />
-                <span className="font-bold text-sm text-foreground uppercase tracking-wider">Filter Options</span>
-              </div>
-              
+              <FilterCollapse activeCount={[selectedCategory, selectedDifficulty, searchQuery].filter(Boolean).length}>
               {/* Search form */}
               <form method="GET" action="/quizzes" className="space-y-4">
                 {selectedCategory && <input type="hidden" name="category" value={selectedCategory} />}
@@ -215,6 +211,7 @@ export default async function QuizzesPage({ searchParams }: PageProps) {
                   ))}
                 </div>
               </div>
+              </FilterCollapse>
             </Card>
           </div>
 
