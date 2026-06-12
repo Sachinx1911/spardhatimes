@@ -24,6 +24,15 @@ export function Navbar() {
     : (session?.user as any);
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
 
+  // Sign out without letting NextAuth compute the redirect URL. On hosts where
+  // NEXTAUTH_URL is misconfigured (e.g. left as localhost) the server-built
+  // redirect would send the user to localhost; doing the redirect ourselves
+  // keeps them on the current domain regardless of env.
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    window.location.href = "/";
+  };
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -90,7 +99,7 @@ export function Navbar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => signOut({ callbackUrl: "/" })}
+                  onClick={handleSignOut}
                   className="flex items-center gap-1.5 text-danger hover:text-danger hover:bg-danger/5"
                 >
                   <LogOut className="h-4 w-4" /> Sign Out
@@ -188,8 +197,8 @@ export function Navbar() {
                 )}
                 <button
                   onClick={() => {
-                    signOut({ callbackUrl: "/" });
                     setIsMenuOpen(false);
+                    handleSignOut();
                   }}
                   className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-danger hover:bg-danger/5"
                 >
