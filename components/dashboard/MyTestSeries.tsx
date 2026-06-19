@@ -135,7 +135,7 @@ export function MyTestSeries({
                       </div>
                       <div className="shrink-0 w-full sm:w-auto">
                         {state === "OPEN" ? (
-                          <Link href={`/quiz/${t.slug}`} className="block">
+                          <Link href={`/quiz/${t.slug}/attempt`} className="block">
                             <Button size="sm" className="w-full sm:w-auto font-semibold text-xs flex items-center justify-center gap-1">
                               {isAttempted ? "Re-attempt" : "Start Test"} <ArrowRight className="h-3.5 w-3.5" />
                             </Button>
