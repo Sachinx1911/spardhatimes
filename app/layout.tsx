@@ -49,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-200">
+      <body className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200">
         <Providers>
           <Navbar />
           <main className="flex-1 flex flex-col">{children}</main>

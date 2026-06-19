@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useTheme } from "./ThemeContext";
-import { Menu, X, Sun, Moon, LogIn, LogOut, User, LayoutDashboard, Shield, Award } from "lucide-react";
+import { Menu, X, Sun, Moon, LogOut, User, LayoutDashboard, Shield } from "lucide-react";
 import { Button } from "../ui/button";
 import { NotificationBell } from "./NotificationBell";
 
@@ -95,15 +95,7 @@ export function Navbar() {
                   <LogOut className="h-4 w-4" /> Sign Out
                 </Button>
               </div>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <Link href="/login">
-                  <Button size="sm" className="flex items-center gap-1.5 shadow-md">
-                    <LogIn className="h-4 w-4" /> Sign In
-                  </Button>
-                </Link>
-              </div>
-            )}
+            ) : null}
           </div>
 
           {/* Mobile menu toggle */}
@@ -115,61 +107,53 @@ export function Navbar() {
             >
               {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="rounded-lg p-2 text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+            {/* The hamburger only has content once signed in; on the login
+                screen the navbar stays minimal (logo + theme toggle). */}
+            {isLoggedIn && (
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="rounded-lg p-2 text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
-      {isMenuOpen && (
+      {/* Mobile Drawer Menu (only ever opens for signed-in users) */}
+      {isMenuOpen && isLoggedIn && (
         <div className="md:hidden border-t border-border/40 bg-white dark:bg-slate-900 px-4 py-4 space-y-3 shadow-lg animate-fade-in">
-          <div>
-            {isLoggedIn ? (
-              <div className="space-y-2">
-                <div className="px-3 py-1.5 text-sm font-semibold text-foreground flex items-center gap-1.5">
-                  <User className="h-4 w-4 text-primary" /> {user?.name || "User"}
-                </div>
-                {isAdmin ? (
-                  <Link
-                    href="/admin/dashboard"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block px-3 py-2 rounded-md text-base font-medium bg-slate-100 dark:bg-slate-800 text-foreground"
-                  >
-                    Admin Control Panel
-                  </Link>
-                ) : (
-                  <Link
-                    href="/dashboard"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block px-3 py-2 rounded-md text-base font-medium bg-slate-100 dark:bg-slate-800 text-foreground"
-                  >
-                    My Dashboard
-                  </Link>
-                )}
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    handleSignOut();
-                  }}
-                  className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-danger hover:bg-danger/5"
-                >
-                  Sign Out
-                </button>
-              </div>
+          <div className="space-y-2">
+            <div className="px-3 py-1.5 text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <User className="h-4 w-4 text-primary" /> {user?.name || "User"}
+            </div>
+            {isAdmin ? (
+              <Link
+                href="/admin/dashboard"
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium bg-slate-100 dark:bg-slate-800 text-foreground"
+              >
+                Admin Control Panel
+              </Link>
             ) : (
-              <div className="grid grid-cols-1 gap-2">
-                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="w-full">
-                  <Button className="w-full flex items-center justify-center gap-1.5">
-                    <LogIn className="h-4 w-4" /> Sign In
-                  </Button>
-                </Link>
-              </div>
+              <Link
+                href="/dashboard"
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium bg-slate-100 dark:bg-slate-800 text-foreground"
+              >
+                My Dashboard
+              </Link>
             )}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                handleSignOut();
+              }}
+              className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-danger hover:bg-danger/5"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       )}

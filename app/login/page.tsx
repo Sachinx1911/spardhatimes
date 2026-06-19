@@ -2,15 +2,14 @@
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, getSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { KeyRound, Mail, AlertCircle } from "lucide-react";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
 
@@ -35,19 +34,20 @@ function LoginForm() {
 
       if (result?.error) {
         setError("Invalid email or password.");
+        setLoading(false);
       } else {
-        // Land straight on the role-correct dashboard (no "/" redirect hop).
-        const session = await getSession();
-        const role = (session?.user as any)?.role;
-        const dest = role === "ADMIN" || role === "SUPERADMIN" ? "/admin/dashboard" : "/dashboard";
-        router.push(dest);
-        router.refresh();
+        // Full-page navigation to "/", which the server redirects by role
+        // (admin -> /admin/dashboard, student -> /dashboard). Using a real
+        // document load — not router.push — so the freshly-set session cookie
+        // is always in effect and the dashboard opens on the first click.
+        window.location.href = "/";
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
-    } finally {
       setLoading(false);
     }
+    // On success we deliberately keep `loading` true: the page is navigating
+    // away, so the button stays in its "Signing in…" state until reload.
   };
 
   return (

@@ -143,6 +143,16 @@ export function SeriesDetail({ series }: { series: Series }) {
     setError("");
     setSuccess(false);
     try {
+      // Convert the datetime-local wall-clock values to absolute UTC instants
+      // HERE in the browser (which knows the admin's timezone). Otherwise the
+      // server would re-parse the bare "YYYY-MM-DDTHH:mm" string in ITS own
+      // timezone (often UTC in production), shifting the real release time by
+      // hours so scheduled tests wouldn't go live when expected.
+      const toIso = (v: string) => {
+        if (!v) return "";
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? "" : d.toISOString();
+      };
       const payload = {
         title,
         description,
@@ -152,8 +162,8 @@ export function SeriesDetail({ series }: { series: Series }) {
         passingMarks: Number(passingMarks),
         difficulty,
         instructions,
-        releaseAt,
-        closeAt: isWindow ? closeAt : "",
+        releaseAt: toIso(releaseAt),
+        closeAt: isWindow ? toIso(closeAt) : "",
       };
       const res = selected
         ? await updateSeriesTest(selected.id, payload)

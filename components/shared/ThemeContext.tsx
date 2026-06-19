@@ -46,7 +46,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <div style={mounted ? undefined : { visibility: "hidden" }}>
+      {/* Fills the viewport as a flex column so the footer always sticks to the
+          bottom (Navbar + flex-1 main + Footer live inside here). */}
+      <div
+        className="min-h-screen flex flex-col"
+        style={mounted ? undefined : { visibility: "hidden" }}
+      >
         {children}
       </div>
     </ThemeContext.Provider>

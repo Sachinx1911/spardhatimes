@@ -54,71 +54,69 @@ export default async function StudentDashboardPage() {
   let assignedSeries: any[] = [];
 
   try {
-    user = await db.user.findUnique({
-      where: { id: userId },
-    });
-
-    attempts = await db.quizAttempt.findMany({
-      where: { userId },
-      include: {
-        quiz: {
-          select: {
-            title: true,
-            slug: true,
-            marks: true,
-            category: { select: { name: true } },
-          }
-        }
-      },
-      orderBy: { createdAt: "desc" }
-    });
-
-    bookmarks = await db.bookmark.findMany({
-      where: { userId },
-      include: {
-        quiz: { select: { title: true } },
-        question: true
-      }
-    });
-
-    certificates = await db.certificate.findMany({
-      where: { userId },
-      include: {
-        quiz: { select: { title: true } }
-      }
-    });
-
-    notifications = await db.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 10
-    });
-
-    // Test series assigned to this student (published only), with their tests.
-    const access = await db.testSeriesAccess.findMany({
-      where: { userId, testSeries: { published: true } },
-      orderBy: { createdAt: "desc" },
-      include: {
-        testSeries: {
-          include: {
-            category: { select: { name: true } },
-            quizzes: {
-              orderBy: { orderIndex: "asc" },
-              select: {
-                id: true,
-                slug: true,
-                title: true,
-                marks: true,
-                duration: true,
-                releaseAt: true,
-                closeAt: true,
-                _count: { select: { questions: true } },
+    // Run all dashboard reads concurrently instead of awaiting them one by one
+    // — the slowest single query now sets the page latency, not their sum.
+    const [u, att, bm, certs, notifs, access] = await Promise.all([
+      db.user.findUnique({ where: { id: userId } }),
+      db.quizAttempt.findMany({
+        where: { userId },
+        include: {
+          quiz: {
+            select: {
+              title: true,
+              slug: true,
+              marks: true,
+              category: { select: { name: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      db.bookmark.findMany({
+        where: { userId },
+        include: { quiz: { select: { title: true } }, question: true },
+      }),
+      db.certificate.findMany({
+        where: { userId },
+        include: { quiz: { select: { title: true } } },
+      }),
+      db.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      }),
+      // Test series assigned to this student (published only), with their tests.
+      db.testSeriesAccess.findMany({
+        where: { userId, testSeries: { published: true } },
+        orderBy: { createdAt: "desc" },
+        include: {
+          testSeries: {
+            include: {
+              category: { select: { name: true } },
+              quizzes: {
+                orderBy: { orderIndex: "asc" },
+                select: {
+                  id: true,
+                  slug: true,
+                  title: true,
+                  marks: true,
+                  duration: true,
+                  releaseAt: true,
+                  closeAt: true,
+                  _count: { select: { questions: true } },
+                },
               },
             },
           },
         },
-      },
-    });
+      }),
+    ]);
+
+    user = u;
+    attempts = att;
+    bookmarks = bm;
+    certificates = certs;
+    notifications = notifs;
     assignedSeries = access.map((a) => a.testSeries);
   } catch (err) {
     console.error("Error loading student dashboard:", err);
