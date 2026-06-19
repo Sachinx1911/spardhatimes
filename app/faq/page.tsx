@@ -82,11 +82,11 @@ export default function FAQPage() {
         <div className="mt-12 text-center bg-white dark:bg-slate-900 border border-border rounded-lg p-8">
           <h2 className="font-bold text-lg text-foreground">Still have questions?</h2>
           <p className="text-sm text-muted-foreground mt-2">
-            Jump in and explore the platform — the best way to learn is to attempt a free mock test.
+            Sign in to open the test series assigned to you by your institute.
           </p>
-          <Link href="/quizzes" className="inline-block mt-5">
+          <Link href="/dashboard" className="inline-block mt-5">
             <Button className="font-semibold flex items-center gap-1.5">
-              Browse Mock Tests <ArrowRight className="h-4 w-4" />
+              Go to My Dashboard <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>

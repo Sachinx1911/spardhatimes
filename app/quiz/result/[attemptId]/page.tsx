@@ -106,8 +106,8 @@ export default async function ResultPage({ params }: PageProps) {
             The quiz result sheet you are looking for does not exist or has been archived.
           </p>
           <div className="flex gap-4 mt-6">
-            <Link href="/quizzes" className="flex-1">
-              <Button variant="outline" className="w-full">Back to Quizzes</Button>
+            <Link href="/dashboard" className="flex-1">
+              <Button variant="outline" className="w-full">Back to Dashboard</Button>
             </Link>
           </div>
         </Card>

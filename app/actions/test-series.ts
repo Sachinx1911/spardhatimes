@@ -52,7 +52,7 @@ function baseSlug(s: string) {
 
 // Ensure a unique slug for a model by appending a short suffix on collision.
 async function uniqueSlug(desired: string, exists: (slug: string) => Promise<boolean>) {
-  let slug = baseSlug(desired);
+  const slug = baseSlug(desired);
   let candidate = slug;
   let i = 0;
   while (await exists(candidate)) {

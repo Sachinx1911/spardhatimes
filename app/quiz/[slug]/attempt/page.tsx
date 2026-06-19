@@ -140,8 +140,8 @@ export default async function QuizAttemptPage({ params }: PageProps) {
             The quiz you are trying to access does not exist or has been removed by administrators.
           </p>
           <div className="flex gap-4 mt-6">
-            <Link href="/quizzes" className="flex-1">
-              <Button variant="outline" className="w-full">Back to Quizzes</Button>
+            <Link href="/dashboard" className="flex-1">
+              <Button variant="outline" className="w-full">Back to Dashboard</Button>
             </Link>
           </div>
         </Card>

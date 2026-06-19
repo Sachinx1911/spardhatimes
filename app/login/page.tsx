@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,16 @@ import { KeyRound, Mail, AlertCircle } from "lucide-react";
 function LoginForm() {
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
+  const { status, data: session } = useSession();
+
+  // Already signed in? Don't show the login form — send them to their dashboard.
+  useEffect(() => {
+    if (status === "authenticated") {
+      const role = (session?.user as any)?.role;
+      window.location.href =
+        role === "ADMIN" || role === "SUPERADMIN" ? "/admin/dashboard" : "/dashboard";
+    }
+  }, [status, session]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
