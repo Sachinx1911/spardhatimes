@@ -2,26 +2,36 @@
 
 import React, { useState } from "react";
 import { toggleBlockUser, resetUserPassword, deleteUser } from "@/app/actions/admin";
+import { createStudent, createAdminUser, assignSeries, unassignSeries } from "@/app/actions/test-series";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Input } from "../ui/input";
 import { Dialog } from "../ui/dialog";
 import { Select } from "../ui/select";
-import { 
-  Users, 
-  Search, 
-  Ban, 
-  Unlock, 
-  KeyRound, 
-  Trash2, 
+import {
+  Users,
+  Search,
+  Ban,
+  Unlock,
+  KeyRound,
+  Trash2,
   FileSpreadsheet,
   AlertCircle,
   CheckCircle,
   ShieldCheck,
-  User
+  User,
+  UserPlus,
+  Layers3,
+  Plus,
+  X
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { formatDate } from "@/lib/utils";
+
+interface SeriesAccess {
+  testSeriesId: string;
+  testSeries: { id: string; title: string };
+}
 
 interface UserItem {
   id: string;
@@ -30,9 +40,25 @@ interface UserItem {
   role: "STUDENT" | "ADMIN" | "SUPERADMIN";
   isBlocked: boolean;
   createdAt: string | Date;
+  seriesAccess?: SeriesAccess[];
 }
 
-export function UserManager({ initialUsers }: { initialUsers: UserItem[] }) {
+interface SeriesOption {
+  id: string;
+  title: string;
+  category?: { name: string } | null;
+}
+
+export function UserManager({
+  initialUsers,
+  allSeries = [],
+  currentRole = "ADMIN",
+}: {
+  initialUsers: UserItem[];
+  allSeries?: SeriesOption[];
+  currentRole?: "STUDENT" | "ADMIN" | "SUPERADMIN";
+}) {
+  const isSuperAdmin = currentRole === "SUPERADMIN";
   const [users, setUsers] = useState<UserItem[]>(initialUsers);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
@@ -47,6 +73,139 @@ export function UserManager({ initialUsers }: { initialUsers: UserItem[] }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+
+  // Create-student dialog
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [cName, setCName] = useState("");
+  const [cEmail, setCEmail] = useState("");
+  const [cPassword, setCPassword] = useState("");
+  const [cPhone, setCPhone] = useState("");
+  const [cSeriesIds, setCSeriesIds] = useState<string[]>([]);
+
+  // Create-admin dialog (super admin only)
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [aName, setAName] = useState("");
+  const [aEmail, setAEmail] = useState("");
+  const [aPassword, setAPassword] = useState("");
+
+  // Manage-series dialog
+  const [isSeriesOpen, setIsSeriesOpen] = useState(false);
+
+  const toggleCreateSeries = (id: string) => {
+    setCSeriesIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
+  };
+
+  const openCreateStudent = () => {
+    setCName("");
+    setCEmail("");
+    setCPassword("");
+    setCPhone("");
+    setCSeriesIds([]);
+    setError("");
+    setSuccess(false);
+    setIsCreateOpen(true);
+  };
+
+  const handleCreateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess(false);
+    try {
+      const res = await createStudent({
+        name: cName,
+        email: cEmail,
+        password: cPassword,
+        phone: cPhone,
+        seriesIds: cSeriesIds,
+      });
+      if (res.error) {
+        setError(res.error);
+      } else {
+        setSuccess(true);
+        setTimeout(() => {
+          setIsCreateOpen(false);
+          window.location.reload();
+        }, 800);
+      }
+    } catch {
+      setError("Failed to create student.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openCreateAdmin = () => {
+    setAName("");
+    setAEmail("");
+    setAPassword("");
+    setError("");
+    setSuccess(false);
+    setIsAdminOpen(true);
+  };
+
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess(false);
+    try {
+      const res = await createAdminUser({ name: aName, email: aEmail, password: aPassword });
+      if (res.error) {
+        setError(res.error);
+      } else {
+        setSuccess(true);
+        setTimeout(() => {
+          setIsAdminOpen(false);
+          window.location.reload();
+        }, 800);
+      }
+    } catch {
+      setError("Failed to create admin.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openSeriesModal = (user: UserItem) => {
+    setSelectedUser(user);
+    setError("");
+    setIsSeriesOpen(true);
+  };
+
+  const handleAssign = async (seriesId: string) => {
+    if (!selectedUser) return;
+    const res = await assignSeries(selectedUser.id, seriesId);
+    if (res.error) {
+      alert(res.error);
+      return;
+    }
+    const found = allSeries.find((s) => s.id === seriesId);
+    const updated: UserItem = {
+      ...selectedUser,
+      seriesAccess: [
+        ...(selectedUser.seriesAccess || []),
+        { testSeriesId: seriesId, testSeries: { id: seriesId, title: found?.title || "" } },
+      ],
+    };
+    setSelectedUser(updated);
+    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+  };
+
+  const handleUnassign = async (seriesId: string) => {
+    if (!selectedUser) return;
+    const res = await unassignSeries(selectedUser.id, seriesId);
+    if (res.error) {
+      alert(res.error);
+      return;
+    }
+    const updated: UserItem = {
+      ...selectedUser,
+      seriesAccess: (selectedUser.seriesAccess || []).filter((a) => a.testSeriesId !== seriesId),
+    };
+    setSelectedUser(updated);
+    setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+  };
 
   // Filter logic
   const filteredUsers = users.filter((u) => {
@@ -173,15 +332,32 @@ export function UserManager({ initialUsers }: { initialUsers: UserItem[] }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-foreground">User Management Directory</h2>
-          <p className="text-xs text-muted-foreground">Block users, reset passwords, delete accounts, or export datasets.</p>
+          <p className="text-xs text-muted-foreground">Create students, assign test series, reset passwords, or export datasets.</p>
         </div>
-        <Button 
-          onClick={handleExportToExcel} 
-          variant="outline" 
-          className="flex items-center gap-1.5 font-semibold text-xs h-9 shrink-0"
-        >
-          <FileSpreadsheet className="h-4 w-4 text-emerald-600" /> Export to Excel
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            onClick={handleExportToExcel}
+            variant="outline"
+            className="flex items-center gap-1.5 font-semibold text-xs h-9"
+          >
+            <FileSpreadsheet className="h-4 w-4 text-emerald-600" /> Export
+          </Button>
+          {isSuperAdmin && (
+            <Button
+              onClick={openCreateAdmin}
+              variant="secondary"
+              className="flex items-center gap-1.5 font-semibold text-xs h-9"
+            >
+              <ShieldCheck className="h-4 w-4" /> New Admin
+            </Button>
+          )}
+          <Button
+            onClick={openCreateStudent}
+            className="flex items-center gap-1.5 font-semibold text-xs h-9"
+          >
+            <UserPlus className="h-4 w-4" /> New Student
+          </Button>
+        </div>
       </div>
 
       {/* Filter and search card */}
@@ -220,6 +396,7 @@ export function UserManager({ initialUsers }: { initialUsers: UserItem[] }) {
                 <th className="p-4">Name</th>
                 <th className="p-4">Email</th>
                 <th className="p-4">Role</th>
+                <th className="p-4 text-center">Series</th>
                 <th className="p-4">Join Date</th>
                 <th className="p-4 text-center">Status</th>
                 <th className="p-4 text-right">Actions</th>
@@ -241,6 +418,16 @@ export function UserManager({ initialUsers }: { initialUsers: UserItem[] }) {
                       {u.role}
                     </span>
                   </td>
+                  <td className="p-4 text-center">
+                    {u.role === "STUDENT" ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-foreground">
+                        <Layers3 className="h-3.5 w-3.5 text-primary" />
+                        {u.seriesAccess?.length ?? 0}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </td>
                   <td className="p-4 text-muted-foreground text-xs">
                     {formatDate(u.createdAt)}
                   </td>
@@ -254,6 +441,15 @@ export function UserManager({ initialUsers }: { initialUsers: UserItem[] }) {
                     </span>
                   </td>
                   <td className="p-4 text-right space-x-1 shrink-0">
+                    {u.role === "STUDENT" && (
+                      <button
+                        onClick={() => openSeriesModal(u)}
+                        className="inline-flex p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-primary cursor-pointer"
+                        title="Manage test series"
+                      >
+                        <Layers3 className="h-4 w-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleToggleBlock(u.id)}
                       className={`inline-flex p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer ${
@@ -369,6 +565,179 @@ export function UserManager({ initialUsers }: { initialUsers: UserItem[] }) {
               disabled={loading}
             >
               {loading ? "Deleting..." : "Delete User"}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Create Student Modal */}
+      <Dialog isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} title="Create Student">
+        <form onSubmit={handleCreateStudent} className="space-y-4 text-sm">
+          {error && (
+            <div className="flex items-center gap-2 bg-danger/10 border border-danger/20 p-3 rounded text-danger">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+          {success && (
+            <div className="flex items-center gap-2 bg-success/10 border border-success/20 p-3 rounded text-success">
+              <CheckCircle className="h-4 w-4 shrink-0" />
+              <span>Student created!</span>
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Full Name</label>
+            <Input type="text" placeholder="Student name" value={cName} onChange={(e) => setCName(e.target.value)} required />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email (login id)</label>
+              <Input type="email" placeholder="student@example.com" value={cEmail} onChange={(e) => setCEmail(e.target.value)} required />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mobile (optional)</label>
+              <Input type="tel" placeholder="10-digit number" value={cPhone} onChange={(e) => setCPhone(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password (min 6 chars)</label>
+            <Input type="text" placeholder="Set a password to share with the student" value={cPassword} onChange={(e) => setCPassword(e.target.value)} required />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Assign Test Series</label>
+            {allSeries.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No test series yet. Create one first to assign it here.</p>
+            ) : (
+              <div className="max-h-44 overflow-y-auto space-y-1.5 border border-border/60 rounded-md p-2">
+                {allSeries.map((s) => (
+                  <label key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={cSeriesIds.includes(s.id)}
+                      onChange={() => toggleCreateSeries(s.id)}
+                    />
+                    <span className="text-sm text-foreground">{s.title}</span>
+                    {s.category?.name && (
+                      <span className="text-[10px] text-muted-foreground ml-auto">{s.category.name}</span>
+                    )}
+                  </label>
+                ))}
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground">{cSeriesIds.length} selected. You can change this later from the directory.</p>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="outline" className="flex-1 font-semibold text-xs" onClick={() => setIsCreateOpen(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" className="flex-1 font-semibold text-xs" disabled={loading}>
+              {loading ? "Creating..." : "Create Student"}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* Create Admin Modal (super admin only) */}
+      <Dialog isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} title="Create Admin">
+        <form onSubmit={handleCreateAdmin} className="space-y-4 text-sm">
+          {error && (
+            <div className="flex items-center gap-2 bg-danger/10 border border-danger/20 p-3 rounded text-danger">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+          {success && (
+            <div className="flex items-center gap-2 bg-success/10 border border-success/20 p-3 rounded text-success">
+              <CheckCircle className="h-4 w-4 shrink-0" />
+              <span>Admin created!</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 p-3 rounded text-xs text-blue-800 dark:text-blue-300">
+            <ShieldCheck className="h-4 w-4 shrink-0" />
+            <span>Admins can manage students, test series, quizzes and results — but cannot create other admins.</span>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Full Name</label>
+            <Input type="text" placeholder="Admin name" value={aName} onChange={(e) => setAName(e.target.value)} required />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email (login id)</label>
+            <Input type="email" placeholder="admin@example.com" value={aEmail} onChange={(e) => setAEmail(e.target.value)} required />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Password (min 6 chars)</label>
+            <Input type="text" placeholder="Set a password to share with the admin" value={aPassword} onChange={(e) => setAPassword(e.target.value)} required />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="outline" className="flex-1 font-semibold text-xs" onClick={() => setIsAdminOpen(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" className="flex-1 font-semibold text-xs" disabled={loading}>
+              {loading ? "Creating..." : "Create Admin"}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* Manage Series Modal */}
+      <Dialog isOpen={isSeriesOpen} onClose={() => setIsSeriesOpen(false)} title="Manage Test Series">
+        <div className="space-y-4 text-sm">
+          <p className="text-foreground">
+            Series access for <span className="font-bold">{selectedUser?.name || selectedUser?.email}</span>
+          </p>
+
+          {allSeries.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No test series available. Create one first.</p>
+          ) : (
+            <div className="max-h-72 overflow-y-auto space-y-1.5 border border-border/60 rounded-md p-2">
+              {allSeries.map((s) => {
+                const assigned = (selectedUser?.seriesAccess || []).some((a) => a.testSeriesId === s.id);
+                return (
+                  <div key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-foreground truncate">{s.title}</p>
+                      {s.category?.name && <p className="text-[10px] text-muted-foreground">{s.category.name}</p>}
+                    </div>
+                    {assigned ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-xs font-semibold text-danger flex items-center gap-1"
+                        onClick={() => handleUnassign(s.id)}
+                      >
+                        <X className="h-3.5 w-3.5" /> Remove
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="text-xs font-semibold flex items-center gap-1"
+                        onClick={() => handleAssign(s.id)}
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Add
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex justify-end pt-2">
+            <Button type="button" variant="outline" className="font-semibold text-xs" onClick={() => setIsSeriesOpen(false)}>
+              Done
             </Button>
           </div>
         </div>

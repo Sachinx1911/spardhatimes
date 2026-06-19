@@ -12,7 +12,7 @@ import {
   ClipboardList,
   ScrollText,
   Settings,
-  Home
+  Layers3
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -71,8 +71,14 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
           >
             <Layers className="h-4 w-4 text-primary" /> Categories
           </Link>
-          <Link 
-            href="/admin/quizzes" 
+          <Link
+            href="/admin/series"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            <Layers3 className="h-4 w-4 text-primary" /> Test Series
+          </Link>
+          <Link
+            href="/admin/quizzes"
             className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             <FileText className="h-4 w-4 text-primary" /> Quizzes & Tests
@@ -106,13 +112,6 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
             className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             <Settings className="h-4 w-4 text-primary" /> Settings
-          </Link>
-          <div className="h-px bg-border/40 my-4" />
-          <Link 
-            href="/" 
-            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-          >
-            <Home className="h-4 w-4" /> Public Website
           </Link>
         </nav>
       </aside>

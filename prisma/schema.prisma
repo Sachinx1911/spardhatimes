@@ -35,6 +35,14 @@ enum AttemptStatus {
   COMPLETED
 }
 
+// How tests inside a series behave once their release time passes.
+// RELEASE_ONLY: opens at releaseAt and stays open forever.
+// WINDOW: opens at releaseAt and closes at closeAt (no attempts after).
+enum TimingMode {
+  RELEASE_ONLY
+  WINDOW
+}
+
 model User {
   id            String         @id @default(cuid())
   name          String?
@@ -52,6 +60,8 @@ model User {
   notifications Notification[]
   adminLogs     AdminLog[]
   passwordResetTokens PasswordResetToken[]
+  seriesAccess  TestSeriesAccess[]   @relation("StudentAccess")
+  grantedAccess TestSeriesAccess[]   @relation("GrantedBy")
 }
 
 model PasswordResetToken {
@@ -79,6 +89,46 @@ model Category {
   updatedAt      DateTime  @updatedAt
 
   quizzes        Quiz[]
+  testSeries     TestSeries[]
+}
+
+// A Test Series groups several Quizzes (tests) that an admin assigns to
+// students. The admin decides up front how many tests it will hold
+// (plannedTotalTests) and schedules each test's release. Belongs to a Category.
+model TestSeries {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  description String?
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  timingMode  TimingMode  @default(RELEASE_ONLY)
+  plannedTotalTests Int    @default(0)
+  published   Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  quizzes     Quiz[]
+  access      TestSeriesAccess[]
+
+  @@index([categoryId])
+}
+
+// Join table: which student can access which test series. Created/removed by
+// an admin. assignedById records the granting admin (nullable).
+model TestSeriesAccess {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation("StudentAccess", fields: [userId], references: [id], onDelete: Cascade)
+  testSeriesId  String
+  testSeries    TestSeries @relation(fields: [testSeriesId], references: [id], onDelete: Cascade)
+  assignedById  String?
+  assignedBy    User?      @relation("GrantedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime   @default(now())
+
+  @@unique([userId, testSeriesId])
+  @@index([userId])
+  @@index([testSeriesId])
 }
 
 model Quiz {
@@ -95,6 +145,15 @@ model Quiz {
   instructions   String?
   categoryId     String
   category       Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  // Test-series linkage + scheduling. A quiz may belong to one series (or be a
+  // standalone quiz when null). releaseAt = when students can see/attempt it;
+  // closeAt = when it locks again (only used when the series is WINDOW mode).
+  testSeriesId   String?
+  testSeries     TestSeries?    @relation(fields: [testSeriesId], references: [id], onDelete: SetNull)
+  orderIndex     Int            @default(0)
+  releaseAt      DateTime?
+  closeAt        DateTime?
+  releaseNotified Boolean       @default(false) // set once release notifications have been fanned out
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -102,6 +161,8 @@ model Quiz {
   attempts       QuizAttempt[]
   bookmarks      Bookmark[]
   certificates   Certificate[]
+
+  @@index([testSeriesId])
 }
 
 model Question {

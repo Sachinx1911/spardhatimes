@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import { KeyRound, Mail, AlertCircle } from "lucide-react";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
   const errorParam = searchParams.get("error");
 
   const [email, setEmail] = useState("");
@@ -37,7 +36,11 @@ function LoginForm() {
       if (result?.error) {
         setError("Invalid email or password.");
       } else {
-        router.push(callbackUrl);
+        // Land straight on the role-correct dashboard (no "/" redirect hop).
+        const session = await getSession();
+        const role = (session?.user as any)?.role;
+        const dest = role === "ADMIN" || role === "SUPERADMIN" ? "/admin/dashboard" : "/dashboard";
+        router.push(dest);
         router.refresh();
       }
     } catch (err) {
@@ -114,22 +117,8 @@ function LoginForm() {
           </div>
         </form>
 
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white dark:bg-slate-900 px-2 text-muted-foreground">
-              Or
-            </span>
-          </div>
-        </div>
-
-        <div className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link href="/register" className="font-semibold text-primary hover:underline">
-            Create an account
-          </Link>
+        <div className="mt-6 text-center text-xs text-muted-foreground">
+          Don&apos;t have an account? Accounts are created by your institute / admin.
         </div>
       </CardContent>
     </Card>

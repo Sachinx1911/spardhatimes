@@ -23,6 +23,9 @@ import {
 import Link from "next/link";
 import { SettingsForm } from "@/components/dashboard/SettingsForm";
 import { PerformanceCharts } from "@/components/dashboard/PerformanceCharts";
+import { MyTestSeries } from "@/components/dashboard/MyTestSeries";
+import { syncTestSeriesReleases } from "@/lib/releases";
+import { Layers3 } from "lucide-react";
 
 export const revalidate = 0; // Dynamic student dashboard data
 
@@ -35,12 +38,20 @@ export default async function StudentDashboardPage() {
 
   const userId = session.user.id;
 
+  // Fan out unlock notifications for any tests whose release time has passed.
+  try {
+    await syncTestSeriesReleases();
+  } catch (err) {
+    console.error("release sweep error:", err);
+  }
+
   // 2. Fetch Student Analytics and Data from Prisma
   let user = null;
   let attempts: any[] = [];
   let bookmarks: any[] = [];
   let certificates: any[] = [];
   let notifications: any[] = [];
+  let assignedSeries: any[] = [];
 
   try {
     user = await db.user.findUnique({
@@ -82,6 +93,33 @@ export default async function StudentDashboardPage() {
       orderBy: { createdAt: "desc" },
       take: 10
     });
+
+    // Test series assigned to this student (published only), with their tests.
+    const access = await db.testSeriesAccess.findMany({
+      where: { userId, testSeries: { published: true } },
+      orderBy: { createdAt: "desc" },
+      include: {
+        testSeries: {
+          include: {
+            category: { select: { name: true } },
+            quizzes: {
+              orderBy: { orderIndex: "asc" },
+              select: {
+                id: true,
+                slug: true,
+                title: true,
+                marks: true,
+                duration: true,
+                releaseAt: true,
+                closeAt: true,
+                _count: { select: { questions: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    assignedSeries = access.map((a) => a.testSeries);
   } catch (err) {
     console.error("Error loading student dashboard:", err);
   }
@@ -133,14 +171,9 @@ export default async function StudentDashboardPage() {
               Welcome back, {session.user.name || "Student"}!
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Check your analytics, resume mock tests, or download certificates.
+              Open your assigned test series, track your analytics, or download certificates.
             </p>
           </div>
-          <Link href="/quizzes">
-            <Button className="font-semibold shadow-md">
-              Browse Mock Tests
-            </Button>
-          </Link>
         </div>
 
         {/* Dashboard Stats */}
@@ -173,8 +206,9 @@ export default async function StudentDashboardPage() {
         </div>
 
         {/* Tabs Content */}
-        <Tabs defaultValue="attempts" className="w-full">
-          <TabsList className="grid h-auto grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1 w-full bg-white dark:bg-slate-900 border border-border/40 p-1 rounded-lg">
+        <Tabs defaultValue="myseries" className="w-full">
+          <TabsList className="grid h-auto grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1 w-full bg-white dark:bg-slate-900 border border-border/40 p-1 rounded-lg">
+            <TabsTrigger value="myseries">My Tests</TabsTrigger>
             <TabsTrigger value="attempts">Attempt History</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
@@ -182,6 +216,24 @@ export default async function StudentDashboardPage() {
             <TabsTrigger value="notifications">Alerts</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
+
+          {/* Tab: My Test Series (assigned by admin) */}
+          <TabsContent value="myseries">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <Layers3 className="h-5 w-5 text-primary" /> My Test Series
+                </CardTitle>
+                <CardDescription>Test series assigned to you. Scheduled tests unlock automatically on their release date.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MyTestSeries
+                  series={assignedSeries as any}
+                  attemptedQuizIds={attempts.map((a) => a.quizId)}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Tab 1: Attempt History */}
           <TabsContent value="attempts">

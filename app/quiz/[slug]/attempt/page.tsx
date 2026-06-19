@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { testState } from "@/lib/releases";
 
 interface PageProps {
   params: Promise<{
@@ -65,6 +66,14 @@ export default async function QuizAttemptPage({ params }: PageProps) {
     quiz = await db.quiz.findUnique({
       where: { slug },
       include: {
+        testSeries: {
+          select: {
+            id: true,
+            timingMode: true,
+            published: true,
+            access: { where: { userId: session.user.id }, select: { id: true } },
+          },
+        },
         questions: {
           select: {
             id: true,
@@ -84,6 +93,41 @@ export default async function QuizAttemptPage({ params }: PageProps) {
     });
   } catch (err) {
     console.error("Error fetching quiz:", err);
+  }
+
+  // Gate series tests: enforce access + the release/close schedule. Standalone
+  // quizzes (no testSeries) are unaffected.
+  if (quiz?.testSeries) {
+    const ts = quiz.testSeries;
+    const hasAccess = ts.access.length > 0;
+    const state = testState(
+      { releaseAt: quiz.releaseAt, closeAt: quiz.closeAt },
+      ts.timingMode
+    );
+    const role = (session.user as any).role;
+    const isAdmin = role === "ADMIN" || role === "SUPERADMIN";
+
+    if (!isAdmin && (!ts.published || !hasAccess || state !== "OPEN")) {
+      const reason = !ts.published || !hasAccess
+        ? "This test is part of a series that hasn't been assigned to your account."
+        : state === "UPCOMING"
+        ? "This test hasn't been unlocked yet. Check back at its scheduled release time."
+        : "This test is now closed and can no longer be attempted.";
+      return (
+        <div className="flex-1 flex items-center justify-center p-6 bg-slate-50 dark:bg-slate-950">
+          <Card className="w-full max-w-md p-6 text-center">
+            <ShieldAlert className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+            <h3 className="font-bold text-lg text-foreground">Test not available</h3>
+            <p className="text-sm text-muted-foreground mt-1">{reason}</p>
+            <div className="flex gap-4 mt-6">
+              <Link href="/dashboard" className="flex-1">
+                <Button variant="outline" className="w-full">Back to Dashboard</Button>
+              </Link>
+            </div>
+          </Card>
+        </div>
+      );
+    }
   }
 
   if (!quiz) {

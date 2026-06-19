@@ -3,54 +3,16 @@
 import db from "@/lib/db";
 import * as bcrypt from "bcryptjs";
 import { getSession } from "@/lib/session";
-import { getSetting } from "@/lib/settings";
 import { revalidatePath } from "next/cache";
 
-export async function registerUser(prevState: any, formData: FormData) {
-  // Admin setting can temporarily close new sign-ups.
-  const registrationsOpen = await getSetting("registrations_open");
-  if (registrationsOpen === "false") {
-    return { error: "Registrations are temporarily closed. Please check back later." };
-  }
-
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-
-  if (!name || !email || !password) {
-    return { error: "All fields are required." };
-  }
-
-  if (password.length < 6) {
-    return { error: "Password must be at least 6 characters long." };
-  }
-
-  try {
-    const existingUser = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
-    });
-
-    if (existingUser) {
-      return { error: "Email is already registered." };
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    await db.user.create({
-      data: {
-        name,
-        email: email.toLowerCase(),
-        passwordHash,
-        role: "STUDENT",
-      },
-    });
-
-    return { success: true };
-  } catch (err) {
-    console.error("Registration error:", err);
-    return { error: "Something went wrong during registration. Please try again." };
-  }
+// Public self-registration is permanently disabled — student accounts are
+// created by an admin from the dashboard (see createStudent in
+// app/actions/test-series.ts). This stub keeps the action safe even if it is
+// somehow still invoked.
+export async function registerUser(_prevState: any, _formData: FormData) {
+  return {
+    error: "Self sign-up is disabled. Please contact your institute / admin for an account.",
+  };
 }
 
 // Update the logged-in user's display name and mobile number.

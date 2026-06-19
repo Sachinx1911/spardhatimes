@@ -24,13 +24,18 @@ export function Navbar() {
     : (session?.user as any);
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
 
+  // Logo / brand points straight at the right destination so there is no
+  // intermediate "/" page load + redirect flash: signed-out -> login,
+  // admin -> admin dashboard, student -> their dashboard.
+  const homeHref = !isLoggedIn ? "/login" : isAdmin ? "/admin/dashboard" : "/dashboard";
+
   // Sign out without letting NextAuth compute the redirect URL. On hosts where
   // NEXTAUTH_URL is misconfigured (e.g. left as localhost) the server-built
   // redirect would send the user to localhost; doing the redirect ourselves
   // keeps them on the current domain regardless of env.
   const handleSignOut = async () => {
     await signOut({ redirect: false });
-    window.location.href = "/";
+    window.location.href = "/login";
   };
 
   return (
@@ -39,7 +44,7 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href={homeHref} className="flex items-center space-x-2">
               <span className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-lg shadow-md shadow-primary/30">
                 Q
               </span>
@@ -49,21 +54,6 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Home
-            </Link>
-            <Link href="/categories" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Categories
-            </Link>
-            <Link href="/quizzes" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Quizzes
-            </Link>
-            <Link href="/leaderboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Leaderboard
-            </Link>
-          </nav>
 
           {/* Actions & Profile */}
           <div className="hidden md:flex items-center space-x-4">
@@ -108,13 +98,8 @@ export function Navbar() {
             ) : (
               <div className="flex items-center space-x-3">
                 <Link href="/login">
-                  <Button variant="ghost" size="sm" className="flex items-center gap-1.5">
+                  <Button size="sm" className="flex items-center gap-1.5 shadow-md">
                     <LogIn className="h-4 w-4" /> Sign In
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button size="sm" className="shadow-md">
-                    Sign Up
                   </Button>
                 </Link>
               </div>
@@ -143,36 +128,7 @@ export function Navbar() {
       {/* Mobile Drawer Menu */}
       {isMenuOpen && (
         <div className="md:hidden border-t border-border/40 bg-white dark:bg-slate-900 px-4 py-4 space-y-3 shadow-lg animate-fade-in">
-          <Link
-            href="/"
-            onClick={() => setIsMenuOpen(false)}
-            className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-slate-50 dark:hover:bg-slate-800"
-          >
-            Home
-          </Link>
-          <Link
-            href="/categories"
-            onClick={() => setIsMenuOpen(false)}
-            className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-slate-50 dark:hover:bg-slate-800"
-          >
-            Categories
-          </Link>
-          <Link
-            href="/quizzes"
-            onClick={() => setIsMenuOpen(false)}
-            className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-slate-50 dark:hover:bg-slate-800"
-          >
-            Quizzes
-          </Link>
-          <Link
-            href="/leaderboard"
-            onClick={() => setIsMenuOpen(false)}
-            className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-slate-50 dark:hover:bg-slate-800"
-          >
-            Leaderboard
-          </Link>
-
-          <div className="border-t border-border/40 pt-4 mt-2">
+          <div>
             {isLoggedIn ? (
               <div className="space-y-2">
                 <div className="px-3 py-1.5 text-sm font-semibold text-foreground flex items-center gap-1.5">
@@ -206,14 +162,11 @@ export function Navbar() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 <Link href="/login" onClick={() => setIsMenuOpen(false)} className="w-full">
-                  <Button variant="outline" className="w-full">
-                    Sign In
+                  <Button className="w-full flex items-center justify-center gap-1.5">
+                    <LogIn className="h-4 w-4" /> Sign In
                   </Button>
-                </Link>
-                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="w-full">
-                  <Button className="w-full">Sign Up</Button>
                 </Link>
               </div>
             )}
