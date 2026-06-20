@@ -132,7 +132,7 @@ async function notifyQuizPublished(quizTitle: string) {
       data: students.map((s) => ({
         userId: s.id,
         title: "New Quiz Published 📢",
-        message: `A new mock test "${quizTitle}" is now available. Attempt it from the Quizzes section!`,
+        message: `A new test "${quizTitle}" is now available. Open it from your dashboard.`,
         type: "quiz_published",
       })),
     });

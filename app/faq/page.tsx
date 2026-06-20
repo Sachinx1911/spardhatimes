@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "Frequently Asked Questions | QuizPlatform Pro",
   description:
-    "Answers to common questions about mock tests, scoring, negative marking, ranks, percentiles, certificates, and the QuizPlatform Pro PWA app.",
+    "Answers to common questions about tests, scoring, negative marking, ranks, percentiles, certificates, and the QuizPlatform Pro PWA app.",
   alternates: { canonical: "/faq" },
 };
 
 const faqs = [
   {
-    q: "Are these mock tests free?",
-    a: "Yes, we offer a wide variety of free mock tests. Some advanced, premium test series designed by top instructors are paid, which you can unlock anytime.",
+    q: "Are these tests free?",
+    a: "Yes, we offer a wide variety of free tests. Some advanced, premium test series designed by top instructors are paid, which you can unlock anytime.",
   },
   {
     q: "Can I attempt a quiz multiple times?",
@@ -30,7 +30,7 @@ const faqs = [
   },
   {
     q: "How do I earn a certificate?",
-    a: "Score at or above the passing marks of any published mock test and a verified certificate is generated automatically. Download it anytime from your dashboard's Certificates tab.",
+    a: "Score at or above the passing marks of any published test and a verified certificate is generated automatically. Download it anytime from your dashboard's Certificates tab.",
   },
   {
     q: "What happens if my internet disconnects during a test?",
@@ -55,7 +55,7 @@ export default function FAQPage() {
             Frequently Asked Questions
           </h1>
           <p className="mt-3 text-muted-foreground text-sm max-w-xl mx-auto">
-            Everything you need to know about mock exams, analytics, scoring, and certificates.
+            Everything you need to know about tests, analytics, scoring, and certificates.
           </p>
         </div>
 

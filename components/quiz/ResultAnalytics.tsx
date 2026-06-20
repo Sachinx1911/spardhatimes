@@ -146,8 +146,8 @@ export function ResultAnalytics({ attempt, comparison }: { attempt: Attempt; com
     const url = window.location.href;
     if (navigator.share) {
       navigator.share({
-        title: `Mock Test Result - ${attempt.quiz.title}`,
-        text: `I scored ${attempt.score}/${attempt.quiz.marks} (${attempt.percentage}%) on the ${attempt.quiz.title} mock test! Check out my result.`,
+        title: `Test Result - ${attempt.quiz.title}`,
+        text: `I scored ${attempt.score}/${attempt.quiz.marks} (${attempt.percentage}%) on the ${attempt.quiz.title} test! Check out my result.`,
         url
       }).catch(console.error);
     } else {

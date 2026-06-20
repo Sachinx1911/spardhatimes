@@ -32,11 +32,11 @@ export async function generateMetadata({ params }: PageProps) {
     });
     if (!quiz) return { title: "Quiz Not Found" };
 
-    const title = `${quiz.title} - ${quiz.category.name} Mock Test`;
+    const title = `${quiz.title} - ${quiz.category.name} Test`;
     const description =
       quiz.description ||
       quiz.category.metaDescription ||
-      `Attempt the ${quiz.title} mock test: ${quiz._count.questions} questions, ${quiz.duration} minutes, ${quiz.difficulty.toLowerCase()} difficulty. Instant results with detailed explanations.`;
+      `Attempt the ${quiz.title} test: ${quiz._count.questions} questions, ${quiz.duration} minutes, ${quiz.difficulty.toLowerCase()} difficulty. Instant results with detailed explanations.`;
 
     return {
       title,
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: PageProps) {
       twitter: { card: "summary", title, description },
     };
   } catch {
-    return { title: "Mock Test" };
+    return { title: "Test" };
   }
 }
 

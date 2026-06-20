@@ -125,7 +125,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     <p class="awarded">This is to certify that</p>
     <div class="name">${esc(studentName)}</div>
     <p class="course">
-      has successfully completed and passed the mock examination
+      has successfully completed and passed the examination
       <strong>${esc(certificate.quiz.title)}</strong>,
       demonstrating proficiency and meeting the required passing standard.
     </p>

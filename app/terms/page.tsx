@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service | QuizPlatform Pro",
-  description: "Terms and conditions for using the QuizPlatform Pro mock test and quiz platform.",
+  description: "Terms and conditions for using the QuizPlatform Pro test and quiz platform.",
   alternates: { canonical: "/terms" },
 };
 

@@ -37,7 +37,7 @@ export function PerformanceCharts({ attemptSeries, categoryPerf }: PerformanceCh
   if (attemptSeries.length === 0) {
     return (
       <div className="p-8 text-center text-muted-foreground text-sm">
-        No attempts recorded yet. Solve mock tests to unlock performance analytics!
+        No attempts recorded yet. Solve tests to unlock performance analytics!
       </div>
     );
   }

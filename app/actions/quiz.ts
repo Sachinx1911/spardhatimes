@@ -153,7 +153,7 @@ export async function submitQuizAttempt(
             data: {
               userId,
               title: "Certificate Earned! 🎉",
-              message: `Congratulations! You passed the "${quiz.title}" mock exam and earned a certificate. Code: ${code}`,
+              message: `Congratulations! You passed the "${quiz.title}" test and earned a certificate. Code: ${code}`,
               type: "certificate_generated"
             }
           });

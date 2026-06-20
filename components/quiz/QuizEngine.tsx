@@ -254,7 +254,7 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
         <Card className="w-full max-w-2xl shadow-xl">
           <CardHeader className="text-center">
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-primary w-fit mx-auto">
-              Mock Test Series
+              Test Series
             </span>
             <CardTitle className="text-2xl font-extrabold text-foreground mt-3">{quiz.title}</CardTitle>
           </CardHeader>
@@ -277,7 +277,7 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
             <div className="space-y-3">
               <h4 className="font-bold text-sm text-foreground uppercase tracking-wide">Test Instructions:</h4>
               <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-2 leading-relaxed">
-                <li>This mock test contains {quiz.questions.length} questions.</li>
+                <li>This test contains {quiz.questions.length} questions.</li>
                 <li>Each question carries equal marks. Total marks: {quiz.marks}.</li>
                 <li>{quiz.instructions || "Read all questions carefully before answering."}</li>
                 <li>Answers are saved automatically as you select options. If your connection drops, refresh the page to restore progress.</li>
@@ -290,7 +290,7 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
                 Go Back
               </Button>
               <Button onClick={() => setHasStarted(true)} className="flex-1 font-semibold flex items-center justify-center gap-1.5 shadow-lg shadow-primary/20">
-                <Play className="h-4 w-4" /> Start Mock Test
+                <Play className="h-4 w-4" /> Start Test
               </Button>
             </div>
           </CardContent>
@@ -556,7 +556,7 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
       <Dialog
         isOpen={isSubmitDialogOpen}
         onClose={() => setIsSubmitDialogOpen(false)}
-        title="Submit Mock Test"
+        title="Submit Test"
       >
         <div className="space-y-4">
           <div className="flex items-center gap-3 text-yellow-600 bg-yellow-50 dark:bg-yellow-950/20 p-3 rounded-lg border border-yellow-200/20">

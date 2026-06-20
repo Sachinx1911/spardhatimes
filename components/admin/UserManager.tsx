@@ -548,7 +548,7 @@ export function UserManager({
         <div className="space-y-4 text-sm">
           <div className="flex items-center gap-3 text-danger bg-danger/10 p-3 rounded border border-danger/20">
             <AlertCircle className="h-5 w-5 shrink-0" />
-            <p>Warning: Deleting this user account will permanently remove all their mock attempt history, bookmarks, and certificates. This action is irreversible!</p>
+            <p>Warning: Deleting this user account will permanently remove all their attempt history, bookmarks, and certificates. This action is irreversible!</p>
           </div>
           <p className="text-foreground">Are you sure you want to delete the user account &ldquo;{selectedUser?.name} ({selectedUser?.email})&rdquo;?</p>
           <div className="flex gap-3 mt-6">

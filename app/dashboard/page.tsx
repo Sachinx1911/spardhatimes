@@ -178,7 +178,7 @@ export default async function StudentDashboardPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="p-5 text-center">
             <History className="h-6 w-6 text-primary mx-auto mb-2" />
-            <p className="text-xs text-muted-foreground uppercase font-semibold">Mock Exams</p>
+            <p className="text-xs text-muted-foreground uppercase font-semibold">Tests</p>
             <p className="text-2xl font-black text-foreground mt-1">{totalAttempts}</p>
           </Card>
           
@@ -240,7 +240,7 @@ export default async function StudentDashboardPage() {
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <History className="h-5 w-5 text-primary" /> Test Attempt History
                 </CardTitle>
-                <CardDescription>Review score sheets and performance metrics of your completed mock exams.</CardDescription>
+                <CardDescription>Review score sheets and performance metrics of your completed tests.</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 {totalAttempts === 0 ? (
@@ -252,7 +252,7 @@ export default async function StudentDashboardPage() {
                     <table className="w-full text-left border-collapse text-sm">
                       <thead>
                         <tr className="bg-slate-50 dark:bg-slate-950 border-b border-border/40 font-semibold text-xs text-muted-foreground uppercase">
-                          <th className="p-4">Mock Test</th>
+                          <th className="p-4">Test</th>
                           <th className="p-4">Date</th>
                           <th className="p-4 text-center">Score</th>
                           <th className="p-4 text-center">Accuracy</th>
@@ -356,7 +356,7 @@ export default async function StudentDashboardPage() {
               <CardContent className="space-y-4">
                 {certificates.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground text-sm">
-                    No certificates earned yet. Pass mock tests with passing scores to earn certificates.
+                    No certificates earned yet. Pass tests with passing scores to earn certificates.
                   </div>
                 ) : (
                   certificates.map((cert) => (

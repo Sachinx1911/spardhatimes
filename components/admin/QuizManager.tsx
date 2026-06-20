@@ -191,7 +191,7 @@ export function QuizManager({
       {/* Header Controls */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold text-foreground">Manage Mock Exams</h2>
+          <h2 className="text-xl font-bold text-foreground">Manage Tests</h2>
           <p className="text-xs text-muted-foreground">Build, edit, configure negative markings, or publish tests.</p>
         </div>
         <Button onClick={openCreateDialog} className="flex items-center gap-1 font-semibold text-xs h-9">
@@ -276,7 +276,7 @@ export function QuizManager({
       <Dialog
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title={selectedQuiz ? "Edit Mock Test" : "Create Mock Test"}
+        title={selectedQuiz ? "Edit Test" : "Create Test"}
         className="max-w-xl"
       >
         <form onSubmit={handleSubmit} className="space-y-4 text-sm">
@@ -298,7 +298,7 @@ export function QuizManager({
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quiz Title</label>
               <Input
                 type="text"
-                placeholder="e.g. Science Mock Test 1"
+                placeholder="e.g. Science Test 1"
                 value={title}
                 onChange={handleTitleChange}
                 required
@@ -309,7 +309,7 @@ export function QuizManager({
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quiz Slug</label>
               <Input
                 type="text"
-                placeholder="e.g. science-mock-test-1"
+                placeholder="e.g. science-test-1"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 required
@@ -423,7 +423,7 @@ export function QuizManager({
               className="flex-1 font-semibold text-xs"
               disabled={loading}
             >
-              {loading ? "Saving..." : "Save Mock Quiz"}
+              {loading ? "Saving..." : "Save Quiz"}
             </Button>
           </div>
         </form>
@@ -433,14 +433,14 @@ export function QuizManager({
       <Dialog
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
-        title="Delete Mock Quiz"
+        title="Delete Quiz"
       >
         <div className="space-y-4 text-sm">
           <div className="flex items-center gap-3 text-danger bg-danger/10 p-3 rounded border border-danger/20">
             <AlertCircle className="h-5 w-5 shrink-0" />
             <p>Warning: Deleting this quiz will remove all student attempts and certificate records. This cannot be undone!</p>
           </div>
-          <p className="text-foreground">Are you sure you want to delete the mock quiz &ldquo;{selectedQuiz?.title}&rdquo;?</p>
+          <p className="text-foreground">Are you sure you want to delete the quiz &ldquo;{selectedQuiz?.title}&rdquo;?</p>
           <div className="flex gap-3 mt-6">
             <Button
               variant="outline"
