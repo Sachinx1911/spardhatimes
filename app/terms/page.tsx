@@ -2,15 +2,15 @@ import React from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | QuizPlatform Pro",
-  description: "Terms and conditions for using the QuizPlatform Pro test and quiz platform.",
+  title: "Terms of Service | Spardha Times",
+  description: "Terms and conditions for using the Spardha Times test and quiz platform.",
   alternates: { canonical: "/terms" },
 };
 
 const sections = [
   {
     h: "1. Acceptance of Terms",
-    p: "By creating an account or using QuizPlatform Pro, you agree to these Terms of Service. If you do not agree, please discontinue use of the platform.",
+    p: "By creating an account or using Spardha Times, you agree to these Terms of Service. If you do not agree, please discontinue use of the platform.",
   },
   {
     h: "2. Accounts & Eligibility",
@@ -22,7 +22,7 @@ const sections = [
   },
   {
     h: "4. Content & Intellectual Property",
-    p: "All questions, explanations, analytics, and platform design are the intellectual property of QuizPlatform Pro or its content partners. You may not reproduce or redistribute test content without written permission.",
+    p: "All questions, explanations, analytics, and platform design are the intellectual property of Spardha Times or its content partners. You may not reproduce or redistribute test content without written permission.",
   },
   {
     h: "5. Scores, Ranks & Certificates",
@@ -34,7 +34,7 @@ const sections = [
   },
   {
     h: "7. Limitation of Liability",
-    p: "QuizPlatform Pro is provided on an 'as is' basis. To the maximum extent permitted by law, we are not liable for indirect or consequential damages arising from use of the platform, including reliance on practice results for actual examinations.",
+    p: "Spardha Times is provided on an 'as is' basis. To the maximum extent permitted by law, we are not liable for indirect or consequential damages arising from use of the platform, including reliance on practice results for actual examinations.",
   },
   {
     h: "8. Changes to These Terms",

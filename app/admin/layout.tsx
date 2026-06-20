@@ -12,7 +12,8 @@ import {
   ClipboardList,
   ScrollText,
   Settings,
-  Layers3
+  Layers3,
+  Trophy
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -94,6 +95,12 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
             className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             <ClipboardList className="h-4 w-4 text-primary" /> Results
+          </Link>
+          <Link
+            href="/admin/leaderboard"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            <Trophy className="h-4 w-4 text-primary" /> Leaderboard
           </Link>
           <Link 
             href="/admin/questions/import" 

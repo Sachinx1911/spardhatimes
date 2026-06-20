@@ -119,7 +119,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 <body>
   <div class="print-bar"><button onclick="window.print()">Download / Print PDF</button></div>
   <div class="certificate">
-    <div class="brand">QuizPlatform Pro</div>
+    <div class="brand">Spardha Times</div>
     <h1 class="title">Certificate of Achievement</h1>
     <p class="subtitle">This certificate is proudly presented to</p>
     <p class="awarded">This is to certify that</p>
@@ -132,7 +132,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     ${scoreLine ? `<p class="score">${esc(scoreLine)}</p>` : ""}
     <div class="footer">
       <div class="block"><div class="line">${esc(issued)}</div><div class="label">Date Issued</div></div>
-      <div class="block"><div class="line">QuizPlatform Pro</div><div class="label">Authorized Platform</div></div>
+      <div class="block"><div class="line">Spardha Times</div><div class="label">Authorized Platform</div></div>
     </div>
     <div class="seal">VERIFIED<br/>SEAL</div>
     <div class="code">Certificate ID: ${esc(certificate.certificateCode)}</div>

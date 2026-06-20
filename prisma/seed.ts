@@ -26,7 +26,7 @@ async function main() {
   const admin = await prisma.user.create({
     data: {
       name: "Super Admin",
-      email: "admin@quizplatform.com",
+      email: "admin@spardhatimes.com",
       passwordHash: adminPasswordHash,
       role: Role.SUPERADMIN,
     },
@@ -35,7 +35,7 @@ async function main() {
   const student = await prisma.user.create({
     data: {
       name: "Jane Doe",
-      email: "student@quizplatform.com",
+      email: "student@spardhatimes.com",
       passwordHash: studentPasswordHash,
       role: Role.STUDENT,
     },

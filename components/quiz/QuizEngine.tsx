@@ -2,17 +2,14 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { submitQuizAttempt, toggleQuestionBookmark } from "@/app/actions/quiz";
+import { submitQuizAttempt } from "@/app/actions/quiz";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Dialog } from "../ui/dialog";
-import { 
-  Clock, 
-  HelpCircle, 
-  ChevronLeft, 
-  ChevronRight, 
-  Flag, 
-  Bookmark, 
+import {
+  Clock,
+  ChevronLeft,
+  ChevronRight,
   AlertTriangle,
   Maximize2,
   Minimize2,
@@ -52,8 +49,6 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
   const router = useRouter();
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({}); // { questionId: chosenOption }
-  const [flagged, setFlagged] = useState<Set<string>>(new Set());
-  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
   
   const [timeRemaining, setTimeRemaining] = useState(quiz.duration * 60);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -72,17 +67,9 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
   // 1. Restore answers from localStorage on mount (Auto-save recover)
   useEffect(() => {
     const savedAnswers = localStorage.getItem(`quiz_answers_${quiz.id}`);
-    const savedFlagged = localStorage.getItem(`quiz_flagged_${quiz.id}`);
     if (savedAnswers) {
       try {
         setAnswers(JSON.parse(savedAnswers));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    if (savedFlagged) {
-      try {
-        setFlagged(new Set(JSON.parse(savedFlagged)));
       } catch (e) {
         console.error(e);
       }
@@ -95,10 +82,6 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
       localStorage.setItem(`quiz_answers_${quiz.id}`, JSON.stringify(answers));
     }
   }, [answers, quiz.id]);
-
-  useEffect(() => {
-    localStorage.setItem(`quiz_flagged_${quiz.id}`, JSON.stringify(Array.from(flagged)));
-  }, [flagged, quiz.id]);
 
   // 3. Timer Hook
   useEffect(() => {
@@ -155,38 +138,7 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
   const isOptionSelected = (option: string) =>
     (answers[currentQuestion.id] || "").split(",").includes(option);
 
-  // 5. Toggle Flag for Review
-  const handleToggleFlag = () => {
-    setFlagged((prev) => {
-      const next = new Set(prev);
-      if (next.has(currentQuestion.id)) {
-        next.delete(currentQuestion.id);
-      } else {
-        next.add(currentQuestion.id);
-      }
-      return next;
-    });
-  };
-
-  // 6. Toggle Bookmark
-  const handleToggleBookmark = async () => {
-    try {
-      const res = await toggleQuestionBookmark(currentQuestion.id, quiz.id);
-      if (res.bookmarked) {
-        setBookmarks((prev) => new Set([...prev, currentQuestion.id]));
-      } else {
-        setBookmarks((prev) => {
-          const next = new Set(prev);
-          next.delete(currentQuestion.id);
-          return next;
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // 7. Fullscreen Toggle
+  // 5. Fullscreen Toggle
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
@@ -218,7 +170,6 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
       } else {
         // Clear local storage
         localStorage.removeItem(`quiz_answers_${quiz.id}`);
-        localStorage.removeItem(`quiz_flagged_${quiz.id}`);
 
         // Navigate to the result page. Use replace() so the back button does
         // not return to the (now finished) attempt. A hard-navigation fallback
@@ -368,40 +319,11 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
         {/* Left 3 Cols: Question Area */}
         <div className="lg:col-span-3 space-y-4">
           <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-start justify-between pb-3 border-b border-border/40">
-              <div>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-primary uppercase">
-                  Question {currentIdx + 1} of {quiz.questions.length}
-                </span>
-                <span className="text-xs text-muted-foreground ml-3">
-                  Marks: +{currentQuestion.marks} | Neg: -{quiz.negativeMarks}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleToggleBookmark}
-                  className={`p-1.5 rounded-md border border-border/40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer ${
-                    bookmarks.has(currentQuestion.id) ? "text-primary fill-primary bg-primary/5" : "text-muted-foreground"
-                  }`}
-                  title="Bookmark question"
-                >
-                  <Bookmark className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={handleToggleFlag}
-                  className={`p-1.5 rounded-md border border-border/40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer ${
-                    flagged.has(currentQuestion.id) ? "text-yellow-500 fill-yellow-500 bg-yellow-500/5 border-yellow-500/20" : "text-muted-foreground"
-                  }`}
-                  title="Flag for review"
-                >
-                  <Flag className="h-4 w-4" />
-                </button>
-              </div>
-            </CardHeader>
             <CardContent className="p-6 space-y-6">
               {/* Question Text */}
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-foreground leading-relaxed">
+                  <span className="text-primary mr-2">Q.{currentIdx + 1}</span>
                   {currentQuestion.text}
                 </h3>
                 {currentQuestion.type === "MULTIPLE_CHOICE" && (
@@ -515,9 +437,6 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
                 <span className="h-2.5 w-2.5 rounded-full bg-primary" /> Answered
               </div>
               <div className="flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-full bg-yellow-500" /> Flagged
-              </div>
-              <div className="flex items-center gap-1">
                 <span className="h-2.5 w-2.5 rounded-full border border-border" /> Unanswered
               </div>
             </div>
@@ -527,7 +446,6 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
               {quiz.questions.map((q, idx) => {
                 const isCurrent = idx === currentIdx;
                 const isAnswered = !!answers[q.id];
-                const isFlagged = flagged.has(q.id);
 
                 return (
                   <button
@@ -536,9 +454,7 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
                     className={`h-9 w-9 rounded-md flex items-center justify-center font-bold text-xs border transition-all cursor-pointer ${
                       isCurrent ? "ring-2 ring-primary ring-offset-2" : ""
                     } ${
-                      isFlagged
-                        ? "bg-yellow-500 text-white border-yellow-500"
-                        : isAnswered
+                      isAnswered
                         ? "bg-primary text-white border-primary"
                         : "bg-white dark:bg-slate-900 border-border text-foreground hover:bg-slate-100"
                     }`}

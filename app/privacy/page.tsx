@@ -2,8 +2,8 @@ import React from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | QuizPlatform Pro",
-  description: "How QuizPlatform Pro collects, uses, and protects your personal data.",
+  title: "Privacy Policy | Spardha Times",
+  description: "How Spardha Times collects, uses, and protects your personal data.",
   alternates: { canonical: "/privacy" },
 };
 

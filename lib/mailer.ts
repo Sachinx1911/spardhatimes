@@ -10,7 +10,7 @@ interface SendMailInput {
 
 export async function sendMail({ to, subject, html }: SendMailInput): Promise<{ sent: boolean }> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || "QuizPlatform <onboarding@resend.dev>";
+  const from = process.env.EMAIL_FROM || "Spardha Times <onboarding@resend.dev>";
 
   if (!apiKey) {
     console.log(`[mailer] RESEND_API_KEY not set — email to ${to} not sent.\nSubject: ${subject}\n${html}`);

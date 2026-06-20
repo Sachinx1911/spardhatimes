@@ -46,10 +46,10 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             <Link href={homeHref} className="flex items-center space-x-2">
               <span className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-lg shadow-md shadow-primary/30">
-                Q
+                S
               </span>
               <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">
-                Quiz<span className="text-primary">Platform</span>
+                Spardha<span className="text-primary">Times</span>
               </span>
             </Link>
           </div>

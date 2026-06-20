@@ -64,7 +64,7 @@ function LoginForm() {
     <Card className="w-full max-w-md shadow-xl border-border animate-fade-in">
       <CardHeader className="space-y-1 text-center">
         <div className="mx-auto h-12 w-12 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/20 mb-4">
-          Q
+          S
         </div>
         <CardTitle className="text-2xl font-bold tracking-tight">Sign In</CardTitle>
         <CardDescription>
@@ -88,7 +88,7 @@ function LoginForm() {
               <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 type="email"
-                placeholder="student@quizplatform.com"
+                placeholder="student@spardhatimes.com"
                 className="pl-10"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

@@ -1,7 +1,7 @@
 {
-  "name": "QuizPlatform Master Pro",
-  "short_name": "QuizPlatform",
-  "description": "Premium Mock Testing & Quiz Platform",
+  "name": "Spardha Times",
+  "short_name": "SpardhaTimes",
+  "description": "Online Test Series & Competitive Exams Platform",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",

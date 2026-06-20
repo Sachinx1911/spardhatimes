@@ -9,14 +9,14 @@ export function Footer() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-1.5">
             <span className="h-5 w-5 rounded bg-primary flex items-center justify-center text-white font-bold text-[10px]">
-              Q
+              S
             </span>
             <span className="font-bold text-xs tracking-tight text-white">
-              Quiz<span className="text-primary">Platform</span>
+              Spardha<span className="text-primary">Times</span>
             </span>
           </div>
           <p className="text-[10px] text-slate-500">
-            &copy; {new Date().getFullYear()} QuizPlatform
+            &copy; {new Date().getFullYear()} Spardha Times
           </p>
         </div>
       </div>

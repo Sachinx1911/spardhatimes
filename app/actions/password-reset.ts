@@ -47,12 +47,12 @@ export async function requestPasswordReset(formData: FormData) {
 
     const { sent } = await sendMail({
       to: user.email,
-      subject: "Reset your QuizPlatform password",
+      subject: "Reset your Spardha Times password",
       html: `
         <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto">
           <h2 style="color:#0F172A">Password Reset Request</h2>
           <p>Hi ${user.name || "there"},</p>
-          <p>We received a request to reset your QuizPlatform password. Click the button below to choose a new one. This link is valid for ${TOKEN_TTL_MINUTES} minutes.</p>
+          <p>We received a request to reset your Spardha Times password. Click the button below to choose a new one. This link is valid for ${TOKEN_TTL_MINUTES} minutes.</p>
           <p style="margin:24px 0">
             <a href="${resetUrl}" style="background:#2563EB;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Reset Password</a>
           </p>

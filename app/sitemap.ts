@@ -6,7 +6,7 @@ export const revalidate = 3600; // Cache sitemap for 1 hour
 // non-gated pages are listed; quiz/category/leaderboard browsing is disabled
 // and student tests live behind login.
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXTAUTH_URL || "https://quizplatform.com";
+  const baseUrl = process.env.NEXTAUTH_URL || "https://spardhatimes.com";
 
   return ["", "/login", "/faq", "/terms", "/privacy"].map((route) => ({
     url: `${baseUrl}${route}`,

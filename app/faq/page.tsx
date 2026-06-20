@@ -5,9 +5,9 @@ import { HelpCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Frequently Asked Questions | QuizPlatform Pro",
+  title: "Frequently Asked Questions | Spardha Times",
   description:
-    "Answers to common questions about tests, scoring, negative marking, ranks, percentiles, certificates, and the QuizPlatform Pro PWA app.",
+    "Answers to common questions about tests, scoring, negative marking, ranks, percentiles, certificates, and the Spardha Times PWA app.",
   alternates: { canonical: "/faq" },
 };
 
@@ -41,8 +41,8 @@ const faqs = [
     a: "Yes. Every result page includes a full question review with your chosen answer, the correct answer, and a detailed explanation for self-correction.",
   },
   {
-    q: "Can I install QuizPlatform as a mobile app?",
-    a: "Yes! QuizPlatform is a PWA — open the site in your mobile browser and choose 'Add to Home Screen' to install it like a native app with offline support.",
+    q: "Can I install Spardha Times as a mobile app?",
+    a: "Yes! Spardha Times is a PWA — open the site in your mobile browser and choose 'Add to Home Screen' to install it like a native app with offline support.",
   },
 ];
 
