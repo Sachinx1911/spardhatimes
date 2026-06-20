@@ -18,7 +18,8 @@ import {
   Minimize2,
   List,
   CheckCircle2,
-  Play
+  Play,
+  Loader2
 } from "lucide-react";
 
 interface Question {
@@ -299,10 +300,20 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`${isFullscreen ? "fullscreen-quiz" : "flex-1 flex flex-col"} bg-slate-50 dark:bg-slate-950`}
     >
+      {/* Full-screen submitting overlay — clear feedback while the attempt is
+          graded on the server and we navigate to the result page. */}
+      {isSubmitting && (
+        <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-3 bg-white/90 dark:bg-slate-950/90 backdrop-blur-sm">
+          <Loader2 className="h-10 w-10 text-primary animate-spin" />
+          <p className="text-sm font-semibold text-foreground">Submitting your test…</p>
+          <p className="text-xs text-muted-foreground">Please wait, don&apos;t close this page.</p>
+        </div>
+      )}
+
       {/* Top Header Panel */}
       <div className="bg-white dark:bg-slate-900 border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div>

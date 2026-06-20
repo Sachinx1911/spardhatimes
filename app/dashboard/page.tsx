@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { SettingsForm } from "@/components/dashboard/SettingsForm";
-import { PerformanceCharts } from "@/components/dashboard/PerformanceCharts";
+import { PerformanceCharts } from "@/components/dashboard/PerformanceChartsLazy";
 import { MyTestSeries } from "@/components/dashboard/MyTestSeries";
 import { syncTestSeriesReleases } from "@/lib/releases";
 import { Layers3 } from "lucide-react";

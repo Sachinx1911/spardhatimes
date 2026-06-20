@@ -25,7 +25,6 @@ import {
   Plus,
   X
 } from "lucide-react";
-import * as XLSX from "xlsx";
 import { formatDate } from "@/lib/utils";
 
 interface SeriesAccess {
@@ -304,8 +303,11 @@ export function UserManager({
     }
   };
 
-  // Export Users to Excel (SheetJS)
-  const handleExportToExcel = () => {
+  // Export Users to Excel (SheetJS). xlsx is heavy and admin-only, so it's
+  // loaded on demand instead of being in the page's initial bundle.
+  const handleExportToExcel = async () => {
+    const mod = await import("xlsx");
+    const XLSX = (mod as any).default ?? mod;
     // Format JSON array for export
     const dataToExport = filteredUsers.map((u) => ({
       ID: u.id,

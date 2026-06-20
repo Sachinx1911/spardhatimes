@@ -1,7 +1,8 @@
 import React from "react";
 import db from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { AdminCharts, TrendPoint } from "@/components/admin/AdminCharts";
+import type { TrendPoint } from "@/components/admin/AdminCharts";
+import { AdminCharts } from "@/components/admin/AdminChartsLazy";
 import {
   Users,
   Layers,

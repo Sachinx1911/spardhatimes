@@ -95,7 +95,11 @@ export async function submitQuizAttempt(
     const totalMarks = quiz.marks;
     const percentage = Math.round(((computedScore / totalMarks) * 100) * 100) / 100;
 
-    // 3. Create Attempt and Responses in a database transaction
+    // 3. Create Attempt and Responses in a database transaction.
+    // NOTE: responses are inserted with a single createMany() instead of one
+    // create() per question. On a serverless DB (Neon) the per-row round trips
+    // add up fast and a long quiz used to blow past the 5s transaction timeout,
+    // making submit fail. createMany is one round trip; timeout is also raised.
     const attempt = await db.$transaction(async (tx) => {
       // Create Quiz Attempt
       const newAttempt = await tx.quizAttempt.create({
@@ -112,16 +116,16 @@ export async function submitQuizAttempt(
         }
       });
 
-      // Create responses
-      for (const response of questionResponsesData) {
-        await tx.questionResponse.create({
-          data: {
+      // Create all responses in one query
+      if (questionResponsesData.length > 0) {
+        await tx.questionResponse.createMany({
+          data: questionResponsesData.map((r) => ({
             attemptId: newAttempt.id,
-            questionId: response.questionId,
-            chosenOption: response.chosenOption,
-            isCorrect: response.isCorrect,
-            timeSpent: response.timeSpent,
-          }
+            questionId: r.questionId,
+            chosenOption: r.chosenOption,
+            isCorrect: r.isCorrect,
+            timeSpent: r.timeSpent,
+          })),
         });
       }
 
@@ -167,7 +171,7 @@ export async function submitQuizAttempt(
       });
 
       return newAttempt;
-    });
+    }, { timeout: 15000 });
 
     // 4. Calculate Rank and Percentile dynamically
     try {

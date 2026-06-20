@@ -17,7 +17,6 @@ import {
   HelpCircle,
   CheckCircle2
 } from "lucide-react";
-import * as XLSX from "xlsx";
 
 interface Quiz {
   id: string;
@@ -66,7 +65,9 @@ export function QuestionImporter({ quizzes }: { quizzes: Quiz[] }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 1. Download sample Excel sheet generated dynamically
-  const handleDownloadSample = () => {
+  const handleDownloadSample = async () => {
+    const xlsxMod = await import("xlsx");
+    const XLSX = (xlsxMod as any).default ?? xlsxMod;
     const sampleData = [
       {
         "Question": "What is the capital of France?",
@@ -138,15 +139,17 @@ export function QuestionImporter({ quizzes }: { quizzes: Quiz[] }) {
     setSuccess(false);
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const data = e.target?.result;
       if (!data) return;
 
       try {
+        const xlsxMod = await import("xlsx");
+        const XLSX = (xlsxMod as any).default ?? xlsxMod;
         const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json<ParsedRow>(worksheet);
+        const jsonData = XLSX.utils.sheet_to_json(worksheet) as ParsedRow[];
         
         validateData(jsonData);
       } catch (err) {

@@ -7,7 +7,6 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Select } from "../ui/select";
 import { Search, FileSpreadsheet, BarChart3, CheckCircle2, XCircle } from "lucide-react";
-import * as XLSX from "xlsx";
 import { formatDateTime } from "@/lib/utils";
 
 interface ResultItem {
@@ -45,7 +44,9 @@ export function ResultManager({ results, quizzes }: { results: ResultItem[]; qui
     return matchesSearch && matchesQuiz && matchesOutcome;
   });
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    const mod = await import("xlsx");
+    const XLSX = (mod as any).default ?? mod;
     const rows = filtered.map((r) => ({
       Student: r.user.name || "Anonymous",
       Email: r.user.email,

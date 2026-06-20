@@ -2,7 +2,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import db from "@/lib/db";
-import { ResultAnalytics } from "@/components/quiz/ResultAnalytics";
+import { ResultAnalytics } from "@/components/quiz/ResultAnalyticsLazy";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
