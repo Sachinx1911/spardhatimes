@@ -326,11 +326,6 @@ export function QuizEngine({ quiz }: { quiz: Quiz }) {
                   <span className="text-primary mr-2">Q.{currentIdx + 1}</span>
                   {currentQuestion.text}
                 </h3>
-                {currentQuestion.type === "MULTIPLE_CHOICE" && (
-                  <p className="mt-1.5 text-xs font-semibold text-primary">
-                    Multiple answers — select all that apply.
-                  </p>
-                )}
                 {currentQuestion.type === "TRUE_FALSE" && (
                   <p className="mt-1.5 text-xs font-semibold text-muted-foreground">
                     True / False — choose one.
