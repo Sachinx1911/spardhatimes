@@ -53,7 +53,7 @@ export async function getTestLeaderboard(
   if (role !== "ADMIN" && role !== "SUPERADMIN") return [];
 
   const attempts = await db.quizAttempt.findMany({
-    where: { quizId, status: "COMPLETED" },
+    where: { quizId, status: "COMPLETED", userId: { not: null } },
     select: {
       score: true,
       percentage: true,
@@ -64,8 +64,8 @@ export async function getTestLeaderboard(
 
   return attempts.map((a, i) => ({
     rank: i + 1,
-    name: a.user.name || "Unknown",
-    email: a.user.email,
+    name: a.user?.name || "Unknown",
+    email: a.user?.email || "",
     score: Math.round(a.score * 100) / 100,
     percentage: Math.round(a.percentage * 100) / 100,
   }));

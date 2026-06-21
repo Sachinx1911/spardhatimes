@@ -30,7 +30,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   }
 
   const attempts = await db.quizAttempt.findMany({
-    where: { quizId, status: "COMPLETED" },
+    where: { quizId, status: "COMPLETED", userId: { not: null } },
     select: {
       score: true,
       percentage: true,
@@ -41,7 +41,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
   const rows = attempts.map((a, i) => ({
     rank: i + 1,
-    name: a.user.name || "Unknown",
+    name: a.user?.name || "Unknown",
     score: Math.round(a.score * 100) / 100,
     pct: Math.round(a.percentage * 100) / 100,
   }));

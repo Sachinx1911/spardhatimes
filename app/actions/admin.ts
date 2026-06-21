@@ -303,6 +303,27 @@ export async function deleteQuiz(id: string) {
   }
 }
 
+export async function toggleQuizPublic(id: string) {
+  try {
+    const admin = await ensureAdmin();
+    const quiz = await db.quiz.findUnique({ where: { id }, select: { isPublic: true, title: true } });
+    if (!quiz) return { error: "Quiz not found." };
+
+    const updated = await db.quiz.update({
+      where: { id },
+      data: { isPublic: !quiz.isPublic },
+      select: { isPublic: true },
+    });
+
+    await logAdminAction(admin.id!, "quiz.toggle_public", `Set "${quiz.title}" public=${updated.isPublic}`);
+    revalidatePath("/admin/quizzes");
+    return { success: true, isPublic: updated.isPublic };
+  } catch (err: any) {
+    console.error(err);
+    return { error: err.message || "Failed to toggle public status." };
+  }
+}
+
 // -------------------------------------------------------------
 // USER MANAGEMENT ACTIONS
 // -------------------------------------------------------------

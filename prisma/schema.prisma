@@ -154,6 +154,7 @@ model Quiz {
   releaseAt      DateTime?
   closeAt        DateTime?
   releaseNotified Boolean       @default(false) // set once release notifications have been fanned out
+  isPublic       Boolean        @default(false)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -189,8 +190,9 @@ model Question {
 
 model QuizAttempt {
   id               String             @id @default(cuid())
-  userId           String
-  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String?
+  user             User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestId          String?
   quizId           String
   quiz             Quiz               @relation(fields: [quizId], references: [id], onDelete: Cascade)
   score            Float              @default(0.0)

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { createQuiz, updateQuiz, deleteQuiz } from "@/app/actions/admin";
+import { createQuiz, updateQuiz, deleteQuiz, toggleQuizPublic } from "@/app/actions/admin";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { Input } from "../ui/input";
@@ -19,7 +19,10 @@ import {
   FileText,
   HelpCircle,
   Activity,
-  ListChecks
+  ListChecks,
+  Globe,
+  Link2,
+  Check
 } from "lucide-react";
 
 interface Category {
@@ -40,6 +43,7 @@ interface Quiz {
   status: "DRAFT" | "PUBLISHED";
   instructions: string | null;
   categoryId: string;
+  isPublic: boolean;
   category: { name: string };
   _count: { questions: number };
 }
@@ -72,6 +76,23 @@ export function QuizManager({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleTogglePublic = async (quiz: Quiz) => {
+    const res = await toggleQuizPublic(quiz.id);
+    if (res.success) {
+      setQuizzes((prev) =>
+        prev.map((q) => (q.id === quiz.id ? { ...q, isPublic: !q.isPublic } : q))
+      );
+    }
+  };
+
+  const handleCopyLink = (quiz: Quiz) => {
+    const url = `${window.location.origin}/test/${quiz.slug}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(quiz.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const openCreateDialog = () => {
     setSelectedQuiz(null);
@@ -220,7 +241,12 @@ export function QuizManager({
                 <tr key={quiz.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 text-sm">
                   <td className="p-4 font-bold text-foreground">
                     <div>
-                      {quiz.title}
+                      <span className="flex items-center gap-1.5">
+                        {quiz.title}
+                        {quiz.isPublic && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 uppercase tracking-wider">Public</span>
+                        )}
+                      </span>
                       <span className="text-[10px] text-muted-foreground font-mono block font-normal mt-0.5">{quiz.slug}</span>
                     </div>
                   </td>
@@ -242,7 +268,27 @@ export function QuizManager({
                       {quiz.status}
                     </span>
                   </td>
-                  <td className="p-4 text-right space-x-2">
+                  <td className="p-4 text-right space-x-1">
+                    <button
+                      onClick={() => handleTogglePublic(quiz)}
+                      className={`inline-flex p-1.5 rounded cursor-pointer ${
+                        quiz.isPublic
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-950/60"
+                          : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-foreground"
+                      }`}
+                      title={quiz.isPublic ? "Disable public link" : "Make public (shareable link)"}
+                    >
+                      <Globe className="h-4 w-4" />
+                    </button>
+                    {quiz.isPublic && (
+                      <button
+                        onClick={() => handleCopyLink(quiz)}
+                        className="inline-flex p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-foreground cursor-pointer"
+                        title="Copy public link"
+                      >
+                        {copiedId === quiz.id ? <Check className="h-4 w-4 text-emerald-600" /> : <Link2 className="h-4 w-4" />}
+                      </button>
+                    )}
                     <Link
                       href={`/admin/quizzes/${quiz.id}/questions`}
                       className="inline-flex p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-primary cursor-pointer align-middle"
