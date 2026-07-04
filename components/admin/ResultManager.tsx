@@ -19,7 +19,8 @@ interface ResultItem {
   timeTaken: number;
   rank: number | null;
   createdAt: string | Date;
-  user: { name: string | null; email: string };
+  // user is null for public/guest attempts (no login).
+  user: { name: string | null; email: string } | null;
   quiz: { id: string; title: string; marks: number; passingMarks: number };
 }
 
@@ -35,8 +36,8 @@ export function ResultManager({ results, quizzes }: { results: ResultItem[]; qui
 
   const filtered = results.filter((r) => {
     const matchesSearch =
-      (r.user.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.user.email.toLowerCase().includes(searchQuery.toLowerCase());
+      (r.user?.name || "Guest").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.user?.email || "").toLowerCase().includes(searchQuery.toLowerCase());
     const matchesQuiz = quizFilter ? r.quiz.id === quizFilter : true;
     const passed = r.score >= r.quiz.passingMarks;
     const matchesOutcome =
@@ -48,8 +49,8 @@ export function ResultManager({ results, quizzes }: { results: ResultItem[]; qui
     const mod = await import("xlsx");
     const XLSX = (mod as any).default ?? mod;
     const rows = filtered.map((r) => ({
-      Student: r.user.name || "Anonymous",
-      Email: r.user.email,
+      Student: r.user?.name || "Guest",
+      Email: r.user?.email || "—",
       Quiz: r.quiz.title,
       Score: r.score,
       "Total Marks": r.quiz.marks,
@@ -137,8 +138,8 @@ export function ResultManager({ results, quizzes }: { results: ResultItem[]; qui
                   return (
                     <tr key={r.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20">
                       <td className="p-4">
-                        <p className="font-bold text-foreground">{r.user.name || "Anonymous"}</p>
-                        <p className="text-[10px] text-muted-foreground">{r.user.email}</p>
+                        <p className="font-bold text-foreground">{r.user?.name || "Guest"}</p>
+                        <p className="text-[10px] text-muted-foreground">{r.user?.email || "—"}</p>
                       </td>
                       <td className="p-4 font-semibold text-xs">{r.quiz.title}</td>
                       <td className="p-4 text-center font-bold">

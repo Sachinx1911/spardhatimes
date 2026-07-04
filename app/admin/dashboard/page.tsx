@@ -209,7 +209,7 @@ export default async function AdminDashboardPage() {
               {recentAttempts.map((attempt) => (
                 <div key={attempt.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-950/20 text-sm">
                   <div>
-                    <p className="font-bold text-foreground">{attempt.user.name}</p>
+                    <p className="font-bold text-foreground">{attempt.user?.name || "Guest"}</p>
                     <p className="text-xs text-muted-foreground">Quiz: {attempt.quiz.title}</p>
                   </div>
                   <div className="text-right">
