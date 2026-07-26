@@ -5,6 +5,7 @@ import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { Role, Difficulty, QuizStatus, QuestionType } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
+import { mapImportedRow, normalizeAnswerList } from "@/lib/question-import";
 
 // Helper to check admin authorization
 async function ensureAdmin() {
@@ -408,17 +409,6 @@ interface QuestionInput {
   categoryName: string;
 }
 
-// Canonical sorted comma list for multiple-choice answers ("C,A" -> "A,C").
-function normalizeAnswerList(answer: string): string {
-  return String(answer || "")
-    .toUpperCase()
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => ["A", "B", "C", "D"].includes(s))
-    .sort()
-    .join(",");
-}
-
 // Validates per question type and returns the prepared (normalized) data,
 // or an error string.
 function prepareQuestion(data: QuestionInput): { error?: string; prepared?: QuestionInput } {
@@ -675,51 +665,7 @@ export async function bulkImportQuestions(quizId: string, questions: any[]) {
     // "Transaction not found ... refers to an old closed transaction".
     // Nothing in this loop reads from the database, so there was never a reason
     // to hold a transaction open across it.
-    const rows = questions.map((q) => {
-      let diff: Difficulty = Difficulty.MEDIUM;
-      const rawDiff = String(q.Difficulty || "").toUpperCase().trim();
-      if (rawDiff === "EASY") diff = Difficulty.EASY;
-      else if (rawDiff === "HARD") diff = Difficulty.HARD;
-
-      // Optional Type column: SINGLE (default) / MULTIPLE / TRUEFALSE
-      const rawType = String(q.Type || "").toUpperCase().replace(/[^A-Z]/g, "");
-      const type: QuestionType =
-        rawType.startsWith("MULTI") ? QuestionType.MULTIPLE_CHOICE
-        : rawType.startsWith("TRUE") ? QuestionType.TRUE_FALSE
-        : QuestionType.SINGLE_CHOICE;
-
-      const rawAnswer = String(q["Correct Answer"] || "").toUpperCase().trim();
-      let correctAnswer = rawAnswer;
-      let optionA = String(q["Option A"] || "").trim();
-      let optionB = String(q["Option B"] || "").trim();
-      let optionC = String(q["Option C"] || "").trim();
-      let optionD = String(q["Option D"] || "").trim();
-
-      if (type === QuestionType.TRUE_FALSE) {
-        optionA = "True";
-        optionB = "False";
-        optionC = "";
-        optionD = "";
-        correctAnswer = rawAnswer === "TRUE" ? "A" : rawAnswer === "FALSE" ? "B" : rawAnswer;
-      } else if (type === QuestionType.MULTIPLE_CHOICE) {
-        correctAnswer = normalizeAnswerList(rawAnswer);
-      }
-
-      return {
-        quizId,
-        type,
-        text: String(q.Question || "").trim(),
-        optionA,
-        optionB,
-        optionC,
-        optionD,
-        correctAnswer,
-        explanation: q.Explanation ? String(q.Explanation).trim() : null,
-        difficulty: diff,
-        marks: 1.0,
-        categoryName: q.Category ? String(q.Category).trim() : null,
-      };
-    });
+    const rows = questions.map((q) => mapImportedRow(q, quizId));
 
     // Array form of $transaction: still atomic (either both land or neither),
     // but sent as one batch instead of holding a session open, so the size of

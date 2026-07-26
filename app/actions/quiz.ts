@@ -3,23 +3,12 @@
 import db from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { AttemptStatus } from "@prisma/client";
+import { gradeAttempt } from "@/lib/grading";
 
 interface AnswerInput {
   questionId: string;
   chosenOption: string | null; // "A".."D", or comma list for multiple choice, or null
   timeSpent: number; // in seconds
-}
-
-// Normalize an answer to a canonical sorted comma list ("C,A" -> "A,C") so
-// multiple-choice selections compare equal regardless of click order.
-function normalizeAnswer(answer: string): string {
-  return answer
-    .toUpperCase()
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => ["A", "B", "C", "D"].includes(s))
-    .sort()
-    .join(",");
 }
 
 export async function submitQuizAttempt(
@@ -45,55 +34,23 @@ export async function submitQuizAttempt(
       return { error: "Quiz not found." };
     }
 
-    let correctAnswersCount = 0;
-    let wrongAnswersCount = 0;
-    let skippedQuestionsCount = 0;
-    let computedScore = 0.0;
+    // 2. Grade the attempt. The scoring itself lives in lib/grading.ts as a pure
+    // function so it can be unit tested — it decides every student's marks.
+    const graded = gradeAttempt(
+      quiz.questions,
+      answers,
+      quiz.negativeMarks,
+      quiz.marks
+    );
 
-    const questionResponsesData: any[] = [];
-
-    // 2. Grade each question
-    for (const question of quiz.questions) {
-      const answer = answers.find((a) => a.questionId === question.id);
-      const chosenOption = answer?.chosenOption || null;
-      const timeSpent = answer?.timeSpent || 0;
-
-      // Normalize both sides so multiple-choice answers ("C,A" vs "A,C")
-      // compare equal; single-choice and true/false reduce to one letter.
-      const normalizedChosen = chosenOption ? normalizeAnswer(chosenOption) : "";
-
-      if (!normalizedChosen) {
-        skippedQuestionsCount++;
-        questionResponsesData.push({
-          questionId: question.id,
-          chosenOption: null,
-          isCorrect: false,
-          timeSpent,
-        });
-      } else {
-        const isCorrect = normalizedChosen === normalizeAnswer(question.correctAnswer);
-        if (isCorrect) {
-          correctAnswersCount++;
-          computedScore += question.marks;
-        } else {
-          wrongAnswersCount++;
-          computedScore -= quiz.negativeMarks;
-        }
-
-        questionResponsesData.push({
-          questionId: question.id,
-          chosenOption: normalizedChosen,
-          isCorrect,
-          timeSpent,
-        });
-      }
-    }
-
-    // Ensure score is not negative if we don't want it to go below 0 (usually negative marks can go below zero, but let's floor it at 0 for display, or allow negative. Usually exams allow negative total score, but let's keep the actual computation).
-    // Let's round to 2 decimal places
-    computedScore = Math.round(computedScore * 100) / 100;
-    const totalMarks = quiz.marks;
-    const percentage = Math.round(((computedScore / totalMarks) * 100) * 100) / 100;
+    const {
+      correctAnswers: correctAnswersCount,
+      wrongAnswers: wrongAnswersCount,
+      skippedQuestions: skippedQuestionsCount,
+      score: computedScore,
+      percentage,
+      responses: questionResponsesData,
+    } = graded;
 
     // 3. Create Attempt and Responses in a database transaction.
     // NOTE: responses are inserted with a single createMany() instead of one
@@ -165,7 +122,7 @@ export async function submitQuizAttempt(
         data: {
           userId,
           title: "Test Submitted 📄",
-          message: `Your attempt for "${quiz.title}" has been graded. Score: ${computedScore}/${totalMarks} (${percentage}%).`,
+          message: `Your attempt for "${quiz.title}" has been graded. Score: ${computedScore}/${quiz.marks} (${percentage}%).`,
           type: "test_completed"
         }
       });
