@@ -666,64 +666,73 @@ export async function bulkImportQuestions(quizId: string, questions: any[]) {
 
     if (!quiz) return { error: "Quiz not found." };
 
-    // Transactional rollback import
-    await db.$transaction(async (tx) => {
-      for (const q of questions) {
-        let diff: Difficulty = Difficulty.MEDIUM;
-        const rawDiff = String(q.Difficulty || "").toUpperCase().trim();
-        if (rawDiff === "EASY") diff = Difficulty.EASY;
-        else if (rawDiff === "HARD") diff = Difficulty.HARD;
+    // Build every row in memory first, then write them in ONE statement.
+    //
+    // This used to be an interactive transaction with `tx.question.create()`
+    // inside the loop — one network round-trip per question. Against a
+    // Supabase region ~170ms away that spent the whole 5s default interactive
+    // transaction budget at roughly 30 questions, and the import then died with
+    // "Transaction not found ... refers to an old closed transaction".
+    // Nothing in this loop reads from the database, so there was never a reason
+    // to hold a transaction open across it.
+    const rows = questions.map((q) => {
+      let diff: Difficulty = Difficulty.MEDIUM;
+      const rawDiff = String(q.Difficulty || "").toUpperCase().trim();
+      if (rawDiff === "EASY") diff = Difficulty.EASY;
+      else if (rawDiff === "HARD") diff = Difficulty.HARD;
 
-        // Optional Type column: SINGLE (default) / MULTIPLE / TRUEFALSE
-        const rawType = String(q.Type || "").toUpperCase().replace(/[^A-Z]/g, "");
-        const type: QuestionType =
-          rawType.startsWith("MULTI") ? QuestionType.MULTIPLE_CHOICE
-          : rawType.startsWith("TRUE") ? QuestionType.TRUE_FALSE
-          : QuestionType.SINGLE_CHOICE;
+      // Optional Type column: SINGLE (default) / MULTIPLE / TRUEFALSE
+      const rawType = String(q.Type || "").toUpperCase().replace(/[^A-Z]/g, "");
+      const type: QuestionType =
+        rawType.startsWith("MULTI") ? QuestionType.MULTIPLE_CHOICE
+        : rawType.startsWith("TRUE") ? QuestionType.TRUE_FALSE
+        : QuestionType.SINGLE_CHOICE;
 
-        const rawAnswer = String(q["Correct Answer"] || "").toUpperCase().trim();
-        let correctAnswer = rawAnswer;
-        let optionA = String(q["Option A"] || "").trim();
-        let optionB = String(q["Option B"] || "").trim();
-        let optionC = String(q["Option C"] || "").trim();
-        let optionD = String(q["Option D"] || "").trim();
+      const rawAnswer = String(q["Correct Answer"] || "").toUpperCase().trim();
+      let correctAnswer = rawAnswer;
+      let optionA = String(q["Option A"] || "").trim();
+      let optionB = String(q["Option B"] || "").trim();
+      let optionC = String(q["Option C"] || "").trim();
+      let optionD = String(q["Option D"] || "").trim();
 
-        if (type === QuestionType.TRUE_FALSE) {
-          optionA = "True";
-          optionB = "False";
-          optionC = "";
-          optionD = "";
-          correctAnswer = rawAnswer === "TRUE" ? "A" : rawAnswer === "FALSE" ? "B" : rawAnswer;
-        } else if (type === QuestionType.MULTIPLE_CHOICE) {
-          correctAnswer = normalizeAnswerList(rawAnswer);
-        }
-
-        await tx.question.create({
-          data: {
-            quizId,
-            type,
-            text: String(q.Question || "").trim(),
-            optionA,
-            optionB,
-            optionC,
-            optionD,
-            correctAnswer,
-            explanation: q.Explanation ? String(q.Explanation).trim() : null,
-            difficulty: diff,
-            marks: 1.0,
-            categoryName: q.Category ? String(q.Category).trim() : null,
-          }
-        });
+      if (type === QuestionType.TRUE_FALSE) {
+        optionA = "True";
+        optionB = "False";
+        optionC = "";
+        optionD = "";
+        correctAnswer = rawAnswer === "TRUE" ? "A" : rawAnswer === "FALSE" ? "B" : rawAnswer;
+      } else if (type === QuestionType.MULTIPLE_CHOICE) {
+        correctAnswer = normalizeAnswerList(rawAnswer);
       }
 
-      // Update Category questions counter
-      await tx.category.update({
+      return {
+        quizId,
+        type,
+        text: String(q.Question || "").trim(),
+        optionA,
+        optionB,
+        optionC,
+        optionD,
+        correctAnswer,
+        explanation: q.Explanation ? String(q.Explanation).trim() : null,
+        difficulty: diff,
+        marks: 1.0,
+        categoryName: q.Category ? String(q.Category).trim() : null,
+      };
+    });
+
+    // Array form of $transaction: still atomic (either both land or neither),
+    // but sent as one batch instead of holding a session open, so the size of
+    // the import no longer competes with a timeout.
+    await db.$transaction([
+      db.question.createMany({ data: rows }),
+      db.category.update({
         where: { id: quiz.categoryId },
         data: {
           totalQuestions: { increment: questions.length }
         }
-      });
-    });
+      }),
+    ]);
 
     await logAdminAction(admin.id!, "question.bulk_import", `Imported ${questions.length} questions into quiz ${quizId}`);
     revalidatePath("/admin/quizzes");
