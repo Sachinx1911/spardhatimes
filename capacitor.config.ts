@@ -32,8 +32,10 @@ const config: CapacitorConfig = {
   //   androidScheme: 'http',
   // },
   android: {
-    // Handy during development (attach chrome://inspect). Turn OFF for release builds.
-    webContentsDebuggingEnabled: true,
+    // OFF deliberately. With this on, anyone who can reach the device over USB
+    // can attach chrome://inspect and read the WebView — including the signed-in
+    // student's session cookie. Flip it to true only while debugging locally.
+    webContentsDebuggingEnabled: false,
   },
 };
 
