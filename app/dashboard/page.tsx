@@ -204,8 +204,13 @@ export default async function StudentDashboardPage() {
         </div>
 
         {/* Tabs Content */}
-        <Tabs defaultValue="myseries" className="w-full">
-          <TabsList className="grid h-auto grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1 w-full bg-white dark:bg-slate-900 border border-border/40 p-1 rounded-lg">
+        {/* syncWithHash lets the navbar menu link straight to a section. */}
+        <Tabs defaultValue="myseries" syncWithHash className="w-full">
+          {/* Hidden on mobile: seven triggers took three rows above the fold on a
+              phone, and most students never leave "My Tests". The sections live
+              in the navbar menu there instead. Desktop has no menu, so it keeps
+              the row. */}
+          <TabsList className="hidden md:grid h-auto grid-cols-4 lg:grid-cols-7 gap-1 w-full bg-white dark:bg-slate-900 border border-border/40 p-1 rounded-lg">
             <TabsTrigger value="myseries">My Tests</TabsTrigger>
             <TabsTrigger value="attempts">Attempt History</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>

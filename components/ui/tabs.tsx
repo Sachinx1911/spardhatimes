@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 
 interface TabsContextProps {
@@ -10,25 +10,65 @@ interface TabsContextProps {
 
 const TabsContext = createContext<TabsContextProps | undefined>(undefined);
 
+// --- URL hash as the source of truth (opt-in via syncWithHash) -------------
+// The hash is used rather than a ?query= param on purpose: switching tabs must
+// not re-run the page's server render. The dashboard fetches every tab's data
+// up front, and the database is ~170ms away, so a round trip per tab would
+// turn an instant switch into a visible wait on mobile.
+function subscribeToHash(onChange: () => void) {
+  window.addEventListener("hashchange", onChange);
+  return () => window.removeEventListener("hashchange", onChange);
+}
+
+function readHash() {
+  return window.location.hash.replace(/^#/, "");
+}
+
 export function Tabs({
   defaultValue,
   value,
   onValueChange,
+  syncWithHash = false,
   children,
   className,
 }: {
   defaultValue?: string;
   value?: string;
   onValueChange?: (value: string) => void;
+  /**
+   * Mirror the active tab in the URL hash, so links elsewhere (the navbar
+   * menu) can open a specific tab, a reload keeps it, and the browser — or the
+   * Android hardware back button — steps back through tabs.
+   */
+  syncWithHash?: boolean;
   children: React.ReactNode;
   className?: string;
 }) {
   const [localTab, setLocalTab] = useState(defaultValue || "");
-  const activeTab = value !== undefined ? value : localTab;
+
+  // useSyncExternalStore rather than an effect: the hash lives outside React,
+  // and this keeps the first client render correct without a setState-in-effect.
+  // The server snapshot is "" since there is no hash server-side.
+  const hashTab = useSyncExternalStore(
+    subscribeToHash,
+    readHash,
+    () => ""
+  );
+
+  const activeTab =
+    value !== undefined
+      ? value
+      : syncWithHash && hashTab
+        ? hashTab
+        : localTab;
 
   const setActiveTab = (newTab: string) => {
     if (value === undefined) {
       setLocalTab(newTab);
+      // Pushes a history entry, so Back returns to the previous tab.
+      if (syncWithHash && typeof window !== "undefined") {
+        window.location.hash = newTab;
+      }
     }
     if (onValueChange) {
       onValueChange(newTab);

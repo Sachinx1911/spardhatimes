@@ -13,6 +13,18 @@ import { NotificationBell } from "./NotificationBell";
 // the login module. Remove the flag from .env to restore real sessions.
 const DEV_BYPASS = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === "true";
 
+// Mirrors the TabsTrigger values in app/dashboard/page.tsx — the hash is the
+// contract between the two. Keep them in step when a tab is added or renamed.
+const DASHBOARD_SECTIONS = [
+  { hash: "myseries", label: "My Tests" },
+  { hash: "attempts", label: "Attempt History" },
+  { hash: "analytics", label: "Analytics" },
+  { hash: "bookmarks", label: "Bookmarks" },
+  { hash: "certificates", label: "Certificates" },
+  { hash: "notifications", label: "Alerts" },
+  { hash: "settings", label: "Settings" },
+] as const;
+
 export function Navbar() {
   const { data: session, status } = useSession();
   const { theme, toggleTheme } = useTheme();
@@ -145,6 +157,33 @@ export function Navbar() {
                 My Dashboard
               </Link>
             )}
+
+            {/* Dashboard sections. On mobile the dashboard's own tab row is
+                hidden — it cost three rows above the fold — so the sections are
+                reachable from here instead. The hash is what the Tabs component
+                reads, so these switch tabs without a server round trip. */}
+            {!isAdmin && (
+              <div className="pt-2 mt-1 border-t border-border/40 space-y-1">
+                <p className="px-3 pt-1 pb-0.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Dashboard Sections
+                </p>
+                {DASHBOARD_SECTIONS.map((section) => (
+                  // Plain <a>, not next/link: Link navigates via history.pushState,
+                  // which does NOT fire a hashchange event, so the tab would never
+                  // switch when already on the dashboard. A normal anchor lets the
+                  // browser set the hash and fire the event.
+                  <a
+                    key={section.hash}
+                    href={`/dashboard#${section.hash}`}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    {section.label}
+                  </a>
+                ))}
+              </div>
+            )}
+
             <button
               onClick={() => {
                 setIsMenuOpen(false);
