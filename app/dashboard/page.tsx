@@ -174,35 +174,6 @@ export default async function StudentDashboardPage() {
           </div>
         </div>
 
-        {/* Dashboard Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="p-5 text-center">
-            <History className="h-6 w-6 text-primary mx-auto mb-2" />
-            <p className="text-xs text-muted-foreground uppercase font-semibold">Tests</p>
-            <p className="text-2xl font-black text-foreground mt-1">{totalAttempts}</p>
-          </Card>
-          
-          <Card className="p-5 text-center">
-            <Percent className="h-6 w-6 text-primary mx-auto mb-2" />
-            <p className="text-xs text-muted-foreground uppercase font-semibold">Average Accuracy</p>
-            <p className="text-2xl font-black text-foreground mt-1">{avgAccuracy}%</p>
-          </Card>
-
-          <Card className="p-5 text-center">
-            <Award className="h-6 w-6 text-primary mx-auto mb-2" />
-            <p className="text-xs text-muted-foreground uppercase font-semibold">Certificates Earned</p>
-            <p className="text-2xl font-black text-foreground mt-1">{totalCertificates}</p>
-          </Card>
-
-          <Card className="p-5 text-center">
-            <Bell className="h-6 w-6 text-primary mx-auto mb-2" />
-            <p className="text-xs text-muted-foreground uppercase font-semibold">Notifications</p>
-            <p className="text-2xl font-black text-foreground mt-1">
-              {notifications.filter(n => !n.read).length} <span className="text-xs text-muted-foreground font-normal">Unread</span>
-            </p>
-          </Card>
-        </div>
-
         {/* Tabs Content */}
         {/* syncWithHash lets the navbar menu link straight to a section. */}
         <Tabs defaultValue="myseries" syncWithHash className="w-full">
@@ -222,6 +193,39 @@ export default async function StudentDashboardPage() {
 
           {/* Tab: My Test Series (assigned by admin) */}
           <TabsContent value="myseries">
+            {/* Stats live inside this tab, not above the whole Tabs block. They
+                summarise the student's overall progress, so repeating them on
+                top of Analytics or Bookmarks was just noise pushing the real
+                content down — most of it duplicated what those tabs already
+                show in more detail. */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <Card className="p-5 text-center">
+                <History className="h-6 w-6 text-primary mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Tests</p>
+                <p className="text-2xl font-black text-foreground mt-1">{totalAttempts}</p>
+              </Card>
+
+              <Card className="p-5 text-center">
+                <Percent className="h-6 w-6 text-primary mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Average Accuracy</p>
+                <p className="text-2xl font-black text-foreground mt-1">{avgAccuracy}%</p>
+              </Card>
+
+              <Card className="p-5 text-center">
+                <Award className="h-6 w-6 text-primary mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Certificates Earned</p>
+                <p className="text-2xl font-black text-foreground mt-1">{totalCertificates}</p>
+              </Card>
+
+              <Card className="p-5 text-center">
+                <Bell className="h-6 w-6 text-primary mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Notifications</p>
+                <p className="text-2xl font-black text-foreground mt-1">
+                  {notifications.filter(n => !n.read).length} <span className="text-xs text-muted-foreground font-normal">Unread</span>
+                </p>
+              </Card>
+            </div>
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-base font-bold flex items-center gap-2">
