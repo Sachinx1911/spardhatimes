@@ -2,18 +2,9 @@
 
 import React, { useEffect } from "react";
 import { SessionProvider } from "next-auth/react";
-import type { Session } from "next-auth";
 import { ThemeProvider } from "./ThemeContext";
 
-export function Providers({
-  children,
-  session,
-}: {
-  children: React.ReactNode;
-  // Resolved on the server in app/layout.tsx so useSession() has the session
-  // immediately and never has to fetch /api/auth/session on mount.
-  session?: Session | null;
-}) {
+export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
@@ -39,7 +30,7 @@ export function Providers({
   }, []);
 
   return (
-    <SessionProvider session={session}>
+    <SessionProvider>
       <ThemeProvider>
         {children}
       </ThemeProvider>
