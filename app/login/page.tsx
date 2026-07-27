@@ -17,7 +17,7 @@ function LoginForm() {
   // Already signed in? Don't show the login form — send them to their dashboard.
   useEffect(() => {
     if (status === "authenticated") {
-      const role = (session?.user as any)?.role;
+      const role = session?.user?.role;
       window.location.href =
         role === "ADMIN" || role === "SUPERADMIN" ? "/admin/dashboard" : "/dashboard";
     }

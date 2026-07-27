@@ -13,7 +13,7 @@ async function ensureAdmin() {
   if (!session?.user) {
     throw new Error("Unauthorized access.");
   }
-  const role = (session.user as any).role;
+  const role = session.user.role;
   if (role !== Role.ADMIN && role !== Role.SUPERADMIN) {
     throw new Error("Access denied. Admin role required.");
   }

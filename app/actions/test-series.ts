@@ -14,7 +14,7 @@ import * as bcrypt from "bcryptjs";
 async function ensureAdmin() {
   const session = await getSession();
   if (!session?.user) throw new Error("Unauthorized access.");
-  const role = (session.user as any).role;
+  const role = session.user.role;
   if (role !== Role.ADMIN && role !== Role.SUPERADMIN) {
     throw new Error("Access denied. Admin role required.");
   }
@@ -24,7 +24,7 @@ async function ensureAdmin() {
 async function ensureSuperAdmin() {
   const session = await getSession();
   if (!session?.user) throw new Error("Unauthorized access.");
-  const role = (session.user as any).role;
+  const role = session.user.role;
   if (role !== Role.SUPERADMIN) {
     throw new Error("Only a Super Admin can perform this action.");
   }

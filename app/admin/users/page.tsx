@@ -7,7 +7,7 @@ export const revalidate = 0;
 
 export default async function AdminUsersPage() {
   const session = await getSession();
-  const currentRole = (session?.user as any)?.role || "ADMIN";
+  const currentRole = session?.user?.role || "ADMIN";
 
   let users: any[] = [];
   let allSeries: any[] = [];

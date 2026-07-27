@@ -104,7 +104,7 @@ export default async function QuizAttemptPage({ params }: PageProps) {
       { releaseAt: quiz.releaseAt, closeAt: quiz.closeAt },
       ts.timingMode
     );
-    const role = (session.user as any).role;
+    const role = session.user.role;
     const isAdmin = role === "ADMIN" || role === "SUPERADMIN";
 
     if (!isAdmin && (!ts.published || !hasAccess || state !== "OPEN")) {

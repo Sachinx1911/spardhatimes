@@ -27,7 +27,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     redirect("/login");
   }
 
-  const role = (session.user as any).role;
+  const role = session.user.role;
   if (role !== "ADMIN" && role !== "SUPERADMIN") {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-slate-100 dark:bg-slate-950">

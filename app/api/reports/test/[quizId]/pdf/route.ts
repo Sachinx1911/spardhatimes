@@ -8,7 +8,7 @@ interface RouteParams {
 
 export async function GET(_req: NextRequest, { params }: RouteParams) {
   const session = await getSession();
-  const role = (session?.user as any)?.role;
+  const role = session?.user?.role;
   if (role !== "ADMIN" && role !== "SUPERADMIN") {
     return new NextResponse("Unauthorized", { status: 401 });
   }

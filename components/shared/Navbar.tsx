@@ -21,7 +21,7 @@ export function Navbar() {
   const isLoggedIn = DEV_BYPASS || status === "authenticated";
   const user = (DEV_BYPASS && !session?.user)
     ? { name: "Dev Mode", role: process.env.NEXT_PUBLIC_DEV_BYPASS_ROLE === "STUDENT" ? "STUDENT" : "SUPERADMIN" }
-    : (session?.user as any);
+    : session?.user;
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
 
   // Logo / brand points straight at the right destination so there is no

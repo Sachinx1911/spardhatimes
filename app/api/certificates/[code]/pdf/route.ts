@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   // Only the owner or an admin may download. Verification (read-only view) is
   // still possible by code, but the printable copy requires the owner session.
   const session = await getSession();
-  const role = (session?.user as any)?.role;
+  const role = session?.user?.role;
   const isOwner = session?.user?.id === certificate.userId;
   const isAdmin = role === "ADMIN" || role === "SUPERADMIN";
 

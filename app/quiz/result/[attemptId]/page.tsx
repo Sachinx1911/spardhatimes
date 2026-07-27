@@ -24,7 +24,7 @@ export default async function ResultPage({ params }: PageProps) {
   const resolvedParams = await params;
   const attemptId = resolvedParams.attemptId;
   const userId = session.user.id;
-  const role = (session.user as any).role;
+  const role = session.user.role;
 
   // 2. Fetch Quiz Attempt
   let attempt = null;

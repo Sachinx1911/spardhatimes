@@ -21,7 +21,7 @@ export interface QuizOption {
 
 export async function getQuizList(): Promise<QuizOption[]> {
   const session = await getSession();
-  const role = (session?.user as any)?.role;
+  const role = session?.user?.role;
   if (role !== "ADMIN" && role !== "SUPERADMIN") return [];
 
   const quizzes = await db.quiz.findMany({
@@ -49,7 +49,7 @@ export async function getTestLeaderboard(
   quizId: string
 ): Promise<LeaderboardRow[]> {
   const session = await getSession();
-  const role = (session?.user as any)?.role;
+  const role = session?.user?.role;
   if (role !== "ADMIN" && role !== "SUPERADMIN") return [];
 
   const attempts = await db.quizAttempt.findMany({
