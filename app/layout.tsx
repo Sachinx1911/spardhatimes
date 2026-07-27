@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/shared/Providers";
+import { getSession } from "@/lib/session";
 import { Navbar } from "@/components/shared/Navbar";
 import { Footer } from "@/components/shared/Footer";
 
@@ -42,15 +43,22 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Read the session on the server and hand it to SessionProvider. Without
+  // this, useSession() in the Navbar fetches /api/auth/session on mount on
+  // every page load — a wasted round trip, a flash of signed-out UI, and in
+  // the Android WebView that first fetch races cold start and fails outright
+  // ("Failed to fetch", errors.authjs.dev#autherror).
+  const session = await getSession();
+
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200">
-        <Providers>
+        <Providers session={session}>
           <Navbar />
           <main className="flex-1 flex flex-col">{children}</main>
           <Footer />
