@@ -47,5 +47,11 @@ prisma/*.db-journal
 *.tsbuildinfo
 next-env.d.ts
 
+# agent skills — vendored third-party docs, restorable from skills-lock.json
+# (the lockfile is committed; these are the node_modules equivalent).
+# .claude/skills holds machine-local symlinks into .agents.
+/.agents/
+/.claude/skills/
+
 # graphify knowledge-graph output (generated)
 graphify-out/
