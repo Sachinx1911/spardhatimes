@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/shared/Providers";
 import { Navbar } from "@/components/shared/Navbar";
 import { Footer } from "@/components/shared/Footer";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -55,6 +56,12 @@ export default function RootLayout({
           <main className="flex-1 flex flex-col">{children}</main>
           <Footer />
         </Providers>
+        {/* Reports Core Web Vitals to Vercel. Only sends data on Vercel
+            deployments, so local development is unaffected. Worth having here:
+            ~90% of students are on mobile, often on slow connections, and this
+            measures what they actually experience rather than what a desktop
+            build looks like. */}
+        <SpeedInsights />
       </body>
     </html>
   );
