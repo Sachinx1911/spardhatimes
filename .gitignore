@@ -1,8 +1,12 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+#
+# Monorepo टीप: इथले बहुतेक नियम **anchored नाहीत** (सुरुवातीला `/` नाही) — म्हणून
+# ते कुठल्याही खोलीवर लागू होतात. Anchored ठेवले तर `apps/admin/.next/` किंवा
+# `packages/core/node_modules/` सारखी folders सुटतात आणि चुकून commit होतात.
 
 # dependencies
-/node_modules
-/.pnp
+node_modules/
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -11,14 +15,28 @@
 !.yarn/versions
 
 # testing
-/coverage
+coverage/
 
 # next.js
-/.next/
-/out/
+.next/
+out/
+
+# expo / react native
+.expo/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# nestjs
+/backend/dist/
 
 # production
-/build
+build/
 
 # misc
 .DS_Store
@@ -34,11 +52,11 @@ yarn-error.log*
 .env*
 
 # local database
-prisma/dev.db
-prisma/*.db-journal
+*.db
+*.db-journal
 
 # user-uploaded content
-/public/uploads/
+public/uploads/
 
 # vercel
 .vercel
@@ -46,6 +64,7 @@ prisma/*.db-journal
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+expo-env.d.ts
 
 # agent skills — vendored third-party docs, restorable from skills-lock.json
 # (the lockfile is committed; these are the node_modules equivalent).

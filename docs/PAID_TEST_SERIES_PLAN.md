@@ -16,7 +16,7 @@
 | | निर्णय |
 |---|---|
 | खरेदी प्रकार | एकेक series, एकदाच पैसे (subscription नाही) |
-| Access मुदत | **कायमस्वरूपी** (expiry नाही → तपासणी सोपी) |
+| Access मुदत | ~~कायमस्वरूपी~~ → **मुदत असेल (6 / 12 महिने)** — बदललं 2026-07-29 |
 | Payment gateway | **Razorpay** (UPI/card/netbanking) |
 | App मधून खरेदी | **Browser उघडून** website वर payment |
 | Sign up | **विद्यार्थी स्वतः account बनवतील** |
@@ -81,7 +81,22 @@ model Order {
 }
 ```
 
-**`TestSeriesAccess` जसंच्या तसं वापरायचं** — त्याचा `assignedById` आधीच nullable आहे, म्हणून स्वतः विकत घेतलेल्या rows मध्ये तो null ठेवायचा (= "admin ने दिलं नाही, विकत घेतलं"). फक्त provenance साठी `orderId String?` जोडायचा. Access कायमस्वरूपी असल्याने `expiresAt` लागत नाही.
+**`TestSeriesAccess` जसंच्या तसं वापरायचं** — त्याचा `assignedById` आधीच nullable आहे, म्हणून स्वतः विकत घेतलेल्या rows मध्ये तो null ठेवायचा (= "admin ने दिलं नाही, विकत घेतलं"). फक्त provenance साठी `orderId String?` जोडायचा.
+
+> **⚠️ बदल (2026-07-29): access ला मुदत असेल.** मूळ योजनेत "कायमस्वरूपी" होतं;
+> storefront च्या designs मध्ये "Valid for 12 Months" आल्यावर मुदत ठेवायची ठरली.
+> याचे तीन परिणाम:
+>
+> 1. `TestSeries` ला `validityMonths Int` (उदा. 6, 12)
+> 2. `TestSeriesAccess` ला `expiresAt DateTime?` — **null = कायमस्वरूपी**, म्हणजे
+>    admin ने हाताने दिलेल्या जुन्या rows तशाच चालू राहतात
+> 3. `packages/core/src/entitlements.ts` मध्ये नवीन reason **`EXPIRED`** आणि
+>    `evaluateAttemptAccess` ला `accessExpiresAt` मिळेल. तपासणीचा क्रम:
+>    `NO_ACCESS` → `EXPIRED` → `NOT_RELEASED` / `CLOSED`.
+>    त्यासाठी `entitlements.test.ts` मध्ये नवीन cases: मुदत संपलेली, मुदत उरलेली,
+>    `expiresAt = null`, आणि admin bypass.
+>
+> हे टप्पा C चं काम आहे — किंमत आणि Order बरोबरच करायचं.
 
 ---
 
