@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // NestJS commonjs वर चालतो; तो `require()` ने ESM घेऊ शकत नाही. Next.js ला
+    // commonjs सुद्धा चालतं, म्हणून दोघांना जुळणारा हाच पर्याय.
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

@@ -48,7 +48,10 @@ model User {
   id            String         @id @default(cuid())
   name          String?
   email         String         @unique
-  phone         String?        // optional mobile number, editable from profile settings
+  // विद्यार्थी app मध्ये phone + password ने login करतात; admin website वर email ने.
+  // म्हणून unique पण nullable — Postgres अनेक NULL चालवून घेतो, त्यामुळे phone
+  // नसलेले जुने admin खाती तशीच राहतात, पण दोन विद्यार्थ्यांचा phone एक असू शकत नाही.
+  phone         String?        @unique
   passwordHash  String
   role          Role           @default(STUDENT)
   isBlocked     Boolean        @default(false)

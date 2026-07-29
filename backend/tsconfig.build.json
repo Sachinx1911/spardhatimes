@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  // NestJS build साठी. Test files इथून वगळल्या आहेत — नाहीतर त्या `dist/` मध्ये
+  // CommonJS म्हणून compile होतात, vitest त्या उचलतो, आणि "Vitest cannot be
+  // imported in a CommonJS module" अशी चूक येते. Tests फक्त `src/` मधून चालतात.
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+}
