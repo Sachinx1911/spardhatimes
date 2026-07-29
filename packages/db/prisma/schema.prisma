@@ -170,6 +170,23 @@ model Quiz {
   @@index([testSeriesId])
 }
 
+// Result आणि Analytics मधली "Section / Subject Wise Performance" याच्यावर उभी आहे.
+//
+// हे मुद्दाम वेगळं model आहे, Question वरचं मोकळं text नाही. आजचा `categoryName`
+// (topic) मोकळं text आहे आणि त्याचा परिणाम दिसतो — "Banking", "Banking Services",
+// "Banking Reforms", "Rural Banking" असे एकाच विषयाचे चार तुकडे पडले आहेत.
+// विषयाचं नाव बदलायचं असेल तर इथे एक ओळ बदलते, हजारो प्रश्न नाही.
+model Subject {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  slug       String     @unique
+  orderIndex Int        @default(0)   // Result मध्ये कोणत्या क्रमाने दाखवायचे
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  questions  Question[]
+}
+
 model Question {
   id            String         @id @default(cuid())
   quizId        String
@@ -184,12 +201,20 @@ model Question {
   explanation   String?
   difficulty    Difficulty     @default(MEDIUM)
   marks         Float          @default(1.0)
-  categoryName  String?        // sub-topic category
+  // विषय — Result/Analytics चे ठोक गट. Nullable, म्हणजे आधीच भरलेले प्रश्न तसेच
+  // चालू राहतात; त्यांना विषय नंतर देता येईल.
+  subjectId     String?
+  subject       Subject?       @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  // विषयाच्या आतला बारीक topic ("Rural Banking"). हे मोकळं text आहे आणि तसंच
+  // ठेवलं आहे — इथे थोडी विसंगती चालते, कारण यावर कुठलाही अहवाल उभा नाही.
+  categoryName  String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
   responses     QuestionResponse[]
   bookmarks     Bookmark[]
+
+  @@index([subjectId])
 }
 
 model QuizAttempt {
