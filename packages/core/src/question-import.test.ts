@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
+  cleanSubjectName,
+  collectSubjects,
   mapImportedRow,
   normalizeAnswerList,
   parseDifficulty,
   parseQuestionType,
+  subjectSlug,
 } from "./question-import";
 
 describe("normalizeAnswerList", () => {
@@ -156,5 +159,60 @@ describe("mapImportedRow", () => {
       "quiz-1"
     );
     expect(row.correctAnswer).toBe("");
+  });
+});
+
+describe("subjectSlug", () => {
+  it("case आणि विरामचिन्हांकडे दुर्लक्ष करतो", () => {
+    expect(subjectSlug("Indian Polity")).toBe("indian-polity");
+    expect(subjectSlug("indian polity")).toBe("indian-polity");
+    expect(subjectSlug("Indian-Polity")).toBe("indian-polity");
+    expect(subjectSlug("  Indian   Polity  ")).toBe("indian-polity");
+  });
+
+  it("देवनागरी नावं टिकवतो", () => {
+    expect(subjectSlug("मराठी व्याकरण")).toBe("मराठी-व्याकरण");
+  });
+
+  it("Science & Tech सारखी नावं एकाच key वर आणतो", () => {
+    expect(subjectSlug("Science & Tech")).toBe(subjectSlug("Science and Tech".replace(" and ", " & ")));
+  });
+});
+
+describe("cleanSubjectName", () => {
+  it("मधली जास्तीची जागा काढतो पण case ठेवतो", () => {
+    expect(cleanSubjectName("  Indian   Polity ")).toBe("Indian Polity");
+    expect(cleanSubjectName("GK")).toBe("GK");
+  });
+
+  it("रिकाम्या पेशी null करतो", () => {
+    expect(cleanSubjectName("")).toBeNull();
+    expect(cleanSubjectName("   ")).toBeNull();
+    expect(cleanSubjectName(undefined)).toBeNull();
+    expect(cleanSubjectName(null)).toBeNull();
+  });
+});
+
+describe("collectSubjects", () => {
+  const q = (subject: unknown) =>
+    mapImportedRow({ Question: "प्र", "Option A": "अ", "Correct Answer": "A", Subject: subject }, "quiz-1");
+
+  it("वेगळे विषय एकदाच परत करतो", () => {
+    const subs = collectSubjects([q("Indian Polity"), q("Geography"), q("Indian Polity")]);
+    expect(subs).toHaveLength(2);
+    expect(subs.map((s) => s.slug).sort()).toEqual(["geography", "indian-polity"]);
+  });
+
+  // हेच खरं महत्त्वाचं: वेगवेगळ्या लिहिण्यामुळे एकाच विषयाचे दोन तुकडे पडता कामा नयेत,
+  // कारण Result मधली विषयवार बेरीज त्यावरच उभी आहे.
+  it("वेगळ्या पद्धतीने लिहिलेला तोच विषय एकच धरतो", () => {
+    const subs = collectSubjects([q("Indian Polity"), q("indian  polity"), q("INDIAN-POLITY")]);
+    expect(subs).toHaveLength(1);
+    // पहिल्यांदा दिसलेलं रूप ठेवतो — admin ने लिहिलेलं नाव तसंच दिसावं.
+    expect(subs[0].name).toBe("Indian Polity");
+  });
+
+  it("विषय नसलेल्या ओळी वगळतो", () => {
+    expect(collectSubjects([q(""), q(undefined), q("   ")])).toEqual([]);
   });
 });

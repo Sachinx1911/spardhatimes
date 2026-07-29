@@ -21,7 +21,18 @@ export interface MappedQuestion {
   difficulty: Difficulty;
   marks: number;
   categoryName: string | null;
+  /**
+   * विषयाचं **नाव** — हा database चा column नाही.
+   *
+   * Import करणाऱ्याला `subjectId` माहीत नसतो, तो Excel मध्ये "Indian Polity" असं
+   * नाव लिहितो. नाव → id हे रूपांतर import action मध्ये होतं, कारण त्यासाठी
+   * database लागतो आणि हे module मुद्दाम database-मुक्त आहे.
+   */
+  subjectName: string | null;
 }
+
+/** `createMany` ला जाणारा आकार — `subjectName` वजा, `subjectId` सह. */
+export type QuestionRow = Omit<MappedQuestion, 'subjectName'> & { subjectId: string | null };
 
 /**
  * Normalize a correct-answer cell to a canonical sorted comma list
@@ -99,5 +110,47 @@ export function mapImportedRow(row: ImportedRow, quizId: string): MappedQuestion
     difficulty: parseDifficulty(row.Difficulty),
     marks: 1.0,
     categoryName: row.Category ? String(row.Category).trim() : null,
+    subjectName: cleanSubjectName(row.Subject),
   };
+}
+
+/**
+ * विषयाचं नाव नीट करणे.
+ *
+ * "  indian   polity " आणि "Indian Polity" हे एकच असले पाहिजेत — नाहीतर
+ * database मध्ये दोन विषय बनतात आणि Result मध्ये तोच विषय दोनदा दिसतो. फक्त
+ * मधली जास्तीची जागा काढतो; अक्षरांची case जशीच्या तशी ठेवतो कारण "GK" चं
+ * "Gk" करणं चुकीचं दिसेल. जुळवणी slug वर होते.
+ */
+export function cleanSubjectName(raw: unknown): string | null {
+  const name = String(raw ?? "").replace(/\s+/g, " ").trim();
+  return name.length > 0 ? name : null;
+}
+
+/**
+ * जुळवणीसाठी key. Case आणि विरामचिन्हांकडे दुर्लक्ष करतो, म्हणजे "Indian Polity",
+ * "indian polity" आणि "Indian-Polity" एकाच विषयावर जातात.
+ */
+export function subjectSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9ऀ-ॿ]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * एका import मधले सगळे वेगळे विषय — नाव आणि slug सह.
+ *
+ * Import action याने विषय **एकदाच** शोधतो/बनवतो. प्रत्येक ओळीसाठी वेगळी query
+ * मारली असती तर 100 प्रश्नांच्या file वर 100 फेऱ्या होतील आणि Supabase च्या
+ * अंतरामुळे तेच आधी import तोडून गेलं होतं.
+ */
+export function collectSubjects(rows: MappedQuestion[]): { name: string; slug: string }[] {
+  const bySlug = new Map<string, string>();
+  for (const r of rows) {
+    if (!r.subjectName) continue;
+    const slug = subjectSlug(r.subjectName);
+    if (slug && !bySlug.has(slug)) bySlug.set(slug, r.subjectName);
+  }
+  return [...bySlug].map(([slug, name]) => ({ name, slug }));
 }

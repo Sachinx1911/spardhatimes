@@ -5,7 +5,12 @@ import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { Role, Difficulty, QuizStatus, QuestionType } from "@mahatest/db";
 import * as bcrypt from "bcryptjs";
-import { mapImportedRow, normalizeAnswerList } from "@mahatest/core";
+import {
+  collectSubjects,
+  mapImportedRow,
+  normalizeAnswerList,
+  subjectSlug,
+} from "@mahatest/core";
 
 // Helper to check admin authorization
 async function ensureAdmin() {
@@ -674,7 +679,33 @@ export async function bulkImportQuestions(quizId: string, questions: any[]) {
     // "Transaction not found ... refers to an old closed transaction".
     // Nothing in this loop reads from the database, so there was never a reason
     // to hold a transaction open across it.
-    const rows = questions.map((q) => mapImportedRow(q, quizId));
+    const mapped = questions.map((q) => mapImportedRow(q, quizId));
+
+    // Excel मध्ये विषयाचं **नाव** असतं, id नाही. नाव → id हे रूपांतर इथे होतं —
+    // पण प्रति-ओळ नाही. वरचं टिप्पणी सांगते तसं या loop मध्ये एकही query असू शकत
+    // नाही, म्हणून आधी वेगळे विषय गोळा करून ठराविक तीन फेऱ्यांत सोडवले आहेत:
+    // नसलेले बनवा, सगळे वाचा, नकाशा बनवा. 10 प्रश्न असोत की 500 — तीनच फेऱ्या.
+    const subjects = collectSubjects(mapped);
+    const subjectIdBySlug = new Map<string, string>();
+
+    if (subjects.length > 0) {
+      await db.subject.createMany({
+        data: subjects.map((s) => ({ name: s.name, slug: s.slug })),
+        // आधीच असलेले विषय पुन्हा बनवायचे नाहीत — slug वर unique आहे.
+        skipDuplicates: true,
+      });
+
+      const saved = await db.subject.findMany({
+        where: { slug: { in: subjects.map((s) => s.slug) } },
+        select: { id: true, slug: true },
+      });
+      for (const s of saved) subjectIdBySlug.set(s.slug, s.id);
+    }
+
+    const rows = mapped.map(({ subjectName, ...q }) => ({
+      ...q,
+      subjectId: subjectName ? (subjectIdBySlug.get(subjectSlug(subjectName)) ?? null) : null,
+    }));
 
     // Array form of $transaction: still atomic (either both land or neither),
     // but sent as one batch instead of holding a session open, so the size of
