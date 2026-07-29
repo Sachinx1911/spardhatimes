@@ -15,7 +15,7 @@ export function MetaPill({
 }) {
   return (
     <View style={styles.pill}>
-      {icon ? <Ionicons name={icon} size={12} color={colors.textMuted} /> : null}
+      {icon ? <Ionicons name={icon} size={12} color={colors.textSecondary} /> : null}
       <Text style={styles.text}>{label}</Text>
     </View>
   );
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   text: {
-    ...typography.micro,
-    color: colors.textMuted,
+    ...typography.caption,
+    color: colors.textSecondary,
   },
 });

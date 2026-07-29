@@ -6,7 +6,7 @@ import { typography } from '@/theme/tokens';
 export default function ProfileScreen() {
   return (
     <Screen>
-      <Text style={typography.h1}>Profile</Text>
+      <Text style={typography.headingL}>Profile</Text>
     </Screen>
   );
 }

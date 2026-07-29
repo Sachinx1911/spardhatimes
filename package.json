@@ -7,6 +7,14 @@
     "packages/*",
     "backend"
   ],
+  "//expo-router": "Root ला याची गरज नाही, तरी इथे जाहीर केला आहे. npm `expo` root वर hoist करतो पण `expo-router` apps/mobile मध्येच ठेवतो; मग root मधला Expo CLI (typed routes आणि web SSR दोन्हीसाठी) त्याला require करताना तुटतो. आवृत्ती apps/mobile शी जुळवून ठेवा.",
+  "dependencies": {
+    "expo-router": "~57.0.8"
+  },
+  "//overrides": "expo-router चा optional peer react-server-dom-webpack@19.2.8 आहे, जो react ^19.2.8 मागतो — पण Next.js 16 react 19.2.4 वर आहे. त्या एका पॅकेजला 19.2.4 वर बांधल्याने दोन्ही जुळतात आणि expo-router root वर येऊ शकतो.",
+  "overrides": {
+    "react-server-dom-webpack": "19.2.4"
+  },
   "scripts": {
     "test": "npm run test --workspace @mahatest/core && npm run test --workspace @mahatest/api",
     "//build:packages": "core आणि db कच्चा TypeScript export करत नाहीत — NestJS फक्त स्वतःचा src compile करतो, म्हणून यांना आधी dist बनवावं लागतं.",

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, spacing, typography } from '@/theme/tokens';
+import { colors, spacing, typography, strong } from '@/theme/tokens';
 
 /**
  * "Today's Progress ........ View All" — mockups मध्ये हा pattern 12+ वेळा येतो.
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   title: {
-    ...typography.h2,
+    ...typography.titleL,
     color: colors.text,
   },
   action: {
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   actionText: {
-    ...typography.bodyStrong,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.primary,
   },
 });

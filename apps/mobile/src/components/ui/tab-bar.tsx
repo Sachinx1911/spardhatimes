@@ -5,7 +5,7 @@ import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, radius, shadow, spacing, typography } from '@/theme/tokens';
+import { colors, layout, radius, shadow, spacing, typography } from '@/theme/tokens';
 
 /**
  * Mockups मधला bottom tab bar.
@@ -68,7 +68,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             <Ionicons
               name={focused ? icon.on : icon.off}
               size={22}
-              color={focused ? colors.primary : colors.textFaint}
+              color={focused ? colors.primary : colors.textSecondary}
             />
             <Text style={[styles.label, focused && styles.labelActive]}>{LABELS[route.name]}</Text>
           </Pressable>
@@ -81,11 +81,13 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
 const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
+    // Design system मधली उंची (safe area वेगळी, ती खाली जोडली जाते).
+    minHeight: layout.bottomNavHeight,
     backgroundColor: colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
-    paddingTop: spacing.sm,
-    ...shadow.raised,
+    paddingTop: spacing.md,
+    ...shadow.card,
   },
   item: {
     flex: 1,
@@ -103,7 +105,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 46,
     height: 46,
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -113,8 +115,8 @@ const styles = StyleSheet.create({
     ...shadow.card,
   },
   label: {
-    ...typography.micro,
-    color: colors.textFaint,
+    ...typography.caption,
+    color: colors.textSecondary,
   },
   labelActive: {
     color: colors.primary,

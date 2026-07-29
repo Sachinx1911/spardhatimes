@@ -6,7 +6,7 @@ import { typography } from '@/theme/tokens';
 export default function LoginScreen() {
   return (
     <Screen scroll={false}>
-      <Text style={typography.h1}>Login</Text>
+      <Text style={typography.headingL}>Login</Text>
     </Screen>
   );
 }

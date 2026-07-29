@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
 import { student, testResult } from '@/data/mock';
-import { colors, radius, shadow, spacing, subjectColor, typography } from '@/theme/tokens';
+import { colors, radius, shadow, spacing, subjectColor, typography, strong } from '@/theme/tokens';
 
 /**
  * निकाल.
@@ -96,15 +96,15 @@ export default function ResultScreen() {
           <Breakdown
             icon="checkmark-circle"
             tint={colors.success}
-            soft={colors.successSoft}
+            soft={colors.successLight}
             label="Correct"
             value={r.correct}
             total={r.correct + r.incorrect + r.unattempted}
           />
           <Breakdown
             icon="close-circle"
-            tint={colors.danger}
-            soft={colors.dangerSoft}
+            tint={colors.error}
+            soft={colors.errorLight}
             label="Incorrect"
             value={r.incorrect}
             total={r.correct + r.incorrect + r.unattempted}
@@ -112,15 +112,15 @@ export default function ResultScreen() {
           <Breakdown
             icon="remove-circle"
             tint={colors.warning}
-            soft={colors.warningSoft}
+            soft={colors.warningLight}
             label="Unattempted"
             value={r.unattempted}
             total={r.correct + r.incorrect + r.unattempted}
           />
           <Breakdown
             icon="time"
-            tint={colors.purple}
-            soft={colors.purpleSoft}
+            tint={colors.primary}
+            soft={colors.primaryLight}
             label="Time Taken"
             valueText={`${mins}m ${secs}s`}
             note={`of ${totalMins}m`}
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   },
   screenTitle: {
     flex: 1,
-    ...typography.h2,
+    ...typography.titleL,
     color: colors.text,
   },
   topAction: {
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   topActionText: {
-    ...typography.caption,
+    ...typography.bodyS,
     color: colors.text,
   },
 
@@ -297,14 +297,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     borderRadius: radius.lg,
     padding: spacing.lg,
   },
   testIcon: {
     width: 44,
     height: 44,
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -314,23 +314,23 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   testTitle: {
-    ...typography.h3,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.text,
   },
   testMeta: {
-    ...typography.micro,
+    ...typography.caption,
     fontWeight: '400',
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   completedChip: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.successSoft,
+    backgroundColor: colors.successLight,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
   },
   completedText: {
-    ...typography.micro,
+    ...typography.caption,
     color: colors.success,
   },
   trophy: {
@@ -351,20 +351,20 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   scoreLabel: {
-    ...typography.caption,
-    color: colors.textMuted,
+    ...typography.bodyS,
+    color: colors.textSecondary,
   },
   scoreTextBox: {
     flex: 1,
     gap: spacing.xs,
   },
   congrats: {
-    ...typography.h3,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.success,
   },
   congratsNote: {
-    ...typography.caption,
-    color: colors.textMuted,
+    ...typography.bodyS,
+    color: colors.textSecondary,
   },
 
   breakdown: {
@@ -385,24 +385,24 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   breakdownLabel: {
-    ...typography.micro,
+    ...typography.caption,
     fontWeight: '500',
-    color: colors.textMuted,
+    color: colors.textSecondary,
     flex: 1,
   },
   breakdownValue: {
-    ...typography.stat,
+    ...typography.headingL,
     fontSize: 22,
     color: colors.text,
   },
   breakdownNote: {
-    ...typography.micro,
+    ...typography.caption,
     fontWeight: '400',
-    color: colors.textFaint,
+    color: colors.textSecondary,
   },
 
   sectionTitle: {
-    ...typography.h3,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.text,
     marginBottom: spacing.md,
   },
@@ -414,9 +414,9 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   th: {
-    ...typography.micro,
+    ...typography.caption,
     fontWeight: '500',
-    color: colors.textFaint,
+    color: colors.textSecondary,
     width: 62,
     textAlign: 'right',
   },
@@ -426,9 +426,9 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   thAccuracy: {
-    ...typography.micro,
+    ...typography.caption,
     fontWeight: '500',
-    color: colors.textFaint,
+    color: colors.textSecondary,
     width: 92,
     textAlign: 'right',
   },
@@ -448,23 +448,23 @@ const styles = StyleSheet.create({
   subjectDot: {
     width: 8,
     height: 8,
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
   },
   subjectTextBox: {
     flex: 1,
   },
   subjectName: {
-    ...typography.caption,
+    ...typography.bodyS,
     fontWeight: '600',
     color: colors.text,
   },
   subjectCount: {
     fontSize: 10,
-    color: colors.textFaint,
+    color: colors.textSecondary,
   },
   scoreCell: {
     width: 62,
-    ...typography.caption,
+    ...typography.bodyS,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'right',
@@ -481,17 +481,17 @@ const styles = StyleSheet.create({
   accuracyTrack: {
     flex: 1,
     height: 5,
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     backgroundColor: colors.border,
     overflow: 'hidden',
   },
   accuracyFill: {
     height: '100%',
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
   },
   accuracyText: {
-    ...typography.micro,
-    color: colors.textMuted,
+    ...typography.caption,
+    color: colors.textSecondary,
     width: 30,
     textAlign: 'right',
   },
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chartTitle: {
-    ...typography.bodyStrong,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.text,
     alignSelf: 'flex-start',
   },
@@ -514,9 +514,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chartNote: {
-    ...typography.micro,
+    ...typography.caption,
     fontWeight: '400',
-    color: colors.textFaint,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   trendLabels: {
@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
     ...shadow.card,
   },
   outlineActionText: {
-    ...typography.caption,
+    ...typography.bodyS,
     fontWeight: '600',
     color: colors.primary,
   },
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   primaryActionText: {
-    ...typography.caption,
+    ...typography.bodyS,
     fontWeight: '600',
     color: colors.textInverse,
   },

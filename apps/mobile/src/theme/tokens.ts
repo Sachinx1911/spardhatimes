@@ -1,50 +1,68 @@
 /**
- * Design tokens — MahaTest mockups मधून काढलेले.
+ * Design tokens — दिलेल्या design system प्रमाणे तंतोतंत.
  *
- * 19 screens मध्ये एकसारखं दिसण्यासाठी रंग/अंतर/आकार **इथेच** ठरतात. Screen files
- * मध्ये hex code किंवा सुटे आकडे लिहायचे नाहीत — नेहमी इथून घ्यायचे.
+ * इथले आकडे **डिझाइनमधून जसेच्या तसे** आहेत, अंदाजाने नाहीत. Screen files मध्ये
+ * hex code किंवा सुटे आकडे लिहायचे नाहीत — नेहमी इथून घ्यायचे. एखादं मूल्य इथे
+ * नसेल तर ते डिझाइनमध्येही नाही; आधी विचारून घ्यायचं, स्वतः ठरवायचं नाही.
  *
- * NativeWind वापरलेलं नाही: Expo SDK 57 / RN 0.86 वर त्याचा support अजून confirmed
- * नाही (v4 जुना, v5 pre-release). StyleSheet + हे tokens तेवढंच control देतात.
+ * NativeWind वापरलेलं नाही: Expo SDK 57 / RN 0.86 वर त्याचा support अजून
+ * confirmed नाही (v4 जुना, v5 pre-release).
  */
 
+// ─── 1. COLOR PALETTE ────────────────────────────────────────────────────────
+
 export const colors = {
-  /** Primary actions: Login button, active tab, links, selected option. */
-  primary: '#2563EB',
-  primaryDark: '#1D4ED8',
-  primarySoft: '#EFF6FF',
-
-  /** बरोबर उत्तर, पूर्ण झालेलं, वाढ. */
+  primary: '#4F46E5',
+  primaryLight: '#EDE9FE',
   success: '#10B981',
-  successSoft: '#ECFDF5',
-
-  /** Logo चा teal — Learn/Current Affairs चे accents. */
-  teal: '#14B8A6',
-
-  /** Maths/analytics accents. */
-  purple: '#8B5CF6',
-  purpleSoft: '#F5F3FF',
-
-  /** Marked for review, streak, warning. */
-  warning: '#F59E0B',
-  warningSoft: '#FFFBEB',
-
-  /** चुकीचं उत्तर, End Test, घसरण. */
-  danger: '#EF4444',
-  dangerSoft: '#FEF2F2',
-
-  /** Screen background — शुभ्र पांढरा नाही, हलका निळसर करडा. */
-  background: '#F5F7FA',
+  background: '#F8FAFC',
   surface: '#FFFFFF',
-  border: '#E2E8F0',
 
   text: '#0F172A',
-  textMuted: '#64748B',
-  textFaint: '#94A3B8',
+  textSecondary: '#64748B',
+  border: '#E2E8F0',
+  error: '#EF4444',
+  warning: '#F59E0B',
+
   textInverse: '#FFFFFF',
+
+  // Palette मध्ये नाहीत, पण डिझाइनमध्ये दिसतात — फिकट छटा (tags, soft चौकोन).
+  successLight: '#ECFDF5',
+  errorLight: '#FEF2F2',
+  warningLight: '#FFFBEB',
 } as const;
 
-/** 4-चा पट. Screen padding = `lg`, card च्या आत = `md`. */
+// ─── 2. TYPOGRAPHY (Inter) ───────────────────────────────────────────────────
+
+/**
+ * Inter चे weights वेगवेगळ्या font families आहेत, `fontWeight` नाही — Android वर
+ * `fontWeight: '600'` ने Inter चा SemiBold उचलला जात नाही, तो नेहमीचा Regular
+ * ताणून दाखवतो. म्हणून प्रत्येक शैलीत `fontFamily` स्पष्ट दिलं आहे.
+ */
+export const fonts = {
+  regular: 'Inter_400Regular',
+  semibold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
+} as const;
+
+export const typography = {
+  headingXL: { fontSize: 32, fontFamily: fonts.bold, lineHeight: 40 },
+  headingL: { fontSize: 26, fontFamily: fonts.semibold, lineHeight: 34 },
+  titleL: { fontSize: 20, fontFamily: fonts.semibold, lineHeight: 28 },
+  bodyL: { fontSize: 15, fontFamily: fonts.regular, lineHeight: 22 },
+  bodyM: { fontSize: 14, fontFamily: fonts.regular, lineHeight: 20 },
+  bodyS: { fontSize: 13, fontFamily: fonts.regular, lineHeight: 18 },
+  caption: { fontSize: 12, fontFamily: fonts.regular, lineHeight: 16 },
+} as const;
+
+/** ठळक करायचं असेल तेव्हा — आकार तोच, फक्त family बदलते. */
+export const strong = {
+  semibold: { fontFamily: fonts.semibold },
+  bold: { fontFamily: fonts.bold },
+} as const;
+
+// ─── 3. SPACING (8px grid) ───────────────────────────────────────────────────
+
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -53,67 +71,67 @@ export const spacing = {
   xl: 20,
   '2xl': 24,
   '3xl': 32,
+  '4xl': 40,
+  '5xl': 48,
+  '6xl': 56,
+  '7xl': 64,
 } as const;
+
+// ─── 4. RADIUS & SHADOW ──────────────────────────────────────────────────────
 
 export const radius = {
   sm: 8,
   md: 12,
-  /** Cards चा मानक आकार. */
   lg: 16,
   xl: 20,
-  /** Chips आणि pills. */
-  pill: 999,
-} as const;
-
-export const typography = {
-  /** "Welcome Back!" */
-  display: { fontSize: 32, fontWeight: '800' },
-  /** Screen title. */
-  h1: { fontSize: 24, fontWeight: '700' },
-  /** Section heading — "Today's Progress". */
-  h2: { fontSize: 19, fontWeight: '700' },
-  /** Card title. */
-  h3: { fontSize: 16, fontWeight: '600' },
-  /** StatCard चा मोठा आकडा. */
-  stat: { fontSize: 26, fontWeight: '700' },
-  body: { fontSize: 15, fontWeight: '400' },
-  bodyStrong: { fontSize: 15, fontWeight: '600' },
-  caption: { fontSize: 13, fontWeight: '400' },
-  /** Meta pills, tab labels. */
-  micro: { fontSize: 11, fontWeight: '600' },
+  xxl: 24,
+  full: 50,
 } as const;
 
 /**
- * Cards ला हलकी सावली — mockups मध्ये सावली अगदी मंद आहे, ठळक नाही.
- *
- * जुने `shadowColor`/`shadowOffset` props वापरलेले नाहीत — RN 0.86 वर ते deprecated
- * आहेत आणि web bundler warning देतो. `boxShadow` तिन्ही platforms वर चालतो.
+ * जुने `shadowColor`/`shadowOffset` props वापरलेले नाहीत — RN 0.86 वर ते
+ * deprecated आहेत आणि web bundler warning देतो. `boxShadow` तिन्ही platforms वर.
  */
 export const shadow = {
-  card: {
-    boxShadow: '0px 2px 8px rgba(15, 23, 42, 0.06)',
-  },
-  /** Bottom tab bar आणि raised center button. */
-  raised: {
-    boxShadow: '0px -2px 12px rgba(15, 23, 42, 0.12)',
-  },
+  card: { boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.08)' },
+  button: { boxShadow: '0px 2px 6px rgba(79, 70, 229, 0.15)' },
 } as const;
 
+// ─── 5. LAYOUT (implementation guide मधली मापं) ──────────────────────────────
+
+export const layout = {
+  /** iPhone 13/14 — डिझाइनचा आधार. */
+  baseWidth: 375,
+  screenPadding: 16,
+  headerHeight: 80,
+  heroHeight: 170,
+  chipHeight: 40,
+  chipPaddingH: 18,
+  featuredCard: { width: 280, height: 235 },
+  /** दोन ओळीत: 375 − 16×2 padding − 12 gap ≈ 171 प्रत्येकी. */
+  examCard: { width: 171, height: 82 },
+  popularCardHeight: 150,
+  bottomNavHeight: 72,
+  buttonHeight: 44,
+} as const;
+
+// ─── विषयांचे रंग ────────────────────────────────────────────────────────────
+
 /**
- * विषयाचा रंग — Result आणि Analytics मध्ये प्रत्येक subject ला ठरलेला रंग हवा,
- * नाहीतर दोन screens वर एकाच विषयाचे दोन रंग दिसतील.
+ * Result आणि Analytics मध्ये एकाच विषयाचा रंग एकच राहावा — दोन screens वर दोन
+ * रंग दिसले तर विद्यार्थ्याला ते वेगळे विषय वाटतात.
  */
 export const subjectColors: Record<string, string> = {
   'Current Affairs': colors.success,
-  'Indian Polity': colors.purple,
-  Geography: colors.primary,
+  'Indian Polity': colors.primary,
+  Geography: '#0EA5E9',
   Economy: colors.warning,
-  History: colors.danger,
-  'Science & Tech': colors.teal,
+  History: colors.error,
+  'Science & Tech': '#14B8A6',
   'General Studies': colors.primary,
-  Maths: colors.purple,
-  Marathi: colors.danger,
+  Maths: '#8B5CF6',
+  Marathi: colors.error,
   GK: colors.primary,
 };
 
-export const subjectColor = (name: string) => subjectColors[name] ?? colors.textMuted;
+export const subjectColor = (name: string) => subjectColors[name] ?? colors.textSecondary;

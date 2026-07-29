@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    ...typography.caption,
-    color: colors.textMuted,
+    ...typography.bodyS,
+    color: colors.textSecondary,
   },
   valueRow: {
     flexDirection: 'row',
@@ -92,24 +92,24 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   value: {
-    ...typography.stat,
+    ...typography.headingL,
     color: colors.text,
   },
   suffix: {
-    ...typography.caption,
-    color: colors.textMuted,
+    ...typography.bodyS,
+    color: colors.textSecondary,
   },
   track: {
     height: 5,
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     backgroundColor: colors.border,
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
   },
   footnote: {
-    ...typography.micro,
+    ...typography.caption,
   },
 });

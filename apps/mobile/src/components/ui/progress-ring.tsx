@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   sublabel: {
-    ...typography.micro,
-    color: colors.textMuted,
+    ...typography.caption,
+    color: colors.textSecondary,
   },
 });

@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { attemptQuestions, testInProgress } from '@/data/mock';
-import { colors, radius, shadow, spacing, typography } from '@/theme/tokens';
+import { colors, radius, shadow, spacing, typography, strong } from '@/theme/tokens';
 
 /**
  * Test सोडवण्याची screen.
@@ -87,7 +87,7 @@ export default function AttemptScreen() {
           <Ionicons
             name={review[current.id] ? 'bookmark' : 'bookmark-outline'}
             size={18}
-            color={review[current.id] ? colors.warning : colors.textMuted}
+            color={review[current.id] ? colors.warning : colors.textSecondary}
           />
           <Text style={styles.bookmarkText}>Bookmark</Text>
         </Pressable>
@@ -131,7 +131,7 @@ export default function AttemptScreen() {
               style={[styles.navButton, index === 0 && styles.navButtonDisabled]}
               disabled={index === 0}
               onPress={() => setIndex((i) => i - 1)}>
-              <Ionicons name="chevron-back" size={16} color={colors.textMuted} />
+              <Ionicons name="chevron-back" size={16} color={colors.textSecondary} />
               <Text style={styles.navButtonText}>Previous</Text>
             </Pressable>
 
@@ -172,14 +172,14 @@ export default function AttemptScreen() {
             <Ionicons
               name={paletteOpen ? 'chevron-down' : 'chevron-up'}
               size={16}
-              color={colors.textMuted}
+              color={colors.textSecondary}
             />
           </Pressable>
 
           <View style={styles.legend}>
             <Legend color={colors.success} label="Answered" />
             <Legend color={colors.warning} label="Review" />
-            <Legend color={colors.textFaint} label="Unanswered" />
+            <Legend color={colors.textSecondary} label="Unanswered" />
           </View>
 
           {paletteOpen ? (
@@ -217,7 +217,7 @@ export default function AttemptScreen() {
       {/* ── खालची पट्टी ── */}
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
         <Pressable style={styles.endButton} onPress={() => router.back()}>
-          <Ionicons name="close" size={16} color={colors.danger} />
+          <Ionicons name="close" size={16} color={colors.error} />
           <Text style={styles.endButtonText}>End Test</Text>
         </Pressable>
 
@@ -262,20 +262,20 @@ const styles = StyleSheet.create({
   },
   testTitle: {
     flex: 1,
-    ...typography.h3,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.text,
   },
   timer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.pill,
+    backgroundColor: colors.primaryLight,
+    borderRadius: radius.full,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
   },
   timerText: {
-    ...typography.bodyStrong,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.primary,
   },
 
@@ -287,11 +287,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   progressLabel: {
-    ...typography.caption,
-    color: colors.textMuted,
+    ...typography.bodyS,
+    color: colors.textSecondary,
   },
   progressStrong: {
-    ...typography.bodyStrong,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.primary,
   },
   bookmark: {
@@ -299,11 +299,11 @@ const styles = StyleSheet.create({
   },
   bookmarkText: {
     fontSize: 10,
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   track: {
     height: 4,
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     backgroundColor: colors.border,
     marginHorizontal: spacing.lg,
     marginTop: spacing.sm,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
   fill: {
     height: '100%',
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     backgroundColor: colors.primary,
   },
 
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     ...shadow.card,
   },
   questionText: {
-    ...typography.h3,
+    ...typography.bodyL, ...strong.semibold,
     fontSize: 17,
     lineHeight: 25,
     color: colors.text,
@@ -346,12 +346,12 @@ const styles = StyleSheet.create({
   },
   optionSelected: {
     borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
   },
   optionKey: {
     width: 26,
     height: 26,
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
@@ -360,15 +360,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   optionKeyText: {
-    ...typography.micro,
-    color: colors.textMuted,
+    ...typography.caption,
+    color: colors.textSecondary,
   },
   optionKeyTextSelected: {
     color: colors.textInverse,
   },
   optionText: {
     flex: 1,
-    ...typography.body,
+    ...typography.bodyL,
     color: colors.text,
   },
   optionTextSelected: {
@@ -395,21 +395,21 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   navButtonText: {
-    ...typography.caption,
+    ...typography.bodyS,
     fontWeight: '600',
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   navButtonPrimary: {
     backgroundColor: colors.primary,
   },
   navButtonPrimaryText: {
-    ...typography.caption,
+    ...typography.bodyS,
     fontWeight: '600',
     color: colors.textInverse,
   },
   clearText: {
-    ...typography.caption,
-    color: colors.textMuted,
+    ...typography.bodyS,
+    color: colors.textSecondary,
   },
 
   palette: {
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   paletteTitle: {
-    ...typography.bodyStrong,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.text,
   },
   legend: {
@@ -446,12 +446,12 @@ const styles = StyleSheet.create({
   legendDot: {
     width: 8,
     height: 8,
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
   },
   legendText: {
-    ...typography.micro,
+    ...typography.caption,
     fontWeight: '400',
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   paletteGrid: {
     flexDirection: 'row',
@@ -469,19 +469,19 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   cellAnswered: {
-    backgroundColor: colors.successSoft,
+    backgroundColor: colors.successLight,
   },
   cellReview: {
-    backgroundColor: colors.warningSoft,
+    backgroundColor: colors.warningLight,
   },
   cellCurrent: {
     borderColor: colors.primary,
     backgroundColor: colors.surface,
   },
   paletteCellText: {
-    ...typography.caption,
+    ...typography.bodyS,
     fontWeight: '600',
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
 
   bottomBar: {
@@ -499,27 +499,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: colors.dangerSoft,
+    backgroundColor: colors.errorLight,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   endButtonText: {
-    ...typography.caption,
+    ...typography.bodyS,
     fontWeight: '600',
-    color: colors.danger,
+    color: colors.error,
   },
   bottomMiddle: {
     flex: 1,
     alignItems: 'center',
   },
   bottomCount: {
-    ...typography.caption,
+    ...typography.bodyS,
     fontWeight: '600',
     color: colors.text,
   },
   bottomReview: {
-    ...typography.micro,
+    ...typography.caption,
     fontWeight: '400',
     color: colors.warning,
   },
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   submitButtonText: {
-    ...typography.caption,
+    ...typography.bodyS,
     fontWeight: '700',
     color: colors.textInverse,
   },

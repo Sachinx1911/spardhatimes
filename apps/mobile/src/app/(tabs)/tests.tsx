@@ -10,7 +10,7 @@ import { SectionHeader } from '@/components/ui/section-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { TestCard } from '@/components/ui/test-card';
 import { mySeries, testInProgress, todayProgress, upcomingTests } from '@/data/mock';
-import { colors, radius, shadow, spacing, subjectColor, typography } from '@/theme/tokens';
+import { colors, radius, shadow, spacing, subjectColor, typography, strong } from '@/theme/tokens';
 
 /**
  * Tests tab = **विद्यार्थ्याचं स्वतःचं.** घेतलेल्या series, अर्धवट राहिलेला test,
@@ -100,7 +100,7 @@ export default function MyTestsScreen() {
         <StatCard
           icon="checkmark-circle"
           tint={colors.success}
-          tintSoft={colors.successSoft}
+          tintSoft={colors.successLight}
           label="Questions Solved"
           value={String(todayProgress.questionsSolved)}
           suffix={`/ ${todayProgress.questionsTarget}`}
@@ -108,8 +108,8 @@ export default function MyTestsScreen() {
         />
         <StatCard
           icon="disc"
-          tint={colors.purple}
-          tintSoft={colors.purpleSoft}
+          tint={colors.primary}
+          tintSoft={colors.primaryLight}
           label="Accuracy"
           value={String(todayProgress.accuracyPercent)}
           suffix="%"
@@ -120,14 +120,14 @@ export default function MyTestsScreen() {
         <StatCard
           icon="time"
           tint={colors.primary}
-          tintSoft={colors.primarySoft}
+          tintSoft={colors.primaryLight}
           label="Study Time"
           value={`${studyHours}h ${studyMins}m`}
         />
         <StatCard
           icon="trophy"
           tint={colors.warning}
-          tintSoft={colors.warningSoft}
+          tintSoft={colors.warningLight}
           label="Current Rank"
           value={`#${todayProgress.rank}`}
           footnote={`Top ${todayProgress.rankTopPercent}%`}
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   title: {
-    ...typography.h1,
+    ...typography.headingL,
     color: colors.text,
   },
   badge: {
@@ -222,8 +222,8 @@ const styles = StyleSheet.create({
     right: -4,
     minWidth: 16,
     height: 16,
-    borderRadius: radius.pill,
-    backgroundColor: colors.danger,
+    borderRadius: radius.full,
+    backgroundColor: colors.error,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,
@@ -259,11 +259,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   continueLabel: {
-    ...typography.caption,
+    ...typography.bodyS,
     color: 'rgba(255,255,255,0.85)',
   },
   continueTitle: {
-    ...typography.h3,
+    ...typography.bodyL, ...strong.semibold,
     fontSize: 18,
     color: colors.textInverse,
   },
@@ -274,18 +274,18 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   continueChipText: {
-    ...typography.micro,
+    ...typography.caption,
     color: colors.textInverse,
   },
   continueTrack: {
     height: 6,
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.25)',
     overflow: 'hidden',
   },
   continueFill: {
     height: '100%',
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     backgroundColor: colors.success,
   },
   continueMeta: {
@@ -293,11 +293,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   continueMetaText: {
-    ...typography.caption,
+    ...typography.bodyS,
     color: 'rgba(255,255,255,0.85)',
   },
   continueMetaStrong: {
-    ...typography.bodyStrong,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.textInverse,
   },
   continueButton: {
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   continueButtonText: {
-    ...typography.bodyStrong,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.primary,
   },
 
@@ -350,26 +350,26 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   categoryText: {
-    ...typography.micro,
+    ...typography.caption,
   },
   seriesTitle: {
-    ...typography.h3,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.text,
   },
   seriesMeta: {
-    ...typography.micro,
+    ...typography.caption,
     fontWeight: '400',
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   seriesTrack: {
     height: 6,
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
     backgroundColor: colors.border,
     overflow: 'hidden',
   },
   seriesFill: {
     height: '100%',
-    borderRadius: radius.pill,
+    borderRadius: radius.full,
   },
   seriesFooter: {
     flexDirection: 'row',
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   viewLinkText: {
-    ...typography.caption,
+    ...typography.bodyS,
     fontWeight: '600',
     color: colors.primary,
   },
@@ -390,14 +390,14 @@ const styles = StyleSheet.create({
   tip: {
     flexDirection: 'row',
     gap: spacing.sm,
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.primaryLight,
     borderRadius: radius.md,
     padding: spacing.md,
   },
   tipText: {
     flex: 1,
-    ...typography.caption,
-    color: colors.textMuted,
+    ...typography.bodyS,
+    color: colors.textSecondary,
   },
   tipStrong: {
     fontWeight: '700',
@@ -411,8 +411,8 @@ const styles = StyleSheet.create({
     height: spacing.xl,
   },
   empty: {
-    ...typography.caption,
-    color: colors.textMuted,
+    ...typography.bodyS,
+    color: colors.textSecondary,
     paddingVertical: spacing.lg,
     textAlign: 'center',
   },

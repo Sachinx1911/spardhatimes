@@ -6,7 +6,7 @@ import { typography } from '@/theme/tokens';
 export default function AnalyticsScreen() {
   return (
     <Screen>
-      <Text style={typography.h1}>Analytics</Text>
+      <Text style={typography.headingL}>Analytics</Text>
     </Screen>
   );
 }

@@ -1,25 +1,26 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { MetaPill } from '@/components/ui/meta-pill';
-import { colors, radius, shadow, spacing, typography } from '@/theme/tokens';
+import { Button } from '@/components/ui/button';
+import { Tag } from '@/components/ui/tag';
+import { colors, layout, radius, shadow, spacing, strong, typography } from '@/theme/tokens';
 import { discountPercent, rupees, type TestSeries } from '@/types';
 
 /**
- * दुकानातलं Test Series कार्ड — दोन रूपं:
+ * दुकानातलं Test Series कार्ड — design system मधली दोन रूपं:
  *
- * - `featured`: रुंद रंगीत आवरण, वर आडवं scroll होणाऱ्या पट्टीत
- * - `row`: यादीतली ओळ, डावीकडे लहान आवरण + उजवीकडे किंमत आणि Buy Now
+ * - `featured`: 280×235, आडव्या पट्टीत, वर रंगीत आवरण
+ * - `popular`: उंची 150, उभ्या यादीत, डावीकडे लहान आवरण + उजवीकडे Buy Now
  *
  * Cart नाही — "Buy Now" थेट त्या series चा checkout उघडतो (ठरलेलं).
  */
 export function SeriesCard({
   series,
-  variant = 'row',
+  variant = 'popular',
   onPress,
   onBuy,
 }: {
   series: TestSeries;
-  variant?: 'featured' | 'row';
+  variant?: 'featured' | 'popular';
   onPress?: () => void;
   onBuy?: () => void;
 }) {
@@ -37,28 +38,26 @@ export function SeriesCard({
         </View>
 
         <View style={styles.featuredBody}>
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={styles.featuredTitle} numberOfLines={1}>
             {series.title}
           </Text>
-          <Text style={styles.subtitle} numberOfLines={1}>
+          <Text style={styles.featuredSubtitle} numberOfLines={1}>
             {series.subtitle}
           </Text>
 
-          <View style={styles.pills}>
-            <MetaPill icon="documents-outline" label={`${series.plannedTotalTests} Tests`} />
-            <MetaPill icon="language-outline" label={series.language} />
-          </View>
+          <Text style={styles.featureText}>{`${series.plannedTotalTests} Tests`}</Text>
+          <Text style={styles.featureText}>{series.language}</Text>
 
           <View style={styles.priceRow}>
-            <Text style={styles.price}>{rupees(series.priceInPaise)}</Text>
+            <Text style={styles.featuredPrice}>{rupees(series.priceInPaise)}</Text>
             {series.mrpInPaise ? (
               <Text style={styles.mrp}>{rupees(series.mrpInPaise)}</Text>
             ) : null}
             {off ? <Text style={styles.off}>{off}% OFF</Text> : null}
           </View>
 
-          <Pressable style={styles.outlineButton} onPress={onPress}>
-            <Text style={[styles.outlineButtonText, { color: cover }]}>View Details</Text>
+          <Pressable style={styles.detailsButton} onPress={onPress}>
+            <Text style={styles.detailsButtonText}>View Details</Text>
           </Pressable>
         </View>
       </Pressable>
@@ -66,172 +65,201 @@ export function SeriesCard({
   }
 
   return (
-    <Pressable style={styles.row} onPress={onPress}>
-      <View style={[styles.rowCover, { backgroundColor: cover }]}>
-        <Text style={styles.rowCoverExam}>{series.examName}</Text>
-        <Text style={styles.rowCoverLabel} numberOfLines={3}>
-          Test Series
-        </Text>
+    <Pressable style={styles.popular} onPress={onPress}>
+      <View style={[styles.popularCover, { backgroundColor: cover }]}>
+        <Text style={styles.popularCoverExam}>{series.examName}</Text>
+        <Text style={styles.popularCoverLabel}>Test Series</Text>
       </View>
 
-      <View style={styles.rowBody}>
-        <Text style={styles.title} numberOfLines={2}>
-          {series.title}
-        </Text>
+      <View style={styles.popularBody}>
+        <View style={styles.popularTop}>
+          <Text style={styles.title} numberOfLines={2}>
+            {series.title}
+          </Text>
+          <View style={styles.priceColumn}>
+            <View style={styles.priceRow}>
+              <Text style={styles.price}>{rupees(series.priceInPaise)}</Text>
+              {series.mrpInPaise ? (
+                <Text style={styles.mrp}>{rupees(series.mrpInPaise)}</Text>
+              ) : null}
+            </View>
+            {off ? <Text style={styles.offRight}>{off}% OFF</Text> : null}
+          </View>
+        </View>
+
         {series.description ? (
           <Text style={styles.description} numberOfLines={2}>
             {series.description}
           </Text>
         ) : null}
 
-        <View style={styles.pills}>
-          <MetaPill label={`${series.plannedTotalTests} Tests`} />
-          <MetaPill label={series.language} />
-          <MetaPill label={`Valid for ${series.validityMonths} Months`} />
-        </View>
-
-        <View style={styles.rowFooter}>
-          <View style={styles.priceRow}>
-            <Text style={styles.price}>{rupees(series.priceInPaise)}</Text>
-            {series.mrpInPaise ? (
-              <Text style={styles.mrp}>{rupees(series.mrpInPaise)}</Text>
-            ) : null}
+        <View style={styles.popularFooter}>
+          <View style={styles.tags}>
+            <Tag label={`${series.plannedTotalTests} Tests`} />
+            <Tag label={series.language} />
+            <Tag label={`Valid for ${series.validityMonths} Months`} />
           </View>
-          <Pressable style={[styles.buyButton, { borderColor: cover }]} onPress={onBuy}>
-            <Text style={[styles.buyButtonText, { color: cover }]}>Buy Now</Text>
-          </Pressable>
+          <Button label="Buy Now" onPress={onBuy} full={false} style={styles.buyButton} />
         </View>
-        {off ? <Text style={styles.offRight}>{off}% OFF</Text> : null}
       </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  // ── featured ──
   featured: {
-    // 240 pt — "English / Hindi" सारखा लांब pill दुसऱ्या ओळीवर जाऊ नये एवढी रुंदी.
-    // कमी असेल तर pills मोडतात आणि शेजारच्या कार्डांची उंची असमान दिसते.
-    width: 240,
+    // मापं design system मधून जशीच्या तशी. उंची निश्चित ठेवली आहे म्हणून
+    // शेजारची कार्डं समान उंचीची दिसतात — नाहीतर लांब नावाचं कार्ड उंच होतं.
+    width: layout.featuredCard.width,
+    height: layout.featuredCard.height,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     overflow: 'hidden',
     ...shadow.card,
   },
   featuredCover: {
-    height: 96,
-    padding: spacing.md,
+    height: 80,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     justifyContent: 'space-between',
   },
   coverExam: {
-    ...typography.micro,
+    ...typography.caption,
     color: 'rgba(255,255,255,0.85)',
   },
   coverTitle: {
-    ...typography.h3,
+    ...typography.bodyL,
+    ...strong.bold,
     color: colors.textInverse,
   },
   featuredBody: {
-    padding: spacing.md,
-    gap: spacing.sm,
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    gap: spacing.xs,
+  },
+  featuredTitle: {
+    ...typography.bodyM,
+    ...strong.semibold,
+    color: colors.text,
+  },
+  featuredSubtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  featureText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  featuredPrice: {
+    ...typography.bodyL,
+    ...strong.bold,
+    color: colors.text,
+  },
+  detailsButton: {
+    marginTop: 'auto',
+    height: 34,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailsButtonText: {
+    ...typography.caption,
+    ...strong.semibold,
+    color: colors.primary,
   },
 
-  row: {
+  // ── popular ──
+  popular: {
     flexDirection: 'row',
     gap: spacing.md,
+    minHeight: layout.popularCardHeight,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.md,
     ...shadow.card,
   },
-  rowCover: {
-    width: 86,
+  popularCover: {
+    width: 88,
     borderRadius: radius.md,
-    padding: spacing.sm,
+    padding: spacing.md,
     justifyContent: 'center',
     gap: spacing.xs,
   },
-  rowCoverExam: {
-    ...typography.bodyStrong,
+  popularCoverExam: {
+    ...typography.bodyL,
+    ...strong.bold,
     color: colors.textInverse,
   },
-  rowCoverLabel: {
-    ...typography.micro,
-    fontWeight: '400',
+  popularCoverLabel: {
+    ...typography.caption,
     color: 'rgba(255,255,255,0.8)',
   },
-  rowBody: {
+  popularBody: {
     flex: 1,
-    gap: spacing.xs,
-  },
-  rowFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.xs,
+    gap: spacing.sm,
   },
-
-  title: {
-    ...typography.h3,
-    color: colors.text,
+  popularTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
   },
-  subtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
+  priceColumn: {
+    alignItems: 'flex-end',
   },
-  description: {
-    ...typography.caption,
-    color: colors.textMuted,
+  popularFooter: {
+    gap: spacing.sm,
   },
-  pills: {
+  tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.xs,
   },
+  buyButton: {
+    alignSelf: 'flex-end',
+  },
 
+  // ── दोन्हींत ──
+  title: {
+    flex: 1,
+    ...typography.bodyL,
+    ...strong.semibold,
+    color: colors.text,
+  },
+  subtitle: {
+    ...typography.bodyS,
+    color: colors.textSecondary,
+  },
+  description: {
+    ...typography.bodyS,
+    color: colors.textSecondary,
+  },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: spacing.sm,
   },
   price: {
-    ...typography.h3,
-    fontSize: 17,
+    ...typography.titleL,
     color: colors.text,
   },
   mrp: {
-    ...typography.caption,
-    color: colors.textFaint,
+    ...typography.bodyS,
+    color: colors.textSecondary,
     textDecorationLine: 'line-through',
   },
   off: {
-    ...typography.micro,
+    ...typography.caption,
+    ...strong.semibold,
     color: colors.success,
   },
   offRight: {
-    ...typography.micro,
+    ...typography.caption,
+    ...strong.semibold,
     color: colors.success,
-    textAlign: 'right',
-  },
-
-  outlineButton: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-  },
-  outlineButtonText: {
-    ...typography.caption,
-    fontWeight: '600',
-  },
-  buyButton: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
-  buyButtonText: {
-    ...typography.caption,
-    fontWeight: '600',
   },
 });

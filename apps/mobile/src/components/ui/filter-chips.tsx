@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
-import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { colors, layout, radius, spacing, strong, typography } from '@/theme/tokens';
 
 export interface FilterChip {
   key: string;
@@ -10,9 +10,8 @@ export interface FilterChip {
 }
 
 /**
- * My Test Series आणि Current Affairs वरच्या आडव्या chips (All / GK / Maths ...).
- *
- * `ScrollView` आडवा ठेवला आहे — विषय वाढले तरी chips ओळीबाहेर जाऊन तुटत नाहीत.
+ * "All Exams / MPSC / UPSC ..." — आडवं scroll होणाऱ्या chips.
+ * मापं design system मधून: उंची 40, आडवं padding 18, radius 20.
  */
 export function FilterChips({
   chips,
@@ -38,8 +37,8 @@ export function FilterChips({
             {chip.icon ? (
               <Ionicons
                 name={chip.icon}
-                size={14}
-                color={selected ? colors.textInverse : colors.textMuted}
+                size={16}
+                color={selected ? colors.textInverse : colors.textSecondary}
               />
             ) : null}
             <Text style={[styles.label, selected && styles.labelActive]}>{chip.label}</Text>
@@ -58,11 +57,11 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.sm,
+    height: layout.chipHeight,
+    paddingHorizontal: layout.chipPaddingH,
+    borderRadius: radius.xl,
     backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -71,9 +70,9 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   label: {
-    ...typography.caption,
-    fontWeight: '600',
-    color: colors.textMuted,
+    ...typography.bodyM,
+    ...strong.semibold,
+    color: colors.textSecondary,
   },
   labelActive: {
     color: colors.textInverse,

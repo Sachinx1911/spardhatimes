@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { MetaPill } from '@/components/ui/meta-pill';
-import { colors, radius, shadow, spacing, subjectColor, typography } from '@/theme/tokens';
+import { colors, radius, shadow, spacing, subjectColor, typography, strong } from '@/theme/tokens';
 import type { Test } from '@/types';
 
 /**
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   month: {
-    ...typography.micro,
+    ...typography.caption,
   },
   day: {
     fontSize: 20,
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   weekday: {
     fontSize: 9,
     fontWeight: '600',
-    color: colors.textFaint,
+    color: colors.textSecondary,
   },
   middle: {
     flex: 1,
@@ -95,10 +95,10 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   categoryText: {
-    ...typography.micro,
+    ...typography.caption,
   },
   title: {
-    ...typography.h3,
+    ...typography.bodyL, ...strong.semibold,
     color: colors.text,
   },
   pills: {
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   actionText: {
-    ...typography.micro,
+    ...typography.caption,
     textAlign: 'center',
   },
 });
