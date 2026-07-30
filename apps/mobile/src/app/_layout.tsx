@@ -2,11 +2,12 @@
 import '@/global.css';
 
 import {
-  Inter_400Regular,
-  Inter_600SemiBold,
-  Inter_700Bold,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
   useFonts,
-} from '@expo-google-fonts/inter';
+} from '@expo-google-fonts/poppins';
 import { Stack, ThemeProvider, DefaultTheme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -34,12 +35,13 @@ const theme = {
 };
 
 export default function RootLayout() {
-  // Design system Inter वर आहे. Font येण्याआधी screens दाखवले तर मजकूर आधी
+  // Design system Poppins वर आहे. Font येण्याआधी screens दाखवले तर मजकूर आधी
   // system font मध्ये दिसतो आणि मग उडी मारून बदलतो — म्हणून तोपर्यंत splash तसाच.
   const [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_600SemiBold,
-    Inter_700Bold,
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
   });
 
   useEffect(() => {

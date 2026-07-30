@@ -11,6 +11,7 @@ import type {
   Article,
   Exam,
   Question,
+  SeriesTestRow,
   StudentProfile,
   Test,
   TestResult,
@@ -386,3 +387,34 @@ export const achievements = [
   { id: 'ach_4', label: 'Dedicated', note: '30 Days Active', icon: 'calendar' as const },
   { id: 'ach_5', label: 'Top Performer', note: 'In Top 10%', icon: 'trophy' as const },
 ];
+
+/**
+ * "My Test Series" screen — घेतलेल्या series मधले वैयक्तिक tests, क्रमांकासह.
+ * `seriesId` ने `mySeries` शी जोडलेले.
+ */
+export const seriesTests: Record<string, SeriesTestRow[]> = {
+  ser_gk: [
+    { id: 'st_1', order: 1, title: 'Full Length Test 01', questionCount: 100, totalMarks: 150, durationMinutes: 120, status: 'COMPLETED', scorePercent: 82 },
+    { id: 'st_2', order: 2, title: 'Full Length Test 02', questionCount: 100, totalMarks: 150, durationMinutes: 120, status: 'IN_PROGRESS', scorePercent: 60 },
+    { id: 'st_3', order: 3, title: 'Full Length Test 03', questionCount: 100, totalMarks: 150, durationMinutes: 120, status: 'NOT_ATTEMPTED' },
+  ],
+  ser_maths: [
+    { id: 'st_4', order: 1, title: 'Maths Test 01', questionCount: 100, totalMarks: 150, durationMinutes: 120, status: 'COMPLETED', scorePercent: 74 },
+    { id: 'st_5', order: 2, title: 'Maths Test 02', questionCount: 100, totalMarks: 150, durationMinutes: 120, status: 'NOT_ATTEMPTED' },
+  ],
+};
+
+/** Performance Analytics कार्ड — चार आकडे. */
+export const performanceSummary = {
+  testsTaken: 24,
+  averageScorePercent: 68,
+  highestScorePercent: 92,
+  accuracyPercent: 72,
+};
+
+/** My Progress — दोन कार्डं. */
+export const myProgress = {
+  testsCompleted: 12,
+  testsTotal: 24,
+  overallScorePercent: 68,
+};

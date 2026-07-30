@@ -111,10 +111,28 @@ export default function StoreScreen() {
               <Text style={styles.examName} numberOfLines={1}>
                 {e.name}
               </Text>
-              <Text style={styles.examCount}>{e.seriesCount} Test Series</Text>
+              <Text style={styles.examCount} numberOfLines={1}>
+                {e.seriesCount} Test Series
+              </Text>
             </View>
           </Pressable>
         ))}
+
+        {/* परीक्षांची संख्या विषम असल्याने शेवटचं कार्ड एकटं पडून पूर्ण रुंदीचं होतं.
+            Design मध्ये त्याच्या शेजारी "More Exams" आहे — तो जोडी पूर्ण करतो. */}
+        <Pressable style={styles.examTile} onPress={() => {}}>
+          <View style={styles.examIcon}>
+            <Ionicons name="ellipsis-horizontal" size={20} color={colors.primary} />
+          </View>
+          <View style={styles.examTextBox}>
+            <Text style={styles.examName} numberOfLines={1}>
+              More Exams
+            </Text>
+            <Text style={styles.examCount} numberOfLines={1}>
+              View All
+            </Text>
+          </View>
+        </Pressable>
       </View>
 
       {/* ── वैशिष्ट्यं ── */}
@@ -196,7 +214,7 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    minHeight: layout.heroHeight,
+    minHeight: layout.topBannerHeight,
     backgroundColor: colors.primaryLight,
     borderRadius: radius.xl,
     padding: spacing.xl,
@@ -257,11 +275,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   examTile: {
-    // 375 − 16×2 padding − 12 gap = 331 ≈ दोन कार्ड. निश्चित रुंदी दिली तर
-    // रुंद फोनवर मधे मोकळी जागा राहते, म्हणून उरलेली जागा वाटून घेतो.
+    // Sheet: 160×72, दोन प्रति ओळ. निश्चित रुंदी दिली तर रुंद फोनवर मधे मोकळी
+    // जागा राहते, म्हणून उरलेली जागा वाटून घेतो — उंची मात्र sheet मधलीच.
     flexGrow: 1,
     flexBasis: '46%',
-    height: layout.examCard.height,
+    height: layout.examCardHeight,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
@@ -271,8 +289,10 @@ const styles = StyleSheet.create({
     ...shadow.card,
   },
   examIcon: {
-    width: 40,
-    height: 40,
+    // 36 — 40 वर "Police Bharti" सारखी लांब नावं 160dp कार्डात कापली जात होती.
+    // Poppins हा Inter पेक्षा रुंद आहे, त्यामुळे मजकुराला जास्त जागा हवी.
+    width: 36,
+    height: 36,
     borderRadius: radius.md,
     backgroundColor: colors.primaryLight,
     alignItems: 'center',
@@ -283,7 +303,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   examName: {
-    ...typography.bodyM,
+    ...typography.bodyS,
     ...strong.semibold,
     color: colors.text,
   },

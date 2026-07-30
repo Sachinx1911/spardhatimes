@@ -151,3 +151,19 @@ export interface TodayProgress {
   rank: number;
   rankTopPercent: number;
 }
+
+/** घेतलेल्या series मधल्या एका test ची ओळ — "My Test Series" screen. */
+export type SeriesTestStatus = 'COMPLETED' | 'IN_PROGRESS' | 'NOT_ATTEMPTED';
+
+export interface SeriesTestRow {
+  id: string;
+  /** यादीत दिसणारा क्रमांक — 01, 02, 03. */
+  order: number;
+  title: string;
+  questionCount: number;
+  totalMarks: number;
+  durationMinutes: number;
+  status: SeriesTestStatus;
+  /** COMPLETED / IN_PROGRESS असेल तरच. */
+  scorePercent?: number;
+}

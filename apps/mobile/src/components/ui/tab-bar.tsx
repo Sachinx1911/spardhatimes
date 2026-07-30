@@ -5,16 +5,18 @@ import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, layout, radius, shadow, spacing, typography } from '@/theme/tokens';
+import { colors, componentType, layout, radius, spacing } from '@/theme/tokens';
 
 /**
- * Mockups मधला bottom tab bar.
+ * Bottom navigation — design sheets मधल्या मापांप्रमाणे: उंची 56dp, icon 24dp,
+ * label 11sp, active रंग #4F46E5.
  *
- * Expo चा `NativeTabs` वापरलेला नाही — तो OS चा native tab bar दाखवतो आणि मधला
- * उंचावलेला "Tests" गोल button त्यात बसत नाही. म्हणून `js-tabs` + हा custom renderer.
+ * **सपाट आहे, मधला उंचावलेला button नाही.** आधीच्या mockups मध्ये "Tests" गोलात
+ * उचललेला दिसत होता, पण तिन्ही नवीन design sheets मध्ये पाचही tabs सारखेच सपाट
+ * आहेत — active फक्त रंगाने आणि खालच्या ठिपक्याने ओळखू येतो.
  *
- * Mockups मध्ये tab bar तीन वेगवेगळ्या क्रमाने दिसतो (कुठे Live Classes, कुठे Learn;
- * कुठे Profile च्या जागी avatar). इथे एकच क्रम ठरवला आहे — तोच सगळीकडे वापरायचा.
+ * Expo चा `NativeTabs` वापरलेला नाही — तो OS चा tab bar दाखवतो, त्यात हा active
+ * ठिपका आणि नेमकी 56dp उंची बसवता येत नाही. म्हणून `js-tabs` + हा custom renderer.
  */
 const ICONS: Record<string, { on: keyof typeof Ionicons.glyphMap; off: keyof typeof Ionicons.glyphMap }> = {
   index: { on: 'home', off: 'home-outline' },
@@ -32,14 +34,11 @@ const LABELS: Record<string, string> = {
   profile: 'Profile',
 };
 
-/** मधला tab उंचावलेला असतो — mockups मध्ये तो नेहमी Tests आहे. */
-const RAISED = 'tests';
-
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
+    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, layout.safeAreaBottom) }]}>
       {state.routes.map((route, index) => {
         const focused = state.index === index;
         const icon = ICONS[route.name];
@@ -50,27 +49,16 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
         };
 
-        if (route.name === RAISED) {
-          return (
-            <Pressable key={route.key} onPress={onPress} style={styles.item} accessibilityRole="tab">
-              <View style={styles.raisedSlot}>
-                <View style={styles.raised}>
-                  <Ionicons name={icon.on} size={22} color={colors.textInverse} />
-                </View>
-              </View>
-              <Text style={[styles.label, focused && styles.labelActive]}>{LABELS[route.name]}</Text>
-            </Pressable>
-          );
-        }
-
         return (
           <Pressable key={route.key} onPress={onPress} style={styles.item} accessibilityRole="tab">
             <Ionicons
               name={focused ? icon.on : icon.off}
-              size={22}
+              size={layout.navIconSize}
               color={focused ? colors.primary : colors.textSecondary}
             />
             <Text style={[styles.label, focused && styles.labelActive]}>{LABELS[route.name]}</Text>
+            {/* Active tab खाली लहान ठिपका — sheets मध्ये तोच फरक दाखवतो. */}
+            <View style={[styles.dot, focused && styles.dotActive]} />
           </Pressable>
         );
       })}
@@ -81,44 +69,32 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
 const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
-    // Design system मधली उंची (safe area वेगळी, ती खाली जोडली जाते).
-    minHeight: layout.bottomNavHeight,
+    // 56dp ही bar ची स्वतःची उंची; safe area त्याखाली वेगळी जोडली जाते.
+    height: layout.bottomNavHeight,
     backgroundColor: colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
-    paddingTop: spacing.md,
-    ...shadow.card,
+    paddingTop: spacing.sm,
   },
   item: {
     flex: 1,
     alignItems: 'center',
-    gap: spacing.xs,
-  },
-  // गोल button इतर tabs च्या icon एवढीच (22px) जागा घेतो, म्हणून सगळ्या tabs चे
-  // labels एका रेषेत राहतात.
-  raisedSlot: {
-    height: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  raised: {
-    position: 'absolute',
-    width: 46,
-    height: 46,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // वर उचलून bar च्या काठाबाहेर काढतो — negative margin ने layout ची उंची बदलली
-    // असती आणि label गोलात घुसला असता.
-    transform: [{ translateY: -14 }],
-    ...shadow.card,
+    gap: 2,
   },
   label: {
-    ...typography.caption,
+    ...componentType.navLabel,
     color: colors.textSecondary,
   },
   labelActive: {
     color: colors.primary,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: radius.full,
+    backgroundColor: 'transparent',
+  },
+  dotActive: {
+    backgroundColor: colors.primary,
   },
 });

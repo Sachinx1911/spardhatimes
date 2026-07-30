@@ -4,21 +4,43 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
-import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
-import { StatCard } from '@/components/ui/stat-card';
-import { TestCard } from '@/components/ui/test-card';
-import { mySeries, testInProgress, todayProgress, upcomingTests } from '@/data/mock';
-import { colors, radius, shadow, spacing, subjectColor, typography, strong } from '@/theme/tokens';
+import {
+  myProgress,
+  mySeries,
+  performanceSummary,
+  seriesTests,
+  testInProgress,
+} from '@/data/mock';
+import {
+  colors,
+  componentType,
+  layout,
+  radius,
+  shadow,
+  spacing,
+  strong,
+  typography,
+} from '@/theme/tokens';
+import type { SeriesTestRow, SeriesTestStatus } from '@/types';
 
 /**
- * Tests tab = **विद्यार्थ्याचं स्वतःचं.** घेतलेल्या series, अर्धवट राहिलेला test,
- * आजची प्रगती, आणि येणारे tests.
+ * "My Test Series" — विद्यार्थ्याचं स्वतःचं. Design sheet मधला क्रम:
+ * banner (170) → Continue कार्ड (150) → घेतलेल्या series (test rows सह) →
+ * Performance Analytics (170) → My Progress (120).
  *
  * Home tab हे दुकान आहे (नवीन series विकत घ्यायला) — इथे फक्त आधीच घेतलेलं दिसतं.
  */
-export default function MyTestsScreen() {
+
+/** प्रत्येक स्थितीचा रंग एकाच ठिकाणी — chip आणि गुण दोन्हीसाठी तोच. */
+const STATUS: Record<SeriesTestStatus, { label: string; fg: string; bg: string }> = {
+  COMPLETED: { label: 'Completed', fg: colors.success, bg: colors.successLight },
+  IN_PROGRESS: { label: 'In Progress', fg: colors.warning, bg: colors.warningLight },
+  NOT_ATTEMPTED: { label: 'Not Attempted', fg: colors.textSecondary, bg: colors.background },
+};
+
+export default function MyTestSeriesScreen() {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState('all');
 
@@ -31,177 +53,241 @@ export default function MyTestsScreen() {
   const visibleSeries =
     activeCategory === 'all' ? mySeries : mySeries.filter((s) => s.categoryName === activeCategory);
 
-  const studyHours = Math.floor(todayProgress.studyMinutes / 60);
-  const studyMins = todayProgress.studyMinutes % 60;
-
-  // स्थानिक const — नाहीतर खालच्या onPress मध्ये TypeScript ला `testInProgress`
-  // null नाही हे लक्षात राहत नाही (import केलेल्या binding चं narrowing टिकत नाही).
-  const inProgress = testInProgress;
-  const answered = inProgress?.answeredCount ?? 0;
-  const progressPct = inProgress
-    ? Math.round((answered / inProgress.questionCount) * 100)
-    : 0;
+  // `testInProgress` हा union मध्ये `null` सुद्धा आहे. एका स्थानिक चलात घेतल्याने
+  // TypeScript ला खात्री पटते की JSX मधल्या closure मध्येही तो null नाही.
+  const current = testInProgress;
+  const answered = current?.answeredCount ?? 0;
+  const donePercent = current ? Math.round((answered / current.questionCount) * 100) : 0;
 
   return (
     <Screen>
       <View style={styles.header}>
-        <Text style={styles.title}>My Test Series</Text>
-        <Pressable hitSlop={8}>
-          <Ionicons name="notifications-outline" size={24} color={colors.text} />
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>3</Text>
+        <Text style={styles.screenTitle}>My Test Series</Text>
+        <View style={styles.headerActions}>
+          <Ionicons name="search" size={layout.navIconSize} color={colors.text} />
+          <View>
+            <Ionicons name="notifications-outline" size={layout.navIconSize} color={colors.text} />
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>3</Text>
+            </View>
           </View>
-        </Pressable>
+        </View>
       </View>
 
       <FilterChips chips={chips} active={activeCategory} onChange={setActiveCategory} />
-      <View style={styles.gap} />
+
+      {/* ── banner ── */}
+      <View style={styles.banner}>
+        <Text style={styles.bannerTitle}>Practice More.{'\n'}Score Higher.</Text>
+        <Text style={styles.bannerNote}>High quality tests designed as per latest pattern.</Text>
+        <Pressable style={styles.bannerButton} onPress={() => router.push('/')}>
+          <Text style={styles.bannerButtonText}>Explore Test Series</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+        </Pressable>
+      </View>
 
       {/* ── अर्धवट राहिलेला test ── */}
-      {inProgress ? (
+      {current ? (
         <View style={styles.continueCard}>
           <View style={styles.continueTop}>
             <View style={styles.continueIcon}>
-              <Ionicons name="document-text" size={20} color={colors.textInverse} />
+              <Ionicons name="document-text" size={layout.cardIconSize} color={colors.primary} />
             </View>
-            <View style={styles.continueTitleBox}>
+            <View style={styles.continueHeadText}>
               <Text style={styles.continueLabel}>Continue Your Test</Text>
-              <Text style={styles.continueTitle}>{inProgress.title}</Text>
-            </View>
-            <View style={styles.continueChip}>
-              <Text style={styles.continueChipText}>In Progress</Text>
+              <Text style={styles.continueTitle} numberOfLines={1}>
+                {current.title}
+              </Text>
             </View>
           </View>
 
-          <View style={styles.continueTrack}>
-            <View style={[styles.continueFill, { width: `${progressPct}%` }]} />
-          </View>
-
-          <View style={styles.continueMeta}>
-            <Text style={styles.continueMetaText}>
-              <Text style={styles.continueMetaStrong}>{answered}</Text>
-              {` / ${inProgress.questionCount} Questions`}
+          <View style={styles.continueMetaRow}>
+            <Text style={styles.continueMeta}>
+              {answered} / {current.questionCount} Questions Completed
             </Text>
-            <Text style={styles.continueMetaStrong}>{progressPct}%</Text>
+            <Text style={styles.continuePercent}>{donePercent}%</Text>
+          </View>
+
+          <View style={styles.track}>
+            <View style={[styles.trackFill, { width: `${donePercent}%` }]} />
           </View>
 
           <Pressable
-            style={styles.continueButton}
-            onPress={() => router.push(`/quiz/${inProgress.id}/attempt`)}>
-            <Text style={styles.continueButtonText}>Continue Test</Text>
-            <Ionicons name="arrow-forward" size={16} color={colors.primary} />
+            style={styles.resumeButton}
+            onPress={() => router.push(`/quiz/${current.id}/attempt`)}>
+            <Text style={styles.resumeButtonText}>Resume Test</Text>
           </Pressable>
         </View>
       ) : null}
 
-      {/* ── आजची प्रगती ── */}
-      <SectionHeader title="Today's Progress" onViewAll={() => router.push('/analytics')} />
-      <View style={styles.statGrid}>
-        <StatCard
-          icon="checkmark-circle"
-          tint={colors.success}
-          tintSoft={colors.successLight}
-          label="Questions Solved"
-          value={String(todayProgress.questionsSolved)}
-          suffix={`/ ${todayProgress.questionsTarget}`}
-          progress={todayProgress.questionsSolved / todayProgress.questionsTarget}
-        />
-        <StatCard
-          icon="disc"
-          tint={colors.primary}
-          tintSoft={colors.primaryLight}
-          label="Accuracy"
-          value={String(todayProgress.accuracyPercent)}
-          suffix="%"
-          progress={todayProgress.accuracyPercent / 100}
-        />
-      </View>
-      <View style={styles.statGrid}>
-        <StatCard
-          icon="time"
-          tint={colors.primary}
-          tintSoft={colors.primaryLight}
-          label="Study Time"
-          value={`${studyHours}h ${studyMins}m`}
-        />
-        <StatCard
-          icon="trophy"
-          tint={colors.warning}
-          tintSoft={colors.warningLight}
-          label="Current Rank"
-          value={`#${todayProgress.rank}`}
-          footnote={`Top ${todayProgress.rankTopPercent}%`}
-        />
-      </View>
-
       {/* ── घेतलेल्या series ── */}
       <View style={styles.gap} />
-      <SectionHeader title="Active Test Series" />
-      <View style={styles.list}>
-        {visibleSeries.length > 0 ? (
-          visibleSeries.map((s) => {
-            const tint = subjectColor(s.categoryName);
-            const done = s.completedTests / s.plannedTotalTests;
-            return (
-              <View key={s.id} style={styles.seriesCard}>
-                <View style={styles.seriesTop}>
-                  <View style={[styles.seriesIcon, { backgroundColor: tint + '18' }]}>
-                    <Ionicons name="layers" size={20} color={tint} />
-                  </View>
-                  <View style={styles.seriesTextBox}>
-                    <View style={[styles.categoryChip, { backgroundColor: tint + '18' }]}>
-                      <Text style={[styles.categoryText, { color: tint }]}>{s.categoryName}</Text>
-                    </View>
-                    <Text style={styles.seriesTitle}>{s.title}</Text>
-                    <Text style={styles.seriesMeta}>
-                      {`${s.completedTests} Tests  •  ${s.plannedTotalTests} Total Tests`}
-                    </Text>
-                  </View>
-                  <ProgressRing progress={done} size={58} color={tint} />
-                </View>
+      <SectionHeader title="Enrolled Test Series" onViewAll={() => {}} />
 
-                <View style={styles.seriesTrack}>
-                  <View
-                    style={[styles.seriesFill, { width: `${done * 100}%`, backgroundColor: tint }]}
-                  />
-                </View>
+      {visibleSeries.map((series) => (
+        <View key={series.id} style={styles.seriesCard}>
+          <View style={styles.seriesHead}>
+            <View style={styles.seriesLogo}>
+              <Ionicons name="library" size={layout.cardIconSize} color={colors.textInverse} />
+            </View>
+            <View style={styles.seriesHeadText}>
+              <Text style={styles.seriesTitle} numberOfLines={1}>
+                {series.title}
+              </Text>
+              <Text style={styles.seriesSubtitle}>Complete Test Series</Text>
+            </View>
+            <View style={[styles.statusChip, { backgroundColor: colors.successLight }]}>
+              <Text style={[styles.statusText, { color: colors.success }]}>Active</Text>
+            </View>
+          </View>
 
-                <View style={styles.seriesFooter}>
-                  <Text style={styles.seriesMeta}>
-                    {`${s.completedTests} / ${s.plannedTotalTests} Tests Completed`}
-                  </Text>
-                  <Pressable style={styles.viewLink}>
-                    <Text style={styles.viewLinkText}>View Series</Text>
-                    <Ionicons name="chevron-forward" size={13} color={colors.primary} />
-                  </Pressable>
-                </View>
-              </View>
-            );
-          })
-        ) : (
-          <Text style={styles.empty}>या विषयाची कुठलीही series घेतलेली नाही.</Text>
-        )}
+          {(seriesTests[series.id] ?? []).map((row) => (
+            <TestRow key={row.id} row={row} onPress={() => router.push(`/quiz/${row.id}/attempt`)} />
+          ))}
+
+          <Pressable style={styles.viewAllTests} onPress={() => {}}>
+            <Text style={styles.viewAllTestsText}>View All Tests</Text>
+          </Pressable>
+        </View>
+      ))}
+
+      {/* ── कामगिरीचा सारांश ── */}
+      <View style={styles.gap} />
+      <View style={styles.analyticsCard}>
+        <View style={styles.analyticsHead}>
+          <View style={styles.analyticsIcon}>
+            <Ionicons name="stats-chart" size={layout.cardIconSize} color={colors.success} />
+          </View>
+          <View style={styles.analyticsHeadText}>
+            <Text style={styles.analyticsTitle}>Your Performance Analytics</Text>
+            <Text style={styles.analyticsNote}>Track your performance and improve</Text>
+          </View>
+          <Pressable onPress={() => router.push('/analytics')}>
+            <Text style={styles.link}>View Report</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.analyticsRow}>
+          <Metric icon="clipboard-outline" label="Tests Taken" value={`${performanceSummary.testsTaken}`} tint={colors.primary} />
+          <Metric icon="ribbon-outline" label="Average Score" value={`${performanceSummary.averageScorePercent}%`} tint={colors.success} />
+          <Metric icon="star-outline" label="Highest Score" value={`${performanceSummary.highestScorePercent}%`} tint={colors.warning} />
+          <Metric icon="disc-outline" label="Accuracy" value={`${performanceSummary.accuracyPercent}%`} tint={colors.danger} />
+        </View>
       </View>
 
-      {/* ── येणारे tests ── */}
+      {/* ── माझी प्रगती ── */}
       <View style={styles.gap} />
-      <SectionHeader title="Upcoming Tests" onViewAll={() => {}} />
-      <View style={styles.list}>
-        {upcomingTests.map((t) => (
-          <TestCard key={t.id} test={t} />
-        ))}
-      </View>
+      <SectionHeader title="My Progress" onViewAll={() => router.push('/analytics')} />
+      <View style={styles.progressRow}>
+        <View style={styles.progressCard}>
+          <View style={[styles.progressIcon, { backgroundColor: colors.primaryLight }]}>
+            <Ionicons name="clipboard" size={20} color={colors.primary} />
+          </View>
+          <Text style={styles.progressLabel}>Tests Completed</Text>
+          <Text style={styles.progressValue}>
+            {myProgress.testsCompleted} / {myProgress.testsTotal}
+          </Text>
+          <View style={styles.track}>
+            <View
+              style={[
+                styles.trackFill,
+                { width: `${(myProgress.testsCompleted / myProgress.testsTotal) * 100}%` },
+              ]}
+            />
+          </View>
+        </View>
 
-      {/* ── सूचना ── */}
-      <View style={styles.gap} />
-      <View style={styles.tip}>
-        <Ionicons name="bulb-outline" size={18} color={colors.primary} />
-        <Text style={styles.tipText}>
-          <Text style={styles.tipStrong}>Pro Tip: </Text>
-          Attempt previous tests to analyze your performance better.
-        </Text>
+        <View style={styles.progressCard}>
+          <View style={[styles.progressIcon, { backgroundColor: colors.successLight }]}>
+            <Ionicons name="disc" size={20} color={colors.success} />
+          </View>
+          <Text style={styles.progressLabel}>Overall Score</Text>
+          <Text style={styles.progressValue}>{myProgress.overallScorePercent}%</Text>
+          <View style={styles.track}>
+            <View
+              style={[
+                styles.trackFill,
+                { width: `${myProgress.overallScorePercent}%`, backgroundColor: colors.success },
+              ]}
+            />
+          </View>
+        </View>
       </View>
     </Screen>
+  );
+}
+
+/** Series कार्डातली एक test ओळ — 01 / नाव / मापं / स्थिती. */
+function TestRow({ row, onPress }: { row: SeriesTestRow; onPress: () => void }) {
+  const status = STATUS[row.status];
+
+  return (
+    <Pressable style={styles.testRow} onPress={onPress}>
+      <Text style={styles.testOrder}>{String(row.order).padStart(2, '0')}</Text>
+
+      <View style={styles.testBody}>
+        <Text style={styles.testTitle} numberOfLines={1}>
+          {row.title}
+        </Text>
+        <View style={styles.testMetaRow}>
+          <TestMeta text={`${row.questionCount} Qs`} />
+          <TestMeta text={`${row.totalMarks} Marks`} />
+          <TestMeta text={`${row.durationMinutes} Mins`} />
+        </View>
+      </View>
+
+      <View style={styles.testRight}>
+        <View style={[styles.statusChip, { backgroundColor: status.bg }]}>
+          <Text style={[styles.statusText, { color: status.fg }]}>{status.label}</Text>
+        </View>
+        {row.scorePercent !== undefined ? (
+          <Text style={styles.testScore}>Score {row.scorePercent}%</Text>
+        ) : null}
+      </View>
+    </Pressable>
+  );
+}
+
+/**
+ * Design मध्ये प्रत्येक मापाच्या आधी icon आहे, पण 360dp मध्ये icon + मजकूर +
+ * स्थितीचा chip एका ओळीत बसत नाहीत — meta दुसऱ्या ओळीवर उडी मारत होतं. Icon
+ * काढून नुसता मजकूर ठेवला की तिन्ही मापं एका ओळीत राहतात, आणि तेच design चा हेतू आहे.
+ */
+function TestMeta({ text }: { icon?: keyof typeof Ionicons.glyphMap; text: string }) {
+  // एक ओळ बंधनकारक — नाहीतर "Not Attempted" सारख्या रुंद chip शेजारी "100 Qs" चं
+  // "100" आणि "Qs" दोन ओळींत तुटतं.
+  return (
+    <Text style={styles.testMetaText} numberOfLines={1}>
+      {text}
+    </Text>
+  );
+}
+
+function Metric({
+  icon,
+  label,
+  value,
+  tint,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  tint: string;
+}) {
+  return (
+    <View style={styles.metric}>
+      {/* रंगाच्या शेवटी 1A = 10% अपारदर्शकता — प्रत्येक tint साठी वेगळा फिकट
+          रंग tokens मध्ये ठेवण्यापेक्षा हे थेट आणि नेहमी जुळणारं आहे. */}
+      <View style={[styles.metricIcon, { backgroundColor: `${tint}1A` }]}>
+        <Ionicons name={icon} size={16} color={tint} />
+      </View>
+      {/* "Average Score" / "Highest Score" एका ओळीत बसत नाहीत — चार stats 360dp
+          मध्ये वाटल्यावर प्रत्येकाला ~72dp मिळतात. दोन ओळी दिल्या की पूर्ण दिसतात. */}
+      <Text style={styles.metricLabel} numberOfLines={2}>
+        {label}
+      </Text>
+      <Text style={styles.metricValue}>{value}</Text>
+    </View>
   );
 }
 
@@ -210,37 +296,79 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.lg,
+    minHeight: layout.headerHeight,
   },
-  title: {
-    ...typography.headingL,
+  screenTitle: {
+    ...typography.headingXL,
     color: colors.text,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
   },
   badge: {
     position: 'absolute',
     top: -4,
-    right: -4,
+    right: -6,
     minWidth: 16,
     height: 16,
     borderRadius: radius.full,
-    backgroundColor: colors.error,
+    backgroundColor: colors.danger,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
   },
   badgeText: {
     fontSize: 9,
-    fontWeight: '700',
+    fontFamily: componentType.badge.fontFamily,
     color: colors.textInverse,
   },
 
-  continueCard: {
+  // ── banner ──
+  banner: {
+    minHeight: 170,
     backgroundColor: colors.primary,
+    borderRadius: radius.xxl,
+    padding: spacing.xl,
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  bannerTitle: {
+    ...typography.headingL,
+    color: colors.textInverse,
+  },
+  bannerNote: {
+    ...typography.bodyM,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  bannerButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    height: layout.buttonHeight,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    marginTop: spacing.sm,
+  },
+  bannerButtonText: {
+    ...componentType.buttonText,
+    color: colors.primary,
+  },
+
+  // ── continue ──
+  continueCard: {
+    minHeight: 150,
+    // Design मधला फिकट निळा — तो surface पेक्षा वेगळा दिसावा म्हणून. Palette मध्ये
+    // नाही, पण banner च्या जांभळ्याशी जुळणारा सर्वात फिकट indigo आहे.
+    backgroundColor: '#EEF2FF',
     borderRadius: radius.lg,
     padding: spacing.lg,
+    marginTop: spacing.lg,
     gap: spacing.md,
-    marginBottom: spacing.xl,
-    ...shadow.card,
   },
   continueTop: {
     flexDirection: 'row',
@@ -248,172 +376,260 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   continueIcon: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     borderRadius: radius.md,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  continueTitleBox: {
-    flex: 1,
-  },
-  continueLabel: {
-    ...typography.bodyS,
-    color: 'rgba(255,255,255,0.85)',
-  },
-  continueTitle: {
-    ...typography.bodyL, ...strong.semibold,
-    fontSize: 18,
-    color: colors.textInverse,
-  },
-  continueChip: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  continueChipText: {
-    ...typography.caption,
-    color: colors.textInverse,
-  },
-  continueTrack: {
-    height: 6,
-    borderRadius: radius.full,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    overflow: 'hidden',
-  },
-  continueFill: {
-    height: '100%',
-    borderRadius: radius.full,
-    backgroundColor: colors.success,
-  },
-  continueMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  continueMetaText: {
-    ...typography.bodyS,
-    color: 'rgba(255,255,255,0.85)',
-  },
-  continueMetaStrong: {
-    ...typography.bodyL, ...strong.semibold,
-    color: colors.textInverse,
-  },
-  continueButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-  },
-  continueButtonText: {
-    ...typography.bodyL, ...strong.semibold,
-    color: colors.primary,
-  },
-
-  statGrid: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.md,
-  },
-
-  seriesCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.md,
-    ...shadow.card,
-  },
-  seriesTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  seriesIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  seriesTextBox: {
+  continueHeadText: {
     flex: 1,
     gap: 2,
   },
-  categoryChip: {
-    alignSelf: 'flex-start',
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
+  continueLabel: {
+    ...componentType.cardDescription,
+    ...strong.semibold,
+    color: colors.primary,
   },
-  categoryText: {
-    ...typography.caption,
-  },
-  seriesTitle: {
-    ...typography.bodyL, ...strong.semibold,
+  continueTitle: {
+    ...typography.titleL,
     color: colors.text,
   },
-  seriesMeta: {
-    ...typography.caption,
-    fontWeight: '400',
+  continueMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  continueMeta: {
+    ...componentType.cardDescription,
     color: colors.textSecondary,
   },
-  seriesTrack: {
+  continuePercent: {
+    ...componentType.cardDescription,
+    ...strong.semibold,
+    color: colors.primary,
+  },
+  resumeButton: {
+    height: layout.buttonSecondaryHeight,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-end',
+  },
+  resumeButtonText: {
+    ...componentType.cardDescription,
+    ...strong.semibold,
+    color: colors.textInverse,
+  },
+
+  track: {
     height: 6,
     borderRadius: radius.full,
     backgroundColor: colors.border,
     overflow: 'hidden',
   },
-  seriesFill: {
+  trackFill: {
     height: '100%',
     borderRadius: radius.full,
+    backgroundColor: colors.primary,
   },
-  seriesFooter: {
+
+  // ── series कार्ड ──
+  seriesCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    gap: spacing.md,
+    ...shadow.card,
+  },
+  seriesHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: spacing.md,
   },
-  viewLink: {
-    flexDirection: 'row',
+  seriesLogo: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  seriesHeadText: {
+    flex: 1,
     gap: 2,
   },
-  viewLinkText: {
-    ...typography.bodyS,
-    fontWeight: '600',
+  seriesTitle: {
+    ...componentType.cardTitle,
+    color: colors.text,
+  },
+  seriesSubtitle: {
+    ...componentType.smallLabel,
+    color: colors.textSecondary,
+  },
+
+  // ── test ओळ ──
+  testRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  testOrder: {
+    ...componentType.cardTitle,
+    color: colors.border,
+  },
+  testBody: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  testTitle: {
+    ...typography.bodyM,
+    ...strong.semibold,
+    color: colors.text,
+  },
+  testMetaRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  testMetaText: {
+    ...componentType.smallLabel,
+    color: colors.textSecondary,
+  },
+  testRight: {
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
+  testScore: {
+    ...componentType.smallLabel,
+    ...strong.semibold,
+    color: colors.text,
+  },
+  statusChip: {
+    height: layout.chipHeight,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.chip,
+  },
+  statusText: {
+    ...componentType.badge,
+  },
+  viewAllTests: {
+    height: layout.buttonHeight,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewAllTestsText: {
+    ...componentType.buttonText,
     color: colors.primary,
   },
 
-  tip: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    backgroundColor: colors.primaryLight,
-    borderRadius: radius.md,
-    padding: spacing.md,
+  // ── analytics ──
+  analyticsCard: {
+    minHeight: 170,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: spacing.lg,
+    ...shadow.card,
   },
-  tipText: {
+  analyticsHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  analyticsIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    backgroundColor: colors.successLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  analyticsHeadText: {
     flex: 1,
-    ...typography.bodyS,
+    gap: 2,
+  },
+  analyticsTitle: {
+    ...componentType.cardTitle,
+    color: colors.text,
+  },
+  analyticsNote: {
+    ...componentType.smallLabel,
     color: colors.textSecondary,
   },
-  tipStrong: {
-    fontWeight: '700',
+  link: {
+    ...componentType.cardDescription,
+    ...strong.semibold,
+    color: colors.primary,
+  },
+  analyticsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  metric: {
+    flex: 1,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  metricIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  metricLabel: {
+    ...componentType.smallLabel,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  metricValue: {
+    ...typography.titleL,
     color: colors.text,
   },
 
-  list: {
+  // ── my progress ──
+  progressRow: {
+    flexDirection: 'row',
     gap: spacing.md,
   },
-  gap: {
-    height: spacing.xl,
+  progressCard: {
+    flex: 1,
+    minHeight: 120,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: spacing.sm,
+    ...shadow.card,
   },
-  empty: {
-    ...typography.bodyS,
+  progressIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressLabel: {
+    ...componentType.smallLabel,
     color: colors.textSecondary,
-    paddingVertical: spacing.lg,
-    textAlign: 'center',
+  },
+  progressValue: {
+    ...typography.headingL,
+    color: colors.text,
+  },
+
+  gap: {
+    height: spacing['3xl'],
   },
 });

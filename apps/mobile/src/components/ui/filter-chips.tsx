@@ -58,8 +58,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    height: layout.chipHeight,
-    paddingHorizontal: layout.chipPaddingH,
+    // Category chip 36dp — status chip (28dp) पेक्षा वेगळा; तो `tag.tsx` मध्ये.
+    height: layout.categoryChipHeight,
+    paddingHorizontal: spacing.lg,
     borderRadius: radius.xl,
     backgroundColor: colors.surface,
     borderWidth: 1,

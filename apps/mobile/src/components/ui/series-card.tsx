@@ -1,15 +1,24 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Button } from '@/components/ui/button';
 import { Tag } from '@/components/ui/tag';
-import { colors, layout, radius, shadow, spacing, strong, typography } from '@/theme/tokens';
+import {
+  colors,
+  componentType,
+  layout,
+  radius,
+  shadow,
+  spacing,
+  strong,
+  typography,
+} from '@/theme/tokens';
 import { discountPercent, rupees, type TestSeries } from '@/types';
 
 /**
- * दुकानातलं Test Series कार्ड — design system मधली दोन रूपं:
+ * दुकानातलं Test Series कार्ड — design sheets मधली तीन रूपं:
  *
- * - `featured`: 280×235, आडव्या पट्टीत, वर रंगीत आवरण
- * - `popular`: उंची 150, उभ्या यादीत, डावीकडे लहान आवरण + उजवीकडे Buy Now
+ * - `featured`: 160 रुंद, आडव्या पट्टीत, वर रंगीत आवरण + "View Details"
+ * - `popular`: पूर्ण रुंदी, डावीकडे आवरण, उजवीकडे मजकूर + Buy Now
+ * - `buy`: "Buy Test Series" screen चं आडवं कार्ड — 72dp चिन्ह, 96×40 Buy button
  *
  * Cart नाही — "Buy Now" थेट त्या series चा checkout उघडतो (ठरलेलं).
  */
@@ -20,7 +29,7 @@ export function SeriesCard({
   onBuy,
 }: {
   series: TestSeries;
-  variant?: 'featured' | 'popular';
+  variant?: 'featured' | 'popular' | 'buy';
   onPress?: () => void;
   onBuy?: () => void;
 }) {
@@ -38,22 +47,16 @@ export function SeriesCard({
         </View>
 
         <View style={styles.featuredBody}>
-          <Text style={styles.featuredTitle} numberOfLines={1}>
-            {series.title}
-          </Text>
           <Text style={styles.featuredSubtitle} numberOfLines={1}>
             {series.subtitle}
           </Text>
+          <Text style={styles.metaLine}>{`${series.plannedTotalTests} Tests`}</Text>
+          <Text style={styles.metaLine}>{series.language}</Text>
 
-          <Text style={styles.featureText}>{`${series.plannedTotalTests} Tests`}</Text>
-          <Text style={styles.featureText}>{series.language}</Text>
-
-          <View style={styles.priceRow}>
+          <View style={styles.featuredPriceRow}>
             <Text style={styles.featuredPrice}>{rupees(series.priceInPaise)}</Text>
-            {series.mrpInPaise ? (
-              <Text style={styles.mrp}>{rupees(series.mrpInPaise)}</Text>
-            ) : null}
-            {off ? <Text style={styles.off}>{off}% OFF</Text> : null}
+            {series.mrpInPaise ? <Text style={styles.mrpSmall}>{rupees(series.mrpInPaise)}</Text> : null}
+            {off ? <Text style={styles.offSmall}>{off}% OFF</Text> : null}
           </View>
 
           <Pressable style={styles.detailsButton} onPress={onPress}>
@@ -64,42 +67,53 @@ export function SeriesCard({
     );
   }
 
+  // `buy` आणि `popular` दोन्ही आडवी कार्डं आहेत; फरक फक्त उंची आणि चिन्हाच्या
+  // आकारात, म्हणून एकच रचना दोन मापांनी वापरली आहे.
+  const isBuy = variant === 'buy';
+
   return (
-    <Pressable style={styles.popular} onPress={onPress}>
-      <View style={[styles.popularCover, { backgroundColor: cover }]}>
-        <Text style={styles.popularCoverExam}>{series.examName}</Text>
-        <Text style={styles.popularCoverLabel}>Test Series</Text>
+    <Pressable style={[styles.row, isBuy && styles.rowBuy]} onPress={onPress}>
+      <View
+        style={[
+          styles.rowCover,
+          { backgroundColor: cover },
+          isBuy && styles.rowCoverBuy,
+        ]}
+      >
+        <Text style={styles.rowCoverExam} numberOfLines={1}>
+          {series.examName}
+        </Text>
+        {!isBuy ? <Text style={styles.rowCoverLabel}>Test Series</Text> : null}
       </View>
 
-      <View style={styles.popularBody}>
-        <View style={styles.popularTop}>
-          <Text style={styles.title} numberOfLines={2}>
-            {series.title}
-          </Text>
-          <View style={styles.priceColumn}>
-            <View style={styles.priceRow}>
-              <Text style={styles.price}>{rupees(series.priceInPaise)}</Text>
-              {series.mrpInPaise ? (
-                <Text style={styles.mrp}>{rupees(series.mrpInPaise)}</Text>
-              ) : null}
-            </View>
-            {off ? <Text style={styles.offRight}>{off}% OFF</Text> : null}
-          </View>
-        </View>
-
+      <View style={styles.rowBody}>
+        <Text style={styles.rowTitle} numberOfLines={1}>
+          {series.title}
+        </Text>
         {series.description ? (
-          <Text style={styles.description} numberOfLines={2}>
+          <Text style={styles.rowDescription} numberOfLines={2}>
             {series.description}
           </Text>
         ) : null}
 
-        <View style={styles.popularFooter}>
-          <View style={styles.tags}>
-            <Tag label={`${series.plannedTotalTests} Tests`} />
-            <Tag label={series.language} />
-            <Tag label={`Valid for ${series.validityMonths} Months`} />
+        <View style={styles.tags}>
+          <Tag label={`${series.plannedTotalTests} Tests`} />
+          <Tag label={series.language} />
+          <Tag label={`Valid for ${series.validityMonths} Months`} />
+        </View>
+
+        <View style={styles.rowFooter}>
+          <View>
+            <View style={styles.priceRow}>
+              <Text style={styles.price}>{rupees(series.priceInPaise)}</Text>
+              {series.mrpInPaise ? <Text style={styles.mrp}>{rupees(series.mrpInPaise)}</Text> : null}
+            </View>
+            {off ? <Text style={styles.off}>{off}% OFF</Text> : null}
           </View>
-          <Button label="Buy Now" onPress={onBuy} full={false} style={styles.buyButton} />
+
+          <Pressable style={styles.buyButton} onPress={onBuy}>
+            <Text style={styles.buyButtonText}>Buy Now</Text>
+          </Pressable>
         </View>
       </View>
     </Pressable>
@@ -107,59 +121,72 @@ export function SeriesCard({
 }
 
 const styles = StyleSheet.create({
-  // ── featured ──
+  // ── featured (आडवी पट्टी) ──
   featured: {
-    // मापं design system मधून जशीच्या तशी. उंची निश्चित ठेवली आहे म्हणून
+    // रुंदी sheet मधल्या अरुंद कार्डाएवढी (160dp). उंची निश्चित ठेवली आहे म्हणून
     // शेजारची कार्डं समान उंचीची दिसतात — नाहीतर लांब नावाचं कार्ड उंच होतं.
-    width: layout.featuredCard.width,
-    height: layout.featuredCard.height,
+    width: 160,
+    height: 235,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     overflow: 'hidden',
     ...shadow.card,
   },
   featuredCover: {
-    height: 80,
+    height: 88,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     justifyContent: 'space-between',
   },
   coverExam: {
-    ...typography.caption,
+    ...componentType.smallLabel,
     color: 'rgba(255,255,255,0.85)',
   },
   coverTitle: {
-    ...typography.bodyL,
+    ...typography.bodyM,
     ...strong.bold,
     color: colors.textInverse,
   },
   featuredBody: {
     flex: 1,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    gap: spacing.xs,
-  },
-  featuredTitle: {
-    ...typography.bodyM,
-    ...strong.semibold,
-    color: colors.text,
+    paddingVertical: spacing.sm,
+    gap: 2,
   },
   featuredSubtitle: {
-    ...typography.caption,
+    ...componentType.smallLabel,
     color: colors.textSecondary,
   },
-  featureText: {
-    ...typography.caption,
+  metaLine: {
+    ...componentType.smallLabel,
     color: colors.textSecondary,
+  },
+  featuredPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    // 160dp मध्ये किंमत + जुनी किंमत + सवलत — तिन्ही एका ओळीत बसतात, पण फट
+    // 4 पेक्षा जास्त ठेवली तर "% OFF" खाली उडी मारतं.
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  offSmall: {
+    ...componentType.smallLabel,
+    ...strong.semibold,
+    color: colors.success,
   },
   featuredPrice: {
     ...typography.bodyL,
     ...strong.bold,
     color: colors.text,
   },
+  mrpSmall: {
+    ...componentType.smallLabel,
+    color: colors.textSecondary,
+    textDecorationLine: 'line-through',
+  },
   detailsButton: {
     marginTop: 'auto',
-    height: 34,
+    height: 32,
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.primary,
@@ -167,76 +194,69 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   detailsButtonText: {
-    ...typography.caption,
+    ...componentType.smallLabel,
     ...strong.semibold,
     color: colors.primary,
   },
 
-  // ── popular ──
-  popular: {
+  // ── आडवी कार्डं (popular / buy) ──
+  row: {
     flexDirection: 'row',
     gap: spacing.md,
-    minHeight: layout.popularCardHeight,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.md,
     ...shadow.card,
   },
-  popularCover: {
-    width: 88,
+  rowBuy: {
+    // Sheet 112dp सांगते, पण त्यात शीर्षक + वर्णन + badges + किंमत बसत नाहीत.
+    // म्हणून तेच किमान माप धरून कार्ड गरजेनुसार वाढू दिलं आहे — मजकूर कापण्यापेक्षा
+    // कार्ड थोडं उंच होणं बरं.
+    minHeight: layout.buySeriesCardHeight,
+  },
+  rowCover: {
+    width: 80,
     borderRadius: radius.md,
-    padding: spacing.md,
+    padding: spacing.sm,
     justifyContent: 'center',
     gap: spacing.xs,
   },
-  popularCoverExam: {
-    ...typography.bodyL,
+  rowCoverBuy: {
+    width: layout.buySeriesIcon,
+    height: layout.buySeriesIcon,
+    alignItems: 'center',
+  },
+  rowCoverExam: {
+    ...typography.bodyM,
     ...strong.bold,
     color: colors.textInverse,
   },
-  popularCoverLabel: {
-    ...typography.caption,
+  rowCoverLabel: {
+    ...componentType.smallLabel,
     color: 'rgba(255,255,255,0.8)',
   },
-  popularBody: {
+  rowBody: {
     flex: 1,
-    justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  popularTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
+  rowTitle: {
+    ...componentType.cardTitle,
+    color: colors.text,
   },
-  priceColumn: {
-    alignItems: 'flex-end',
-  },
-  popularFooter: {
-    gap: spacing.sm,
+  rowDescription: {
+    ...componentType.cardDescription,
+    color: colors.textSecondary,
   },
   tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
-  buyButton: {
-    alignSelf: 'flex-end',
-  },
-
-  // ── दोन्हींत ──
-  title: {
-    flex: 1,
-    ...typography.bodyL,
-    ...strong.semibold,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.bodyS,
-    color: colors.textSecondary,
-  },
-  description: {
-    ...typography.bodyS,
-    color: colors.textSecondary,
+  rowFooter: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   priceRow: {
     flexDirection: 'row',
@@ -244,22 +264,30 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   price: {
-    ...typography.titleL,
+    ...componentType.priceCurrent,
     color: colors.text,
   },
   mrp: {
-    ...typography.bodyS,
+    ...componentType.priceOld,
     color: colors.textSecondary,
     textDecorationLine: 'line-through',
   },
   off: {
-    ...typography.caption,
-    ...strong.semibold,
+    ...componentType.discount,
     color: colors.success,
   },
-  offRight: {
-    ...typography.caption,
+  buyButton: {
+    width: layout.buyButton.width,
+    height: layout.buyButton.height,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadow.button,
+  },
+  buyButtonText: {
+    ...componentType.cardDescription,
     ...strong.semibold,
-    color: colors.success,
+    color: colors.textInverse,
   },
 });

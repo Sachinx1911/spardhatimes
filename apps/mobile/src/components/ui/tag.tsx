@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '@/theme/tokens';
+import { colors, componentType, layout, radius, spacing } from '@/theme/tokens';
 
 /**
  * "70 Tests", "Bilingual", "Valid for 12 Months" — series कार्डांवरचे फिकट tags.
@@ -19,13 +19,16 @@ export function Tag({ label }: { label: string }) {
 
 const styles = StyleSheet.create({
   tag: {
+    // Badge: उंची 24dp, आतली मोकळी जागा 4×10 — "Buy Test Series" sheet मधून.
+    height: layout.badgeHeight,
+    justifyContent: 'center',
     backgroundColor: colors.primaryLight,
     borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: 10,
     paddingVertical: spacing.xs,
   },
   text: {
-    ...typography.caption,
+    ...componentType.badge,
     color: colors.primary,
   },
 });
