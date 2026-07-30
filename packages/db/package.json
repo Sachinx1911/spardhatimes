@@ -18,7 +18,8 @@
     "dev": "tsc --watch",
     "generate": "prisma generate",
     "db:push": "prisma db push",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "seed:app-student": "tsx prisma/seed-app-student.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3"

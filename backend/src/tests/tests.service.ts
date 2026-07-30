@@ -103,11 +103,23 @@ export class TestsService {
       throw new ForbiddenException('ही test series तुमच्या खात्याला दिलेली नाही.');
     }
 
+    // `percentage` सुद्धा इथेच घेतो — यादीत प्रत्येक test शेजारी "Score 82%"
+    // दाखवायचा आहे. वेगळी query केली असती तर तेवढ्यासाठी आणखी एक फेरी झाली असती,
+    // आणि DB ~170ms दूर आहे.
     const attempts = await this.prisma.client.quizAttempt.findMany({
       where: { userId, quizId: { in: series.quizzes.map((q) => q.id) } },
-      select: { quizId: true, status: true },
+      select: { quizId: true, status: true, percentage: true },
+      orderBy: { createdAt: 'desc' },
     });
-    const attemptByQuiz = new Map(attempts.map((a) => [a.quizId, a.status]));
+
+    // एकाच test चे अनेक attempts असू शकतात; `orderBy` मुळे पहिला तोच सर्वात
+    // अलीकडचा, आणि Map मध्ये तोच टिकतो.
+    const attemptByQuiz = new Map<string, { status: string; percentage: number }>();
+    for (const a of attempts) {
+      if (!attemptByQuiz.has(a.quizId)) {
+        attemptByQuiz.set(a.quizId, { status: a.status, percentage: a.percentage });
+      }
+    }
 
     return {
       id: series.id,
@@ -125,11 +137,13 @@ export class TestsService {
         releaseAt: q.releaseAt?.toISOString() ?? null,
         state: testState(q, series.timingMode),
         attemptState:
-          attemptByQuiz.get(q.id) === 'COMPLETED'
+          attemptByQuiz.get(q.id)?.status === 'COMPLETED'
             ? 'COMPLETED'
             : attemptByQuiz.has(q.id)
               ? 'IN_PROGRESS'
               : 'NOT_STARTED',
+        /** सोडवलेला नसेल तर null — तेव्हा यादीत गुण दाखवायचे नाहीत. */
+        scorePercent: attemptByQuiz.get(q.id)?.percentage ?? null,
       })),
     };
   }

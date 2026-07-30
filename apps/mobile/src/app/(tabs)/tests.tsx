@@ -3,16 +3,13 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { EmptyState, ErrorState, Loading } from '@/components/ui/async-state';
 import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
-import {
-  myProgress,
-  mySeries,
-  performanceSummary,
-  seriesTests,
-  testInProgress,
-} from '@/data/mock';
+import { myProgress, performanceSummary } from '@/data/mock';
+import { api, type ApiAttemptState, type ApiSeriesTest } from '@/lib/api';
+import { useApi } from '@/lib/use-api';
 import {
   colors,
   componentType,
@@ -23,7 +20,6 @@ import {
   strong,
   typography,
 } from '@/theme/tokens';
-import type { SeriesTestRow, SeriesTestStatus } from '@/types';
 
 /**
  * "My Test Series" — विद्यार्थ्याचं स्वतःचं. Design sheet मधला क्रम:
@@ -34,30 +30,45 @@ import type { SeriesTestRow, SeriesTestStatus } from '@/types';
  */
 
 /** प्रत्येक स्थितीचा रंग एकाच ठिकाणी — chip आणि गुण दोन्हीसाठी तोच. */
-const STATUS: Record<SeriesTestStatus, { label: string; fg: string; bg: string }> = {
+const STATUS: Record<ApiAttemptState, { label: string; fg: string; bg: string }> = {
   COMPLETED: { label: 'Completed', fg: colors.success, bg: colors.successLight },
   IN_PROGRESS: { label: 'In Progress', fg: colors.warning, bg: colors.warningLight },
-  NOT_ATTEMPTED: { label: 'Not Attempted', fg: colors.textSecondary, bg: colors.background },
+  NOT_STARTED: { label: 'Not Attempted', fg: colors.textSecondary, bg: colors.background },
 };
 
 export default function MyTestSeriesScreen() {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState('all');
 
-  const categories = Array.from(new Set(mySeries.map((s) => s.categoryName)));
+  /**
+   * यादी आणि प्रत्येक series मधले tests — एकत्र.
+   *
+   * `/series` फक्त series देतो, tests साठी प्रत्येकाला वेगळी विनंती लागते. दोन-तीन
+   * series साठी हे ठीक आहे; संख्या वाढली तर backend ला एकच जोडलेला endpoint लागेल.
+   */
+  const { data, loading, error, reload } = useApi(async () => {
+    const list = await api.mySeries();
+    const details = await Promise.all(list.map((s) => api.seriesTests(s.id)));
+    return { list, details };
+  }, []);
+
+  const series = data?.list ?? [];
+  const details = data?.details ?? [];
+
+  const categories = Array.from(new Set(series.map((s) => s.categoryName)));
   const chips: FilterChip[] = [
     { key: 'all', label: 'All' },
     ...categories.map((c) => ({ key: c, label: c })),
   ];
 
   const visibleSeries =
-    activeCategory === 'all' ? mySeries : mySeries.filter((s) => s.categoryName === activeCategory);
+    activeCategory === 'all' ? series : series.filter((s) => s.categoryName === activeCategory);
 
-  // `testInProgress` हा union मध्ये `null` सुद्धा आहे. एका स्थानिक चलात घेतल्याने
-  // TypeScript ला खात्री पटते की JSX मधल्या closure मध्येही तो null नाही.
-  const current = testInProgress;
-  const answered = current?.answeredCount ?? 0;
-  const donePercent = current ? Math.round((answered / current.questionCount) * 100) : 0;
+  const testsBySeries = new Map(details.map((d) => [d.id, d.tests]));
+
+  // "Continue Your Test" — अर्धवट राहिलेला पहिला test. वेगळा endpoint नाही;
+  // आधीच आणलेल्या यादीतूनच काढतो.
+  const current = details.flatMap((d) => d.tests).find((t) => t.attemptState === 'IN_PROGRESS');
 
   return (
     <Screen>
@@ -101,16 +112,9 @@ export default function MyTestSeriesScreen() {
             </View>
           </View>
 
-          <View style={styles.continueMetaRow}>
-            <Text style={styles.continueMeta}>
-              {answered} / {current.questionCount} Questions Completed
-            </Text>
-            <Text style={styles.continuePercent}>{donePercent}%</Text>
-          </View>
-
-          <View style={styles.track}>
-            <View style={[styles.trackFill, { width: `${donePercent}%` }]} />
-          </View>
+          <Text style={styles.continueMeta}>
+            {current.questionCount} Questions · {current.durationMinutes} Mins
+          </Text>
 
           <Pressable
             style={styles.resumeButton}
@@ -124,25 +128,41 @@ export default function MyTestSeriesScreen() {
       <View style={styles.gap} />
       <SectionHeader title="Enrolled Test Series" onViewAll={() => {}} />
 
-      {visibleSeries.map((series) => (
-        <View key={series.id} style={styles.seriesCard}>
+      {loading ? <Loading /> : null}
+      {error ? <ErrorState message={error} onRetry={reload} /> : null}
+      {!loading && !error && series.length === 0 ? (
+        <EmptyState
+          icon="library-outline"
+          message={'तुमच्या खात्याला अजून कुठलीही test series दिलेली नाही.'}
+        />
+      ) : null}
+
+      {visibleSeries.map((s) => (
+        <View key={s.id} style={styles.seriesCard}>
           <View style={styles.seriesHead}>
             <View style={styles.seriesLogo}>
               <Ionicons name="library" size={layout.cardIconSize} color={colors.textInverse} />
             </View>
             <View style={styles.seriesHeadText}>
               <Text style={styles.seriesTitle} numberOfLines={1}>
-                {series.title}
+                {s.title}
               </Text>
-              <Text style={styles.seriesSubtitle}>Complete Test Series</Text>
+              <Text style={styles.seriesSubtitle}>
+                {s.completedTests} / {s.plannedTotalTests} Tests Completed
+              </Text>
             </View>
             <View style={[styles.statusChip, { backgroundColor: colors.successLight }]}>
               <Text style={[styles.statusText, { color: colors.success }]}>Active</Text>
             </View>
           </View>
 
-          {(seriesTests[series.id] ?? []).map((row) => (
-            <TestRow key={row.id} row={row} onPress={() => router.push(`/quiz/${row.id}/attempt`)} />
+          {(testsBySeries.get(s.id) ?? []).map((test, i) => (
+            <TestRow
+              key={test.id}
+              test={test}
+              order={i + 1}
+              onPress={() => router.push(`/quiz/${test.id}/attempt`)}
+            />
           ))}
 
           <Pressable style={styles.viewAllTests} onPress={() => {}}>
@@ -218,21 +238,30 @@ export default function MyTestSeriesScreen() {
 }
 
 /** Series कार्डातली एक test ओळ — 01 / नाव / मापं / स्थिती. */
-function TestRow({ row, onPress }: { row: SeriesTestRow; onPress: () => void }) {
-  const status = STATUS[row.status];
+function TestRow({
+  test,
+  order,
+  onPress,
+}: {
+  test: ApiSeriesTest;
+  /** यादीतला क्रमांक — API देत नाही, तो जागेवरून येतो. */
+  order: number;
+  onPress: () => void;
+}) {
+  const status = STATUS[test.attemptState];
 
   return (
     <Pressable style={styles.testRow} onPress={onPress}>
-      <Text style={styles.testOrder}>{String(row.order).padStart(2, '0')}</Text>
+      <Text style={styles.testOrder}>{String(order).padStart(2, '0')}</Text>
 
       <View style={styles.testBody}>
         <Text style={styles.testTitle} numberOfLines={1}>
-          {row.title}
+          {test.title}
         </Text>
         <View style={styles.testMetaRow}>
-          <TestMeta text={`${row.questionCount} Qs`} />
-          <TestMeta text={`${row.totalMarks} Marks`} />
-          <TestMeta text={`${row.durationMinutes} Mins`} />
+          <TestMeta text={`${test.questionCount} Qs`} />
+          <TestMeta text={`${test.totalMarks} Marks`} />
+          <TestMeta text={`${test.durationMinutes} Mins`} />
         </View>
       </View>
 
@@ -240,8 +269,8 @@ function TestRow({ row, onPress }: { row: SeriesTestRow; onPress: () => void }) 
         <View style={[styles.statusChip, { backgroundColor: status.bg }]}>
           <Text style={[styles.statusText, { color: status.fg }]}>{status.label}</Text>
         </View>
-        {row.scorePercent !== undefined ? (
-          <Text style={styles.testScore}>Score {row.scorePercent}%</Text>
+        {test.scorePercent !== null ? (
+          <Text style={styles.testScore}>Score {Math.round(test.scorePercent)}%</Text>
         ) : null}
       </View>
     </Pressable>

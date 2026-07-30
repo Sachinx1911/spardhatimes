@@ -129,6 +129,75 @@ export interface Me {
   createdAt: string;
 }
 
+/**
+ * खालचे आकार backend च्या `TestsService` मधून जसेच्या तसे. ते बदलले तर हे
+ * बदलावेच लागतील — म्हणून तिथे बदल करताना इथे बघा.
+ */
+
+/** `GET /series` — घेतलेल्या series, प्रगतीसह. */
+export interface ApiSeries {
+  id: string;
+  title: string;
+  categoryName: string;
+  plannedTotalTests: number;
+  completedTests: number;
+  releasedTests: number;
+  owned: boolean;
+}
+
+export type ApiTestState = 'UPCOMING' | 'OPEN' | 'CLOSED';
+export type ApiAttemptState = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+
+export interface ApiSeriesTest {
+  id: string;
+  slug: string;
+  title: string;
+  seriesTitle: string;
+  categoryName: string;
+  questionCount: number;
+  durationMinutes: number;
+  totalMarks: number;
+  releaseAt: string | null;
+  state: ApiTestState;
+  attemptState: ApiAttemptState;
+  /** सोडवलेला नसेल तर null. */
+  scorePercent: number | null;
+}
+
+/** `GET /series/:id` */
+export interface ApiSeriesDetail {
+  id: string;
+  title: string;
+  categoryName: string;
+  tests: ApiSeriesTest[];
+}
+
+/** `GET /tests/:id` — बरोबर उत्तरं आणि खुलासे यात **नसतात**. */
+export interface ApiQuizQuestion {
+  id: string;
+  type: string;
+  text: string;
+  marks: number;
+  options: { key: 'A' | 'B' | 'C' | 'D'; text: string }[];
+}
+
+export interface ApiQuiz {
+  id: string;
+  slug: string;
+  title: string;
+  durationMinutes: number;
+  totalMarks: number;
+  negativeMarks: number;
+  instructions: string | null;
+  questions: ApiQuizQuestion[];
+}
+
+export interface ApiSubmitAnswer {
+  questionId: string;
+  chosenOption: string | null;
+  timeSpent: number;
+}
+
 export const api = {
   async login(phone: string, password: string): Promise<Me> {
     const pair = await request<AuthTokens>(
@@ -155,4 +224,20 @@ export const api = {
       return null;
     }
   },
+
+  // ── tests ──
+
+  mySeries: () => request<ApiSeries[]>('/series'),
+
+  seriesTests: (seriesId: string) => request<ApiSeriesDetail>(`/series/${seriesId}`),
+
+  startTest: (quizId: string) => request<ApiQuiz>(`/tests/${quizId}`),
+
+  submitTest: (quizId: string, answers: ApiSubmitAnswer[], timeTakenSeconds: number) =>
+    request<{ attemptId: string }>(`/tests/${quizId}/submit`, {
+      method: 'POST',
+      body: { answers, timeTakenSeconds },
+    }),
+
+  attemptResult: (attemptId: string) => request<unknown>(`/attempts/${attemptId}`),
 };
