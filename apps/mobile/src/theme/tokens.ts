@@ -36,11 +36,17 @@ export const colors = {
   /** `danger` चं जुनं नाव — जुन्या screens साठी. */
   error: '#EF4444',
 
-  // Sheets मध्ये सुटे नाहीत, पण chips/tags मध्ये दिसतात — फिकट छटा.
+  // Sheets मध्ये सुटे नाहीत, पण chips/tags/कार्डांत दिसतात — फिकट छटा.
   successLight: '#ECFDF5',
   dangerLight: '#FEF2F2',
   errorLight: '#FEF2F2',
   warningLight: '#FFFBEB',
+  /**
+   * `primaryLight` पेक्षाही फिकट — पांढऱ्या कार्डांमध्ये वेगळं उठून दिसणारं कार्ड
+   * (उदा. "Continue Your Test"). `primaryLight` तिथे वापरला तर तो chips आणि
+   * tags शी गोंधळतो.
+   */
+  primarySoft: '#EEF2FF',
 } as const;
 
 // ─── 2. TYPOGRAPHY (Poppins) ─────────────────────────────────────────────────

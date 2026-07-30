@@ -362,9 +362,7 @@ const styles = StyleSheet.create({
   // ── continue ──
   continueCard: {
     minHeight: 150,
-    // Design मधला फिकट निळा — तो surface पेक्षा वेगळा दिसावा म्हणून. Palette मध्ये
-    // नाही, पण banner च्या जांभळ्याशी जुळणारा सर्वात फिकट indigo आहे.
-    backgroundColor: '#EEF2FF',
+    backgroundColor: colors.primarySoft,
     borderRadius: radius.lg,
     padding: spacing.lg,
     marginTop: spacing.lg,
