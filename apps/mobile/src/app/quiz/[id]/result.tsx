@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Polyline } from 'react-native-svg';
 
+import { ErrorState, Loading } from '@/components/ui/async-state';
 import { Card } from '@/components/ui/card';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
-import { student, testResult } from '@/data/mock';
+import { api } from '@/lib/api';
+import { useSession } from '@/lib/session';
+import { useApi } from '@/lib/use-api';
 import { colors, radius, shadow, spacing, subjectColor, typography, strong } from '@/theme/tokens';
 
 /**
@@ -20,16 +22,29 @@ import { colors, radius, shadow, spacing, subjectColor, typography, strong } fro
  */
 export default function ResultScreen() {
   const router = useRouter();
-  const r = testResult;
+  const { user } = useSession();
+
+  /**
+   * URL मधला `id` हा **attempt चा** आहे, quiz चा नाही — submit झाल्यावर
+   * `router.replace('/quiz/<attemptId>/result')` असं पाठवलं जातं. एकाच test चे
+   * अनेक attempts असू शकतात, त्यामुळे निकाल attempt नेच ओळखावा लागतो.
+   */
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { data: r, loading, error, reload } = useApi(() => api.attemptResult(id), [id]);
 
   // Test सोडवून झाल्यावर इथे `replace` ने येतो — म्हणजे मागे जायला इतिहासच नसतो
   // आणि सरळ `back()` केलं तर "GO_BACK was not handled" अशी चूक येते. इतिहास असेल
   // तरच मागे, नाहीतर My Tests वर.
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/tests'));
 
+  if (loading) return <Loading label="निकाल आणतोय…" />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (!r) return <ErrorState message="हा निकाल सापडला नाही." />;
+
   const mins = Math.floor(r.timeTakenSeconds / 60);
   const secs = r.timeTakenSeconds % 60;
   const totalMins = Math.round(r.durationSeconds / 60);
+  const firstName = user?.name?.split(' ')[0] ?? 'विद्यार्थी';
 
   return (
     <Screen>
@@ -55,12 +70,16 @@ export default function ResultScreen() {
         </View>
         <View style={styles.testTextBox}>
           <Text style={styles.testTitle}>{r.testTitle}</Text>
+          {/* Mockup मध्ये इथे "#GK27124" असा सांकेतिक क्रमांक होता. API तो देत नाही
+              आणि तो विद्यार्थ्याच्या कामाचाही नाही — म्हणून फक्त तारीख.
+              टिप्पणी `<Text>` च्या **बाहेर** ठेवली आहे: आत ठेवली तर तिच्यामुळे
+              Text ला दोन children जातात आणि React "unique key" ची तक्रार करतो. */}
           <Text style={styles.testMeta}>
-            {`${r.code} • ${new Date(r.submittedAt).toLocaleDateString('en-GB', {
+            {new Date(r.submittedAt).toLocaleDateString('en-GB', {
               day: 'numeric',
               month: 'long',
               year: 'numeric',
-            })}`}
+            })}
           </Text>
           <View style={styles.completedChip}>
             <Text style={styles.completedText}>Completed</Text>
@@ -85,9 +104,13 @@ export default function ResultScreen() {
           </View>
 
           <View style={styles.scoreTextBox}>
-            <Text style={styles.congrats}>{`Great Job, ${student.name.split(' ')[0]}! 🎉`}</Text>
+            <Text style={styles.congrats}>{`Great Job, ${firstName}! 🎉`}</Text>
+            {/* हा test सोडवणारा हा पहिलाच असेल तर percentile निघत नाही — तेव्हा
+                "null% of test takers" दाखवण्यापेक्षा गुण सांगायचे. */}
             <Text style={styles.congratsNote}>
-              {`You have scored better than ${r.percentile}% of test takers.`}
+              {r.percentile === null
+                ? `तुम्ही ${r.totalMarks} पैकी ${r.score} गुण मिळवले.`
+                : `You have scored better than ${Math.round(r.percentile)}% of test takers.`}
             </Text>
           </View>
         </View>
@@ -186,14 +209,10 @@ export default function ResultScreen() {
           <Text style={styles.chartNote}>{`वापरलेला वेळ — एकूण ${totalMins} मिनिटांपैकी`}</Text>
         </Card>
 
-        <Card style={styles.chartCard}>
-          <Text style={styles.chartTitle}>Accuracy Trend</Text>
-          <TrendLine points={r.trend.map((t) => t.percentage)} />
-          <View style={styles.trendLabels}>
-            <Text style={styles.chartNote}>{r.trend[0].label}</Text>
-            <Text style={styles.chartNote}>{r.trend[r.trend.length - 1].label}</Text>
-          </View>
-        </Card>
+        {/* Design मध्ये इथे "Accuracy Trend" चा आलेख होता — मागच्या पाच tests
+            मधली कामगिरी. तो एका attempt च्या निकालातून काढता येत नाही; त्यासाठी
+            विद्यार्थ्याच्या सगळ्या attempts चा endpoint लागेल, जो Analytics
+            (टप्पा D) मध्ये येईल. तोपर्यंत रिकामं कार्ड दाखवण्यापेक्षा वगळलं आहे. */}
       </View>
 
       {/* ── कृती ── */}
@@ -243,31 +262,6 @@ function Breakdown({
       <Text style={styles.breakdownValue}>{valueText ?? value}</Text>
       <Text style={styles.breakdownNote}>{note ?? (pct !== null ? `${pct}%` : '')}</Text>
     </View>
-  );
-}
-
-/** साधी रेषा — शेवटच्या काही tests चे टक्के. Chart library न वापरता SVG नेच. */
-function TrendLine({ points }: { points: number[] }) {
-  const W = 130;
-  const H = 62;
-  const max = 100;
-  const step = points.length > 1 ? W / (points.length - 1) : W;
-  const coords = points.map((p, i) => `${i * step},${H - (p / max) * H}`).join(' ');
-
-  return (
-    <Svg width={W} height={H}>
-      <Polyline
-        points={coords}
-        fill="none"
-        stroke={colors.success}
-        strokeWidth={2}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-      {points.map((p, i) => (
-        <Circle key={i} cx={i * step} cy={H - (p / max) * H} r={2.5} fill={colors.success} />
-      ))}
-    </Svg>
   );
 }
 
@@ -518,11 +512,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: colors.textSecondary,
     textAlign: 'center',
-  },
-  trendLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignSelf: 'stretch',
   },
 
   actions: {

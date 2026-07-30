@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { attemptQuestions, testInProgress } from '@/data/mock';
+import { ErrorState, Loading } from '@/components/ui/async-state';
+import { api } from '@/lib/api';
+import { useApi } from '@/lib/use-api';
 import { colors, radius, shadow, spacing, typography, strong } from '@/theme/tokens';
 
 /**
@@ -12,8 +14,9 @@ import { colors, radius, shadow, spacing, typography, strong } from '@/theme/tok
  *
  * ⚠️ **Mockup मध्ये प्रश्नाखाली Explanation दाखवलं आहे — इथे मुद्दाम नाही.**
  * Timer चालू असताना बरोबर उत्तराचा खुलासा दाखवला तर प्रत्येक विद्यार्थी पैकीच्या
- * पैकी गुण मिळवेल. खुलासा फक्त निकालाच्या "Review Answers" मध्ये. पुढे API सुद्धा
- * test सुरू असताना `correctAnswer`/`explanation` पाठवणार नाही.
+ * पैकी गुण मिळवेल. खुलासा फक्त निकालाच्या "Review Answers" मध्ये — आणि API सुद्धा
+ * `/tests/:id` मध्ये `correctAnswer`/`explanation` पाठवतच नाही, त्यामुळे ते
+ * network मध्ये बघूनही मिळत नाहीत.
  */
 
 type Mark = 'answered' | 'review' | 'unanswered';
@@ -21,24 +24,85 @@ type Mark = 'answered' | 'review' | 'unanswered';
 export default function AttemptScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const questions = attemptQuestions;
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  const { data: quiz, loading, error, reload } = useApi(() => api.startTest(id), [id]);
 
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [review, setReview] = useState<Record<string, boolean>>({});
   const [paletteOpen, setPaletteOpen] = useState(true);
-  const [secondsLeft, setSecondsLeft] = useState((testInProgress?.durationMinutes ?? 30) * 60);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
 
-  // सोपं घड्याळ — प्रत्येक सेकंदाला एक टिक. खरा attempt येईल तेव्हा हे server
-  // वेळेशी जुळवावं लागेल, नाहीतर app बंद करून वेळ वाचवता येईल.
+  const questions = quiz?.questions ?? [];
+
+  /**
+   * प्रत्येक प्रश्नावर किती वेळ गेला — submit ला तेच पाठवायचं आहे.
+   * `ref` मध्ये ठेवलं आहे कारण हे दर सेकंदाला बदलतं आणि त्यासाठी पुन्हा render
+   * करायची गरज नाही.
+   */
+  const timeSpent = useRef<Record<string, number>>({});
+  const questionStart = useRef(Date.now());
+
+  // Quiz आल्यावर घड्याळ त्याच्या खऱ्या कालावधीने सुरू होतं.
+  useEffect(() => {
+    if (quiz) setSecondsLeft(quiz.durationMinutes * 60);
+  }, [quiz]);
+
+  // ⚠️ हे घड्याळ फक्त app मध्ये चालतं. App बंद करून वेळ वाचवता येईल — तो प्रश्न
+  // server वर attempt सुरू झाल्याची वेळ ठेवूनच सुटेल, जे अजून बांधलेलं नाही.
   useEffect(() => {
     const t = setInterval(() => setSecondsLeft((s) => (s > 0 ? s - 1 : 0)), 1000);
     return () => clearInterval(t);
   }, []);
 
   const current = questions[index];
-  const chosen = answers[current.id];
+  const chosen = current ? answers[current.id] : undefined;
 
+  /** प्रश्न बदलताना आधीच्या प्रश्नावरचा वेळ जमा करतो. */
+  const goTo = (next: number) => {
+    if (current) {
+      const spent = Math.round((Date.now() - questionStart.current) / 1000);
+      timeSpent.current[current.id] = (timeSpent.current[current.id] ?? 0) + spent;
+    }
+    questionStart.current = Date.now();
+    setIndex(next);
+  };
+
+  const submit = async () => {
+    if (!quiz || submitting) return;
+    setSubmitting(true);
+
+    if (current) {
+      const spent = Math.round((Date.now() - questionStart.current) / 1000);
+      timeSpent.current[current.id] = (timeSpent.current[current.id] ?? 0) + spent;
+    }
+
+    try {
+      const { attemptId } = await api.submitTest(
+        quiz.id,
+        // न सोडवलेले प्रश्नसुद्धा पाठवतो — server ला "सोडून दिला" आणि "आलाच नाही"
+        // यातला फरक कळावा म्हणून.
+        questions.map((q) => ({
+          questionId: q.id,
+          chosenOption: answers[q.id] ?? null,
+          timeSpent: timeSpent.current[q.id] ?? 0,
+        })),
+        Math.max(0, quiz.durationMinutes * 60 - secondsLeft)
+      );
+      // `replace` — मागे येऊन तोच test पुन्हा सोडवता येऊ नये.
+      router.replace(`/quiz/${attemptId}/result`);
+    } catch (err) {
+      setSubmitting(false);
+      // TODO: पडद्यावर दाखवायचं. आत्ता निदान शोधता येतं.
+      console.warn('Submit झाला नाही:', (err as Error).message);
+    }
+  };
+
+  // ⚠️ सगळे hooks इथवर संपले पाहिजेत. खाली loading/error साठी लवकर परत जातो,
+  // आणि hook त्या return नंतर लिहिला तर काही render मध्ये तो चालेल, काहींत नाही —
+  // React चा नियम मोडतो आणि app कोसळतो.
   const marks = useMemo<Mark[]>(
     () =>
       questions.map((q) =>
@@ -46,6 +110,12 @@ export default function AttemptScreen() {
       ),
     [questions, answers, review]
   );
+
+  if (loading) return <Loading label="Test उघडतोय…" />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (!quiz || questions.length === 0 || !current) {
+    return <ErrorState message="या test मध्ये एकही प्रश्न नाही." />;
+  }
 
   const answeredCount = marks.filter((m) => m === 'answered').length;
   const reviewCount = marks.filter((m) => m === 'review').length;
@@ -62,7 +132,7 @@ export default function AttemptScreen() {
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={styles.testTitle} numberOfLines={1}>
-          {testInProgress?.title ?? 'Test'}
+          {quiz.title}
         </Text>
         <View style={styles.timer}>
           <Ionicons name="time-outline" size={14} color={colors.primary} />
@@ -130,7 +200,7 @@ export default function AttemptScreen() {
             <Pressable
               style={[styles.navButton, index === 0 && styles.navButtonDisabled]}
               disabled={index === 0}
-              onPress={() => setIndex((i) => i - 1)}>
+              onPress={() => goTo(index - 1)}>
               <Ionicons name="chevron-back" size={16} color={colors.textSecondary} />
               <Text style={styles.navButtonText}>Previous</Text>
             </Pressable>
@@ -150,9 +220,7 @@ export default function AttemptScreen() {
             <Pressable
               style={[styles.navButton, styles.navButtonPrimary]}
               onPress={() =>
-                index === questions.length - 1
-                  ? router.replace(`/quiz/${testInProgress?.id ?? 'x'}/result`)
-                  : setIndex((i) => i + 1)
+                index === questions.length - 1 ? void submit() : goTo(index + 1)
               }>
               <Text style={styles.navButtonPrimaryText}>
                 {index === questions.length - 1 ? 'Finish' : 'Next'}
@@ -190,7 +258,7 @@ export default function AttemptScreen() {
                 return (
                   <Pressable
                     key={q.id}
-                    onPress={() => setIndex(i)}
+                    onPress={() => goTo(i)}
                     style={[
                       styles.paletteCell,
                       mark === 'answered' && styles.cellAnswered,
@@ -229,9 +297,12 @@ export default function AttemptScreen() {
         </View>
 
         <Pressable
-          style={styles.submitButton}
-          onPress={() => router.replace(`/quiz/${testInProgress?.id ?? 'x'}/result`)}>
-          <Text style={styles.submitButtonText}>Submit Test</Text>
+          style={[styles.submitButton, submitting && styles.submitButtonBusy]}
+          disabled={submitting}
+          onPress={() => void submit()}>
+          <Text style={styles.submitButtonText}>
+            {submitting ? 'पाठवतोय…' : 'Submit Test'}
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -528,6 +599,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
+  },
+  // पाठवत असताना फिकट — दुसऱ्यांदा दाबता येत नाही हे दिसावं म्हणून.
+  submitButtonBusy: {
+    opacity: 0.6,
   },
   submitButtonText: {
     ...typography.bodyS,

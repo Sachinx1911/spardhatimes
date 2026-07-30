@@ -198,6 +198,44 @@ export interface ApiSubmitAnswer {
   timeSpent: number;
 }
 
+/** `GET /attempts/:id` — बरोबर उत्तरं आणि खुलासे **फक्त इथे** येतात. */
+export interface ApiResultSubject {
+  /** विषयाचं नाव. विषय न दिलेल्या प्रश्नांसाठी backend "इतर" पाठवतो. */
+  subject: string;
+  orderIndex: number;
+  questionCount: number;
+  correct: number;
+  score: number;
+  maxScore: number;
+}
+
+export interface ApiResultAnswer {
+  questionId: string;
+  text: string;
+  chosenOption: string | null;
+  correctAnswer: string;
+  explanation: string | null;
+  isCorrect: boolean;
+}
+
+export interface ApiResult {
+  attemptId: string;
+  testTitle: string;
+  submittedAt: string;
+  score: number;
+  totalMarks: number;
+  percentage: number;
+  correct: number;
+  incorrect: number;
+  unattempted: number;
+  timeTakenSeconds: number;
+  durationSeconds: number;
+  /** पहिलाच attempt असेल तर null असू शकतो. */
+  percentile: number | null;
+  subjects: ApiResultSubject[];
+  answers: ApiResultAnswer[];
+}
+
 export const api = {
   async login(phone: string, password: string): Promise<Me> {
     const pair = await request<AuthTokens>(
@@ -239,5 +277,5 @@ export const api = {
       body: { answers, timeTakenSeconds },
     }),
 
-  attemptResult: (attemptId: string) => request<unknown>(`/attempts/${attemptId}`),
+  attemptResult: (attemptId: string) => request<ApiResult>(`/attempts/${attemptId}`),
 };
