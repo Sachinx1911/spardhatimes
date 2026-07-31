@@ -76,6 +76,7 @@ model User {
   adminLogs     AdminLog[]
   passwordResetTokens PasswordResetToken[]
   orders        Order[]
+  materialProgress StudyMaterialProgress[]
   seriesAccess  TestSeriesAccess[]   @relation("StudentAccess")
   grantedAccess TestSeriesAccess[]   @relation("GrantedBy")
 }
@@ -496,9 +497,41 @@ model StudyMaterial {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
+  progress    StudyMaterialProgress[]
+
   @@index([published, type, publishedAt])
   @@index([subjectId])
   @@index([examId])
+}
+
+
+/// विद्यार्थ्याने कोणतं साहित्य किती वाचलं/बघितलं.
+///
+/// याशिवाय Learn मध्ये "पुढे सुरू ठेवा" आणि विषयाची प्रगती दाखवताच येत नाही —
+/// आणि तीच दोन गोष्टी विद्यार्थ्याला पुन्हा उघडायला लावतात.
+///
+/// **XP, streak आणि रोजचं ध्येय इथे मुद्दाम नाहीत.** ते gamification आहे आणि
+/// `docs/DEVELOPMENT_PLAN.md` मध्ये v1 च्या बाहेर ठेवलेलं आहे; ते जोडायचं तर
+/// तो वेगळा निर्णय.
+model StudyMaterialProgress {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  materialId   String
+  material     StudyMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  /// 0-100. व्हिडिओ किती बघितला, टिपणीची किती पानं वाचली.
+  percent      Int           @default(0)
+  /// "पुढे सुरू ठेवा" याच्या क्रमाने लावतो.
+  lastOpenedAt DateTime      @default(now())
+  completedAt  DateTime?
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // एका विद्यार्थ्याची एका साहित्यावर एकच नोंद — नाहीतर प्रगती दुभंगते.
+  @@unique([userId, materialId])
+  @@index([userId, lastOpenedAt])
 }
 
 // ─── चालू घडामोडी ──────────────────────────────────────────────────────────────

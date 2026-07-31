@@ -6,7 +6,7 @@ import { EmptyState, ErrorState, Loading } from '@/components/ui/async-state';
 import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
-import { api, type ApiMaterial, type ApiMaterialType } from '@/lib/api';
+import { api, type ApiLearnOverview, type ApiMaterial, type ApiMaterialType } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 import {
   colors,
@@ -78,13 +78,65 @@ export default function LearnScreen() {
       <Text style={styles.title}>Learn</Text>
       <Text style={styles.subtitle}>तयारीसाठी निवडक साहित्य</Text>
 
-      {/* ── संख्या ── */}
-      <View style={styles.summary}>
-        <Count label="Notes" value={counts.notes} />
-        <Count label="Videos" value={counts.videos} />
-        <Count label="Books" value={counts.books} />
-        <Count label="PYQs" value={counts.pyqs} />
+      {/* ── तयारीची पट्टी ── */}
+      <View style={styles.hero}>
+        <View style={styles.heroText}>
+          <Text style={styles.heroTitle}>तयारी जोरात करा 🚀</Text>
+          <Text style={styles.heroNote}>
+            परीक्षेसाठी निवडलेलं दर्जेदार साहित्य एकाच ठिकाणी.
+          </Text>
+        </View>
+        <View style={styles.summary}>
+          <Count label="Notes" value={counts.notes} />
+          <Count label="Videos" value={counts.videos} />
+          <Count label="Books" value={counts.books} />
+          <Count label="PYQs" value={counts.pyqs} />
+        </View>
       </View>
+
+      {/* ── पुढे सुरू ठेवा ── */}
+      {overview.data.continueLearning.length > 0 ? (
+        <>
+          <SectionHeader title="पुढे सुरू ठेवा" />
+          <View style={styles.list}>
+            {overview.data.continueLearning.map((c) => (
+              <ContinueRow key={c.id} item={c} />
+            ))}
+          </View>
+          <View style={styles.gapLg} />
+        </>
+      ) : null}
+
+      {/* ── विषयानुसार प्रगती ── */}
+      {subjects.length > 0 ? (
+        <>
+          <SectionHeader title="विषय" />
+          <View style={styles.subjectGrid}>
+            {subjects.map((s) => (
+              <Pressable
+                key={s.id}
+                style={styles.subjectCard}
+                onPress={() => setSubjectId(s.id)}>
+                <Text style={styles.subjectName} numberOfLines={1}>
+                  {s.name}
+                </Text>
+                <Text style={styles.subjectMeta}>
+                  {`${s.completedCount} / ${s.materialCount} पूर्ण`}
+                </Text>
+                <View style={styles.bar}>
+                  <View
+                    style={[
+                      styles.barFill,
+                      { width: `${s.percent}%`, backgroundColor: subjectColor(s.name) },
+                    ]}
+                  />
+                </View>
+              </Pressable>
+            ))}
+          </View>
+          <View style={styles.gapLg} />
+        </>
+      ) : null}
 
       {total === 0 ? (
         <EmptyState
@@ -146,6 +198,46 @@ function Count({ label, value }: { label: string; value: number }) {
  * दाखवण्यासाठी वेगळे viewers लागतील; तोपर्यंत बाहेर पाठवणं प्रामाणिक आहे —
  * आतच अर्धवट उघडून तुटण्यापेक्षा.
  */
+/**
+ * साहित्य उघडणे.
+ *
+ * उघडल्याची नोंद server ला पाठवतो, पण **तिची वाट बघत नाही** — नोंद ठेवणं हे
+ * दुय्यम काम आहे; ते अडलं म्हणून दुवा उघडायचा थांबवणं चुकीचं ठरेल.
+ *
+ * टक्केवारीचा अंदाज लावत नाही: PDF/YouTube बाहेर उघडतो, त्यामुळे विद्यार्थी
+ * किती वाचला हे app ला कळतच नाही. म्हणून फक्त "उघडलं" एवढंच (1%) नोंदवतो.
+ * खरी टक्केवारी app मध्येच viewer आल्यावरच शक्य आहे.
+ */
+function openMaterial(id: string, url: string) {
+  void api.saveMaterialProgress(id, 1).catch(() => {});
+  void Linking.openURL(url);
+}
+
+/** "पुढे सुरू ठेवा" मधली ओळ — प्रगतीच्या पट्टीसह. */
+function ContinueRow({ item }: { item: ApiLearnOverview['continueLearning'][number] }) {
+  const tint = item.subjectName ? subjectColor(item.subjectName) : colors.primary;
+
+  return (
+    <Pressable style={styles.row} onPress={() => openMaterial(item.id, item.url)}>
+      <View style={[styles.rowIcon, { backgroundColor: colors.primaryLight }]}>
+        <Ionicons name={TYPE_ICON[item.type]} size={18} color={tint} />
+      </View>
+      <View style={styles.rowText}>
+        <Text style={styles.rowTitle} numberOfLines={1}>
+          {item.title}
+        </Text>
+        <View style={styles.bar}>
+          <View
+            style={[styles.barFill, { width: `${item.percent}%`, backgroundColor: tint }]}
+          />
+        </View>
+        <Text style={styles.rowMeta}>{`${item.percent}% झालं`}</Text>
+      </View>
+      <Ionicons name="play-circle" size={20} color={colors.primary} />
+    </Pressable>
+  );
+}
+
 function MaterialRow({ material }: { material: ApiMaterial }) {
   const tint = material.subjectName ? subjectColor(material.subjectName) : colors.primary;
 
@@ -158,7 +250,7 @@ function MaterialRow({ material }: { material: ApiMaterial }) {
     .join(' · ');
 
   return (
-    <Pressable style={styles.row} onPress={() => Linking.openURL(material.url)}>
+    <Pressable style={styles.row} onPress={() => openMaterial(material.id, material.url)}>
       <View style={[styles.rowIcon, { backgroundColor: colors.primaryLight }]}>
         <Ionicons name={TYPE_ICON[material.type]} size={18} color={tint} />
       </View>
@@ -189,14 +281,66 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   gap: { height: spacing.sm },
+  gapLg: { height: spacing.lg },
+
+  hero: {
+    backgroundColor: colors.primaryLight,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    gap: spacing.lg,
+  },
+  heroText: { gap: spacing.xs },
+  heroTitle: {
+    ...typography.titleL,
+    ...strong.bold,
+    color: colors.text,
+  },
+  heroNote: {
+    ...componentType.cardDescription,
+    color: colors.textSecondary,
+  },
+
+  subjectGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+  },
+  subjectCard: {
+    // दोन प्रति ओळ: पूर्ण रुंदीतून मधली फट वजा करून निम्मं.
+    width: '48%',
+    flexGrow: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    gap: spacing.xs,
+    ...shadow.card,
+  },
+  subjectName: {
+    ...componentType.cardTitle,
+    color: colors.text,
+  },
+  subjectMeta: {
+    ...componentType.smallLabel,
+    color: colors.textSecondary,
+  },
+  bar: {
+    height: 6,
+    borderRadius: radius.full,
+    backgroundColor: colors.border,
+    overflow: 'hidden',
+    marginTop: spacing.xs,
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: radius.full,
+  },
 
   summary: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-    ...shadow.card,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
   },
   count: { flex: 1, alignItems: 'center' },
   countValue: {

@@ -240,7 +240,25 @@ export interface ApiLearnOverview {
     pyqs: number;
   };
   /** साहित्य असलेले विषयच येतात — रिकामे गाळलेले असतात. */
-  subjects: { id: string; name: string; materialCount: number }[];
+  subjects: {
+    id: string;
+    name: string;
+    materialCount: number;
+    completedCount: number;
+    percent: number;
+  }[];
+  /** सुरू केलेलं पण पूर्ण न झालेलं, अलीकडे उघडलेलं आधी. जास्तीत जास्त ३. */
+  continueLearning: {
+    id: string;
+    title: string;
+    slug: string;
+    type: ApiMaterialType;
+    url: string;
+    subjectName: string | null;
+    percent: number;
+    durationSeconds: number | null;
+    pageCount: number | null;
+  }[];
 }
 
 export type ApiMaterialType = 'NOTE' | 'VIDEO' | 'BOOK' | 'SHORT';
@@ -533,6 +551,16 @@ export const api = {
   analytics: () => request<ApiAnalytics>('/analytics'),
 
   learn: () => request<ApiLearnOverview>('/learn'),
+
+  /**
+   * किती वाचलं/बघितलं ते नोंदवणे. Server प्रगती **मागे नेत नाही**, म्हणून
+   * कमी आकडा पाठवला तरी आधीची प्रगती टिकते.
+   */
+  saveMaterialProgress: (materialId: string, percent: number) =>
+    request<{ percent: number; completed: boolean }>(`/materials/${materialId}/progress`, {
+      method: 'POST',
+      body: { percent },
+    }),
 
   materials: (opts: { type?: ApiMaterialType; subjectId?: string } = {}) => {
     const q = new URLSearchParams();
