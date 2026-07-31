@@ -13,6 +13,7 @@ import {
   Mukta_500Medium,
   Mukta_600SemiBold,
   Mukta_700Bold,
+  Mukta_800ExtraBold,
 } from '@expo-google-fonts/mukta';
 import { Stack, ThemeProvider, DefaultTheme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -56,6 +57,7 @@ export default function RootLayout() {
     Mukta_500Medium,
     Mukta_600SemiBold,
     Mukta_700Bold,
+    Mukta_800ExtraBold,
   });
 
   useEffect(() => {

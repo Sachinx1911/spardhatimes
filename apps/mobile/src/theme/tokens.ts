@@ -28,58 +28,47 @@ import { useWindowDimensions } from 'react-native';
  * - **नष्ट करणारी बटणं कडांची**, भरीव नाहीत
  */
 export const colors = {
-  /** Brand लाल — logo आणि CTA मधला. */
-  primary: '#E11B22',
-  primaryDark: '#B4141A',
-  primaryLight: '#FDECEC',
-  /** Logo मधला गडद निळा — "TIMES" आणि काही चिन्हं. */
-  navy: '#12277D',
-  success: '#22C55E',
-  warning: '#F59E0B',
-  danger: '#EF4444',
+  primary: '#EF4444',
+  primaryDark: '#DC2626',
+  primaryLight: '#FFECEC',
 
-  text: '#1E293B',
-  textSecondary: '#64748B',
-  border: '#E5E7EB',
   background: '#F8F9FD',
   surface: '#FFFFFF',
 
-  textInverse: '#FFFFFF',
-  /** `danger` चं जुनं नाव — जुन्या screens साठी. */
+  blue: '#3B82F6',
+  green: '#22C55E',
+  orange: '#F59E0B',
+  purple: '#7C3AED',
+  teal: '#14B8A6',
+  pink: '#DB2777',
+
+  text: '#111827',
+  textSecondary: '#64748B',
+  border: '#E5E7EB',
+
+  success: '#22C55E',
+  /**
+   * ⚠️ `error` आणि `primary` **एकच रंग आहेत** — sheet मध्ये दोन्ही #EF4444.
+   * म्हणून: **भरीव लाल = पुढे जा** (CTA, active tab). चूक कधीच भरीव बटण म्हणून
+   * दाखवायची नाही — चिन्ह + मजकूर + फिकट पार्श्वभूमी, एवढंच.
+   */
   error: '#EF4444',
+  danger: '#EF4444',
+  warning: '#F59E0B',
 
-  // Sheets मध्ये सुटे नाहीत, पण chips/tags/कार्डांत दिसतात — फिकट छटा.
+  textInverse: '#FFFFFF',
+  /** Bottom nav मधला निष्क्रिय रंग — sheet मध्ये वेगळा दिलेला आहे. */
+  navInactive: '#6B7280',
+  /** Logo मधला गडद निळा ("TIMES"). Palette मध्ये सुटा नाही, पण logo शिवाय
+   *  दुसरीकडे वापरायचा नाही. */
+  navy: '#12277D',
+
+  // फिकट छटा — status chips आणि चिन्हांच्या मागे.
   successLight: '#F0FDF4',
-  dangerLight: '#FEF2F2',
-  errorLight: '#FEF2F2',
+  dangerLight: '#FFECEC',
+  errorLight: '#FFECEC',
   warningLight: '#FFFBEB',
-  /**
-   * `primaryLight` पेक्षाही फिकट — पांढऱ्या कार्डांमध्ये वेगळं उठून दिसणारं कार्ड
-   * (उदा. "Continue Your Test"). `primaryLight` तिथे वापरला तर तो chips आणि
-   * tags शी गोंधळतो.
-   */
-  primarySoft: '#F3F0FF',
-
-  /**
-   * Home वरच्या tile जाळीत आठ चौकोन आहेत आणि पाच मुख्य रंग पुरत नाहीत — दोन
-   * tiles ला शेजारचाच रंग मिळाला असता आणि ते एकाच गटातले वाटले असते. म्हणून हे
-   * दोन. सुटे hex म्हणून screen मध्ये लिहिलेले होते; नियम १ प्रमाणे token केले.
-   *
-   * हेच दोन रंग `subjectColors` मध्ये Maths आणि Geography ला आहेत — तेही आता
-   * इथूनच घेतात, म्हणून एकच जागा.
-   */
-  accentViolet: '#8B5CF6',
-  accentSky: '#0EA5E9',
-  /** Spec मधले सुटे रंग — tiles आणि चिन्हांसाठी. */
-  blue: '#2C7BE5',
-  pink: '#D6217F',
-  /** Home tiles चे रंग — design मधून तंतोतंत. */
-  tileRed: '#E8232A',
-  tileGreen: '#1DA750',
-  tileOrange: '#F5911E',
-  tileViolet: '#7C4DFF',
-  tileTeal: '#12B5A5',
-  tileAmber: '#FDB913',
+  primarySoft: '#FFF5F5',
 } as const;
 
 /**
@@ -87,87 +76,83 @@ export const colors = {
  * `LinearGradient` ला देताना प्रत्येक screen मध्ये hex लिहावे लागत नाहीत.
  */
 export const gradients = {
-  /** Banner ची क्रीम पार्श्वभूमी — design मधल्या कार्डासारखी. */
-  banner: ['#FFF7F0', '#FDE9EC'] as const,
+  /** Banner ची पार्श्वभूमी — sheet मधला gradient. */
+  banner: ['#FFECEC', '#FFF5F5'] as const,
 } as const;
 
-// ─── 2. TYPOGRAPHY (Poppins + Mukta) ─────────────────────────────────────────
+// ─── 2. TYPOGRAPHY (Mukta) ───────────────────────────────────────────────────
 
 /**
- * Poppins चे weights वेगवेगळ्या font families आहेत, `fontWeight` नाही — Android वर
- * `fontWeight: '600'` ने Poppins चा SemiBold उचलला जात नाही, तो Regular ताणून
- * दाखवतो. म्हणून प्रत्येक शैलीत `fontFamily` स्पष्ट दिलं आहे.
+ * **मुख्य font Mukta आहे**, Poppins नाही — sheet मध्ये सगळ्या शैली Mukta च्या
+ * आहेत. App मराठी-प्रथम आहे आणि Mukta मध्ये देवनागरी आणि लॅटिन दोन्ही आहेत,
+ * त्यामुळे एकाच font ने दोन्ही भाषा नीट दिसतात.
+ *
+ * Weights वेगवेगळ्या **families** आहेत, `fontWeight` नाही — Android वर
+ * `fontWeight: '600'` ने SemiBold उचलला जात नाही, तो Regular ताणून दाखवतो.
  */
 export const fonts = {
+  regular: 'Mukta_400Regular',
+  medium: 'Mukta_500Medium',
+  semibold: 'Mukta_600SemiBold',
+  bold: 'Mukta_700Bold',
+  extrabold: 'Mukta_800ExtraBold',
+} as const;
+
+/**
+ * Poppins अजून लोड होतो पण **नवीन screens मध्ये वापरायचा नाही**. जुन्या
+ * screens त्यावर आहेत; त्या टप्प्याटप्प्याने Mukta वर आणायच्या.
+ */
+export const poppins = {
   regular: 'Poppins_400Regular',
   medium: 'Poppins_500Medium',
   semibold: 'Poppins_600SemiBold',
   bold: 'Poppins_700Bold',
 } as const;
 
-/**
- * मराठीसाठी Mukta — **हे मुद्दाम वेगळं आहे.**
- *
- * Poppins मध्ये देवनागरी अक्षरं नाहीत; मराठी मजकूर त्यात दिला की OS स्वतःचा
- * पर्यायी font घालतो आणि तो प्रत्येक फोनवर वेगळा दिसतो. Mukta देवनागरीसाठीच
- * बनवलेला आहे, म्हणून मराठी ओळी याने द्यायच्या.
- *
- * वापर: `{...typography.titleL, ...marathi.semibold}` — आकार तोच, फक्त family
- * बदलते.
- */
-export const marathiFonts = {
-  regular: 'Mukta_400Regular',
-  medium: 'Mukta_500Medium',
-  semibold: 'Mukta_600SemiBold',
-  bold: 'Mukta_700Bold',
-} as const;
-
-export const marathi = {
-  regular: { fontFamily: marathiFonts.regular },
-  medium: { fontFamily: marathiFonts.medium },
-  semibold: { fontFamily: marathiFonts.semibold },
-  bold: { fontFamily: marathiFonts.bold },
-} as const;
-
-/** Screen-पातळीवरचा scale (Android 360dp sheet). */
+/** Sheet मधल्या सहा शैली, जशाच्या तशा. */
 export const typography = {
-  /** Screen title */
-  headingXL: { fontSize: 30, fontFamily: fonts.bold, lineHeight: 38 },
-  /** Section title */
-  headingL: { fontSize: 24, fontFamily: fonts.semibold, lineHeight: 32 },
-  /** Card title */
-  titleL: { fontSize: 20, fontFamily: fonts.semibold, lineHeight: 28 },
-  /** Body */
+  /** Screen title — 34 / ExtraBold */
+  headingXL: { fontSize: 34, fontFamily: fonts.extrabold, lineHeight: 44 },
+  /** Section title — 22 / SemiBold */
+  headingL: { fontSize: 22, fontFamily: fonts.semibold, lineHeight: 30 },
+  /** Card title — 18 / Bold */
+  titleL: { fontSize: 18, fontFamily: fonts.bold, lineHeight: 26 },
+  /** Body — 16 / Regular */
   bodyL: { fontSize: 16, fontFamily: fonts.regular, lineHeight: 24 },
-  bodyM: { fontSize: 15, fontFamily: fonts.regular, lineHeight: 22 },
-  /** Caption */
+  bodyM: { fontSize: 16, fontFamily: fonts.regular, lineHeight: 24 },
+  /** Caption — 14 / Regular */
   bodyS: { fontSize: 14, fontFamily: fonts.regular, lineHeight: 20 },
-  caption: { fontSize: 13, fontFamily: fonts.regular, lineHeight: 18 },
+  caption: { fontSize: 14, fontFamily: fonts.regular, lineHeight: 20 },
 } as const;
 
-/**
- * Component-पातळीवरची मापं, "Buy Test Series" sheet मधून जशीच्या तशी.
- * किंमत आणि सवलत यांचा आकार global scale मध्ये बसत नाही — तो मुद्दाम मोठा आहे.
- */
 export const componentType = {
-  cardTitle: { fontSize: 16, fontFamily: fonts.semibold, lineHeight: 22 },
-  cardDescription: { fontSize: 13, fontFamily: fonts.regular, lineHeight: 20 },
-  badge: { fontSize: 11, fontFamily: fonts.medium, lineHeight: 16 },
-  priceCurrent: { fontSize: 22, fontFamily: fonts.bold, lineHeight: 28 },
+  cardTitle: { fontSize: 18, fontFamily: fonts.bold, lineHeight: 26 },
+  cardDescription: { fontSize: 14, fontFamily: fonts.regular, lineHeight: 20 },
+  /** Button text — 18 / Bold */
+  buttonText: { fontSize: 18, fontFamily: fonts.bold, lineHeight: 26 },
+  badge: { fontSize: 12, fontFamily: fonts.medium, lineHeight: 16 },
+  smallLabel: { fontSize: 12, fontFamily: fonts.regular, lineHeight: 16 },
+  /** Bottom nav चं label. */
+  navLabel: { fontSize: 12, fontFamily: fonts.medium, lineHeight: 16 },
+  priceCurrent: { fontSize: 22, fontFamily: fonts.bold, lineHeight: 30 },
   priceOld: { fontSize: 14, fontFamily: fonts.medium, lineHeight: 20 },
   discount: { fontSize: 12, fontFamily: fonts.semibold, lineHeight: 16 },
-  buttonText: { fontSize: 16, fontFamily: fonts.semibold, lineHeight: 22 },
-  smallLabel: { fontSize: 11, fontFamily: fonts.regular, lineHeight: 16 },
-  /** Bottom nav चं label */
-  navLabel: { fontSize: 11, fontFamily: fonts.medium, lineHeight: 16 },
 } as const;
 
-/** ठळक करायचं असेल तेव्हा — आकार तोच, फक्त family बदलते. */
+/** ठळक करायचं असेल तेव्हा — आकार तोच, family बदलते. */
 export const strong = {
   medium: { fontFamily: fonts.medium },
   semibold: { fontFamily: fonts.semibold },
   bold: { fontFamily: fonts.bold },
+  extrabold: { fontFamily: fonts.extrabold },
 } as const;
+
+/**
+ * जुन्या screens मधून `marathi.*` वापरलं जातं. मुख्य font आता Mukta च आहे,
+ * त्यामुळे हे वेगळं ठेवायची गरज उरली नाही — पण ते काढलं तर एकोणीस files
+ * तुटतील, म्हणून तेच families इथून देतो.
+ */
+export const marathi = { ...strong, regular: { fontFamily: fonts.regular } } as const;
 
 // ─── 3. SPACING (8dp grid) ───────────────────────────────────────────────────
 
@@ -188,21 +173,22 @@ export const spacing = {
 // ─── 4. BORDER RADIUS ────────────────────────────────────────────────────────
 
 export const radius = {
-  xs: 4,
+  /** Sheet चे पाच: 8 · 12 · 18 · 22 · 28. */
   sm: 8,
-  /** Button (small) — sheet मध्ये 10dp, grid वर नाही पण दिलेलं आहे. */
-  buttonSmall: 10,
   md: 12,
-  /** Chip / status — sheet मध्ये 14dp. */
-  chip: 14,
-  /** Button — spec: 14dp. */
-  button: 14,
-  lg: 16,
-  /** Card — spec: 18dp. हाच कार्डांचा नेहमीचा radius. */
+  /** कार्डांचा नेहमीचा. */
   card: 18,
-  xl: 20,
-  xxl: 24,
+  lg: 22,
+  xl: 28,
+  /** गोल — chips, ठिपके, अवतार. */
   full: 999,
+
+  // जुन्या screens मधून वापरले जाणारे — sheet च्या पाचांशी जोडलेले.
+  xs: 8,
+  buttonSmall: 12,
+  chip: 12,
+  button: 12,
+  xxl: 28,
 } as const;
 
 // ─── 5. SHADOW (elevation) ───────────────────────────────────────────────────
@@ -212,12 +198,10 @@ export const radius = {
  * deprecated आहेत आणि web bundler warning देतो. `boxShadow` तिन्ही platforms वर.
  */
 export const shadow = {
-  /** Spec चं soft shadow — blur 24, 8% अपारदर्शकता. कार्डांचं नेहमीचं. */
-  card: { boxShadow: '0px 4px 24px rgba(30, 41, 59, 0.08)' },
-  /** थोडं जास्त उचललेलं — banner, तरंगती कार्डं. */
-  cardRaised: { boxShadow: '0px 8px 24px rgba(30, 41, 59, 0.10)' },
-  /** Primary बटणाखाली त्याच रंगाची मऊ छटा. */
-  button: { boxShadow: '0px 4px 12px rgba(91, 61, 245, 0.24)' },
+  /** Sheet चं card shadow: X0 Y8 blur8, 8% अपारदर्शकता. */
+  card: { boxShadow: '0px 8px 8px rgba(17, 24, 39, 0.08)' },
+  cardRaised: { boxShadow: '0px 8px 16px rgba(17, 24, 39, 0.10)' },
+  button: { boxShadow: '0px 4px 12px rgba(239, 68, 68, 0.24)' },
 } as const;
 
 // ─── 6. LAYOUT ───────────────────────────────────────────────────────────────
@@ -260,8 +244,22 @@ export const layout = {
   buttonSmall: { width: 120, height: 40 },
   buyButton: { width: 96, height: 40 },
 
-  bottomNavHeight: 56,
+  /** Sheet: 74dp. */
+  bottomNavHeight: 74,
+  /** Active tab खालची दांडी. */
+  navIndicatorHeight: 3,
   navIconSize: 24,
+  /**
+   * चिन्हाची चौकट.
+   *
+   * Sheet च्या COMPONENTS मध्ये 60×60 दिलं आहे, पण ते **मोठ्या कार्डांसाठी**
+   * आहे. Home वरची tiles दोन प्रति ओळ आहेत — 360dp वर प्रत्येक 154dp — आणि
+   * त्यात 60dp चौकट घातली तर मजकुराला जेमतेम 50dp उरतात आणि प्रत्येक नाव
+   * कापलं जातं. Sheet च्या स्वतःच्या mockup मध्येही tile चं चिन्ह ~44dp आहे.
+   */
+  iconBox: 60,
+  /** Home tiles मधली लहान चौकट. */
+  tileIconBox: 44,
   cardIconSize: 28,
   chipIconSize: 18,
 } as const;
@@ -275,12 +273,12 @@ export const layout = {
 export const subjectColors: Record<string, string> = {
   'Current Affairs': colors.success,
   'Indian Polity': colors.primary,
-  Geography: colors.accentSky,
+  Geography: colors.blue,
   Economy: colors.warning,
   History: colors.danger,
   'Science & Tech': '#14B8A6',
   'General Studies': colors.primary,
-  Maths: colors.accentViolet,
+  Maths: colors.purple,
   Marathi: colors.danger,
   GK: colors.primary,
 };

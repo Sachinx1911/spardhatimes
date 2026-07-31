@@ -25,19 +25,29 @@
 
 | Token | Hex | कुठे |
 |---|---|---|
-| `primary` | `#5B3DF5` | Buttons, active tab, दुवे |
-| `primaryDark` | `#4427D6` | Gradient चं दुसरं टोक, दाबलेलं बटण |
-| `primaryLight` | `#F3F0FF` | Tags, chips, icon ची पार्श्वभूमी |
-| `success` | `#22C55E` | बरोबर उत्तर, सवलत, "Completed" |
-| `warning` | `#F59E0B` | "In Progress", सावधानतेचे आकडे |
-| `danger` | `#EF4444` | चूक, badge counter, धोका |
-| `blue` | `#3B82F6` | Tile चिन्हं |
-| `pink` | `#EC4899` | Tile चिन्हं |
-| `text` | `#1E293B` | मुख्य मजकूर |
-| `textSecondary` | `#64748B` | दुय्यम मजकूर, meta |
-| `border` | `#E5E7EB` | रेषा, रिकामा progress track |
+| `primary` | `#EF4444` | Buttons, active tab, दुवे |
+| `primaryDark` | `#DC2626` | दाबलेलं बटण |
+| `primaryLight` | `#FFECEC` | Tags, chips, चिन्हामागची पार्श्वभूमी |
 | `background` | `#F8F9FD` | पडद्याची पार्श्वभूमी |
 | `surface` | `#FFFFFF` | कार्ड |
+| `blue` | `#3B82F6` | Tile चिन्हं |
+| `green` | `#22C55E` | Tile चिन्हं |
+| `orange` | `#F59E0B` | Tile चिन्हं |
+| `purple` | `#7C3AED` | Tile चिन्हं |
+| `teal` | `#14B8A6` | Tile चिन्हं |
+| `pink` | `#DB2777` | Tile चिन्हं |
+| `text` | `#111827` | मुख्य मजकूर |
+| `textSecondary` | `#64748B` | दुय्यम मजकूर |
+| `border` | `#E5E7EB` | रेषा |
+| `navInactive` | `#6B7280` | Bottom nav चे निष्क्रिय tabs |
+| `success` | `#22C55E` | बरोबर, "Completed" |
+| `error` | `#EF4444` | चूक |
+
+> ⚠️ **`error` आणि `primary` एकच रंग आहेत** (#EF4444). म्हणून एक नियम:
+> **भरीव लाल = पुढे जा** (CTA, active tab). चूक कधीच भरीव बटण म्हणून दाखवायची
+> नाही — चिन्ह + मजकूर + फिकट पार्श्वभूमी, एवढंच.
+
+**Banner gradient:** `#FFECEC` → `#FFF5F5` (`gradients.banner`).
 
 **वरची पट्टी gradient आहे** — `gradients.appBar` (`#5B3DF5` → `#7C5CFF`).
 Screen मध्ये hex लिहायचे नाहीत, तो token वापरायचा.
@@ -51,46 +61,30 @@ tokens ला दुसरा संच लागेल — screens ला ह�
 
 ---
 
-## २. Typography — Poppins + Mukta
+## २. Typography — **Mukta**
 
-Weights वेगवेगळ्या **font families** आहेत, `fontWeight` नाही. Android वर
-`fontWeight: '600'` ने Poppins चा SemiBold उचलला जात नाही — तो Regular ताणून दाखवतो.
-म्हणून प्रत्येक शैलीत `fontFamily` स्पष्ट.
+मुख्य font **Mukta** आहे, Poppins नाही. App मराठी-प्रथम आहे आणि Mukta मध्ये
+देवनागरी आणि लॅटिन दोन्ही आहेत, त्यामुळे एकाच font ने दोन्ही भाषा नीट दिसतात.
 
-### 🔤 मराठी मजकुराला **Mukta**
+Weights वेगवेगळ्या **families** आहेत, `fontWeight` नाही — Android वर
+`fontWeight: '600'` ने SemiBold उचलला जात नाही, तो Regular ताणून दाखवतो.
 
-Poppins मध्ये देवनागरी अक्षरं नाहीत. मराठी ओळ Poppins मध्ये दिली की OS स्वतःचा
-पर्यायी font घालतो — आणि तो प्रत्येक फोनवर वेगळा दिसतो. म्हणून:
+| शैली | Size | Weight | Token |
+|---|---|---|---|
+| Screen Title | 34 | ExtraBold | `typography.headingXL` |
+| Section Title | 22 | SemiBold | `typography.headingL` |
+| Card Title | 18 | Bold | `typography.titleL` |
+| Body | 16 | Regular | `typography.bodyL` |
+| Caption | 14 | Regular | `typography.caption` |
+| Button Text | 18 | Bold | `componentType.buttonText` |
 
-```ts
-<Text style={{ ...typography.titleL, ...marathi.semibold }}>मोफत टेस्ट</Text>
-```
+**Poppins अजून लोड होतो** (`poppins.*`) पण नवीन screens मध्ये वापरायचा नाही —
+जुन्या screens त्यावर आहेत, त्या टप्प्याटप्प्याने Mukta वर आणायच्या.
 
-आकार तोच राहतो, फक्त family बदलते. **मराठी मजकूर असलेल्या प्रत्येक `Text` ला
-`marathi.*` जोडा.**
-
-### Screen-पातळीचा scale (`typography`)
-
-| Token | Size | Weight | Line | कुठे |
-|---|---|---|---|---|
-| `headingXL` | 30 | Bold | 38 | Screen title |
-| `headingL` | 24 | SemiBold | 32 | Section title, मोठा आकडा |
-| `titleL` | 20 | SemiBold | 28 | Card title |
-| `bodyL` | 16 | Regular | 24 | मुख्य मजकूर |
-| `bodyM` | 15 | Regular | 22 | नेहमीचा मजकूर |
-| `bodyS` | 14 | Regular | 20 | Meta |
-| `caption` | 13 | Regular | 18 | सर्वात लहान |
-
-### Component-पातळीची मापं (`componentType`)
-
-Sheet ने एखाद्या घटकाला स्वतःचं माप दिलं असेल तर ते वरच्या scale पेक्षा वरचढ.
-किंमत मुद्दाम मोठी आहे — ती scale मध्ये बसवायची नाही.
-
-`cardTitle` 16/SemiBold · `cardDescription` 13/Regular · `badge` 11/Medium ·
-`priceCurrent` **22/Bold** · `priceOld` 14/Medium · `discount` 12/SemiBold ·
-`buttonText` 16/SemiBold · `smallLabel` 11/Regular · `navLabel` 11/Medium
-
-ठळक करायचं असेल तर आकार तोच ठेवून `strong.semibold` / `strong.bold` जोडा.
+> **Card Title 18 सगळीकडे बसत नाही.** Home वरची tiles दोन प्रति ओळ आहेत —
+> 360dp वर प्रत्येक 154dp — आणि तिथे 18px शीर्षक + 60dp चौकट घातली तर मजकुराला
+> ~50dp उरतात आणि प्रत्येक नाव कापलं जातं. त्या tiles साठी शीर्षक 13, चौकट 44
+> (`layout.tileIconBox`). Sheet च्या स्वतःच्या mockup मध्येही तेवढंच आहे.
 
 ---
 
@@ -99,8 +93,7 @@ Sheet ने एखाद्या घटकाला स्वतःचं म�
 **Spacing — 8dp grid:** 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 56 · 64
 (`xs sm md lg xl 2xl 3xl 4xl 5xl 6xl 7xl`)
 
-**Radius:** `xs` 4 · `sm` 8 · `buttonSmall` 10 · `md` 12 · `chip` 14 ·
-**`button` 14** · `lg` 16 · **`card` 18** · `xl` 20 · `xxl` 24 · `full` 999
+**Radius:** `sm` 8 · `md` 12 · **`card` 18** · `lg` 22 · `xl` 28 · `full` 999
 
 कार्डांना `radius.card` (18) आणि बटणांना `radius.button` (14) — spec ने हे दोन
 वेगळे दिले आहेत, म्हणून त्यांचे स्वतःचे tokens.
@@ -110,9 +103,9 @@ Sheet ने एखाद्या घटकाला स्वतःचं म�
 
 | Token | मूल्य | कुठे |
 |---|---|---|
-| `shadow.card` | `0 4 24 rgba(30,41,59,.08)` | कार्डं — spec चं soft shadow |
-| `shadow.cardRaised` | `0 8 24 rgba(30,41,59,.10)` | उचललेली कार्डं, banner |
-| `shadow.button` | `0 4 12 rgba(91,61,245,.24)` | भरीव primary buttons |
+| `shadow.card` | `0 8 8 rgba(17,24,39,.08)` | कार्डं — sheet चं card shadow |
+| `shadow.cardRaised` | `0 8 16 rgba(17,24,39,.10)` | उचललेली कार्डं |
+| `shadow.button` | `0 4 12 rgba(239,68,68,.24)` | भरीव primary buttons |
 
 ---
 
@@ -168,8 +161,13 @@ Nav icon **24** · Card icon **28** · Home tile **92** · Carousel **180**
 Home · My Course · Free Test · Profile
 ```
 
-उंची 56dp + safe area. Icon 24dp, label 11sp Medium.
-Active = `primary` रंग + खाली 4dp ठिपका. मधला उंचावलेला गोल button नाही.
+उंची **74dp** + safe area. Icon 24dp, label 12 Medium.
+Active `#EF4444` + खाली **3dp दांडी**; निष्क्रिय `#6B7280`. वरची रेषा `#E5E7EB`.
+मधला उंचावलेला गोल button नाही.
+
+> Design system sheet मध्ये तिसरा tab "Chat Help" दाखवला आहे, पण **"Free Test"
+> ठरलं आहे** — ते sheet नंतर स्पष्ट सांगितलं गेलं. Chat ला schema मध्ये एकही
+> model नाही; Free Test मात्र आजच्या data वर चालतो (किंमत ० असलेल्या series).
 
 > **बदलाची नोंद.** 2026-07-29 ला पाच tabs गोठवले होते
 > (`Home · Learn · Tests · Analytics · Profile`). 2026-08-01 च्या मुख्य पानाच्या

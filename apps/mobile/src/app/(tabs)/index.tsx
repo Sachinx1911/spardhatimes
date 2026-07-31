@@ -32,7 +32,6 @@ import {
 
 interface Tile {
   title: string;
-  note: string;
   icon: string;
   tint: string;
   /** पान नसेल तर `null`. */
@@ -42,23 +41,20 @@ interface Tile {
 const TILES: Tile[] = [
   {
     title: 'MPSC',
-    note: 'अभ्यास साहित्य, टेस्ट आणि नोट्स',
     icon: 'document-text',
-    tint: colors.tileRed,
+    tint: colors.primary,
     href: '/store',
   },
   {
     title: 'ONLINE TEST',
-    note: 'टेस्ट द्या आणि तुमची तयारी तपासा',
     icon: 'clipboard',
     tint: colors.blue,
     href: '/tests',
   },
   {
     title: 'PDF NOTES',
-    note: 'सर्व विषयांचे PDF नोट्स डाउनलोड करा',
     icon: 'file-tray',
-    tint: colors.tileGreen,
+    tint: colors.green,
     href: '/learn',
   },
   // ── हे तीन अजून बांधलेले नाहीत ──
@@ -66,35 +62,30 @@ const TILES: Tile[] = [
   // दाबल्यावर रिकामं पान उघडण्यापेक्षा "लवकरच" दाखवणं प्रामाणिक.
   {
     title: 'अभ्यासक्रम',
-    note: 'परीक्षेनुसार संपूर्ण अभ्यासक्रम पहा',
     icon: 'book',
-    tint: colors.tileOrange,
+    tint: colors.orange,
     href: null,
   },
   {
     title: 'चालू घडामोडी',
-    note: 'दैनिक, साप्ताहिक आणि मासिक अपडेट्स',
     icon: 'newspaper',
-    tint: colors.tileViolet,
+    tint: colors.purple,
     href: '/current-affairs',
   },
   {
     title: 'सरळसेवा',
-    note: 'महत्त्वाच्या सेवा आणि उपयुक्त लिंक',
     icon: 'people',
-    tint: colors.tileTeal,
+    tint: colors.teal,
     href: null,
   },
   {
     title: 'चालू घडामोडी Quiz',
-    note: 'चालू घडामोडींवर आधारित विविध खेळा',
     icon: 'bulb',
-    tint: colors.tileAmber,
+    tint: colors.orange,
     href: null,
   },
   {
     title: 'TCS | IBPS',
-    note: 'बँकिंग आणि TCS परीक्षांची तयारी',
     icon: 'bank',
     tint: colors.pink,
     href: '/store',
@@ -153,15 +144,14 @@ export default function HomeScreen() {
                 </View>
 
                 <View style={styles.tileText}>
-                  {/* 154dp रुंद कार्डात चिन्ह, मजकूर आणि बाण बसवायचे आहेत.
-                      "ONLINE TEST" आणि "चालू घडामोडी Quiz" एका ओळीत मावत नाहीत,
-                      म्हणून दोन ओळी — नाव कापण्यापेक्षा कार्ड थोडं उंच बरं. */}
-                  <Text style={styles.tileTitle} numberOfLines={2}>
+                  {/* 154dp रुंद कार्डात "चालू घडामोडी Quiz" एका ओळीत मावत नाही,
+                      म्हणून तीन ओळींपर्यंत मुभा — नाव कापण्यापेक्षा कार्ड थोडं
+                      उंच बरं. बाकीची नावं दोनच ओळी घेतात. */}
+                  <Text style={styles.tileTitle} numberOfLines={3}>
                     {t.title}
                   </Text>
-                  <Text style={styles.tileNote} numberOfLines={2}>
-                    {off ? 'लवकरच येत आहे' : t.note}
-                  </Text>
+                  {/* न बांधलेल्या tiles खाली एवढंच — फिकटपणा एकटा पुरेसा नाही. */}
+                  {off ? <Text style={styles.tileNote}>लवकरच</Text> : null}
                 </View>
 
                 <Icon name="chevron-forward" size={14} color={colors.textSecondary} />
@@ -359,23 +349,24 @@ const styles = StyleSheet.create({
   },
   tileOff: { opacity: 0.45 },
   tileIcon: {
-    width: 40,
-    height: 40,
+    width: layout.tileIconBox,
+    height: layout.tileIconBox,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tileText: { flex: 1 },
   tileTitle: {
-    ...componentType.badge,
-    fontSize: 13,
-    lineHeight: 17,
+    // वर्णन काढल्याने जागा मोकळी झाली, म्हणून नाव sheet च्या Card Title च्या
+    // जवळ नेता आलं. 18 अजूनही बसत नाही — "चालू घडामोडी Quiz" दोन ओळींत जातो.
+    fontSize: 15,
+    lineHeight: 20,
     ...marathi.semibold,
     color: colors.text,
   },
   tileNote: {
-    fontSize: 10,
-    lineHeight: 13,
+    fontSize: 11,
+    lineHeight: 15,
     ...marathi.regular,
     color: colors.textSecondary,
     marginTop: 2,
