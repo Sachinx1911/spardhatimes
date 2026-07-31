@@ -193,3 +193,51 @@ describe("evaluateAttemptAccess", () => {
     }
   });
 });
+
+describe("access ची मुदत", () => {
+  it("मुदत उरली असेल तर चालतो", () => {
+    expect(
+      evaluateAttemptAccess(ctx({ accessExpiresAt: after(HOUR) }), NOW).allowed
+    ).toBe(true);
+  });
+
+  it("मुदत संपली असेल तर नाकारतो", () => {
+    expect(evaluateAttemptAccess(ctx({ accessExpiresAt: before(HOUR) }), NOW)).toEqual({
+      allowed: false,
+      reason: "EXPIRED",
+    });
+  });
+
+  // Admin ने हाताने दिलेला access — त्याला मुदत नसते.
+  it("expiresAt null म्हणजे कायमस्वरूपी", () => {
+    expect(evaluateAttemptAccess(ctx({ accessExpiresAt: null }), NOW).allowed).toBe(true);
+  });
+
+  it("नेमक्या मुदतीच्या क्षणी संपलेला धरतो", () => {
+    // सीमेवर उदार राहिलं तर "मुदत संपली" कधीच खरं होत नाही.
+    expect(evaluateAttemptAccess(ctx({ accessExpiresAt: NOW }), NOW).reason).toBe("EXPIRED");
+  });
+
+  it("access नसेल तर मुदतीचा प्रश्नच येत नाही", () => {
+    // NO_ACCESS आधी तपासलं पाहिजे — नाहीतर series कधी संपते हे न घेतलेल्यालाही कळेल.
+    expect(
+      evaluateAttemptAccess(ctx({ hasAccess: false, accessExpiresAt: before(HOUR) }), NOW).reason
+    ).toBe("NO_ACCESS");
+  });
+
+  it("मुदत संपली तरी admin ला चालतो", () => {
+    expect(
+      evaluateAttemptAccess(ctx({ accessExpiresAt: before(HOUR), role: "ADMIN" }), NOW).allowed
+    ).toBe(true);
+  });
+
+  it("standalone quiz ला मुदत लागू नाही", () => {
+    const q = quiz({ testSeries: null });
+    expect(
+      evaluateAttemptAccess(
+        ctx({ quiz: q, hasAccess: false, accessExpiresAt: before(HOUR) }),
+        NOW
+      ).allowed
+    ).toBe(true);
+  });
+});

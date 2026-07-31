@@ -39,6 +39,7 @@ export type AccessReason =
   | "NOT_FOUND"
   | "DRAFT"
   | "NO_ACCESS"
+  | "EXPIRED"
   | "NOT_RELEASED"
   | "CLOSED";
 
@@ -55,6 +56,11 @@ export interface AttemptContext {
   quiz: AttemptableQuiz | null;
   /** Whether a TestSeriesAccess row exists for this user and the quiz's series. */
   hasAccess: boolean;
+  /**
+   * त्या access ची मुदत कधी संपते. **null = कायमस्वरूपी** — admin ने हाताने
+   * दिलेला access असाच असतो. `hasAccess` false असेल तर याला अर्थ नाही.
+   */
+  accessExpiresAt?: Date | null;
   /** The viewer's role, or null when nobody is logged in. */
   role: string | null;
 }
@@ -91,6 +97,12 @@ export function evaluateAttemptAccess(
 
   // An unpublished series is indistinguishable from one you were never given.
   if (!series.published || !ctx.hasAccess) return deny("NO_ACCESS");
+
+  // मुदत NO_ACCESS **नंतर** तपासतो — आधी तपासली असती तर series कधी संपते हे
+  // ती न घेतलेल्यालाही कळलं असतं. सीमेवर उदार नाही: नेमक्या क्षणी संपलेली धरतो,
+  // नाहीतर "मुदत संपली" कधीच खरं होत नाही.
+  const expiresAt = ctx.accessExpiresAt;
+  if (expiresAt && expiresAt <= now) return deny("EXPIRED");
 
   const state = testState(ctx.quiz, series.timingMode, now);
   if (state === "UPCOMING") return deny("NOT_RELEASED");

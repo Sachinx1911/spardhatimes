@@ -18,7 +18,7 @@ export const attemptAccessInclude = (userId: string) =>
       select: {
         published: true,
         timingMode: true,
-        access: { where: { userId }, select: { id: true } },
+        access: { where: { userId }, select: { id: true, expiresAt: true } },
       },
     },
   }) as const;
@@ -31,7 +31,7 @@ export interface QuizWithAccess {
   testSeries: {
     published: boolean;
     timingMode: TimingMode;
-    access: { id: string }[];
+    access: { id: string; expiresAt: Date | null }[];
   } | null;
 }
 
@@ -55,6 +55,9 @@ export function decideAttemptAccess(
         }
       : null,
     hasAccess: (quiz?.testSeries?.access.length ?? 0) > 0,
+    // प्रत्येक विद्यार्थ्याला एका series ला एकच access row असते
+    // (`@@unique([userId, testSeriesId])`), म्हणून पहिलीच तीच.
+    accessExpiresAt: quiz?.testSeries?.access[0]?.expiresAt ?? null,
     role: role ?? null,
   });
 }
@@ -72,6 +75,10 @@ export function messageForReason(reason: AccessReason): string {
       return "This test hasn't been unlocked yet. Check back at its scheduled release time.";
     case "CLOSED":
       return "This test is now closed and can no longer be attempted.";
+    // मुदत संपली हे स्पष्ट सांगायचं — विद्यार्थ्याने पैसे भरलेले आहेत, त्याला
+    // "तुम्हाला ही series दिलेली नाही" सांगणं चुकीचं आणि गोंधळात टाकणारं आहे.
+    case "EXPIRED":
+      return "Your access to this test series has expired. Renew it to continue.";
     default:
       return "This test is part of a series that hasn't been assigned to your account.";
   }
