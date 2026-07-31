@@ -34,6 +34,10 @@ interface Series {
   timingMode: "RELEASE_ONLY" | "WINDOW";
   plannedTotalTests: number;
   published: boolean;
+  examId: string | null;
+  priceInPaise: number;
+  mrpInPaise: number | null;
+  validityMonths: number;
   _count?: { quizzes: number; access: number };
 }
 
@@ -42,12 +46,22 @@ interface Category {
   name: string;
 }
 
+interface Exam {
+  id: string;
+  name: string;
+}
+
+/** paise → रुपये, form मध्ये दाखवायला. 0 म्हणजे रिकामं (मोफत). */
+const toRupees = (paise: number | null) => (paise && paise > 0 ? String(paise / 100) : "");
+
 export function SeriesManager({
   initialSeries,
   categories,
+  exams,
 }: {
   initialSeries: Series[];
   categories: Category[];
+  exams: Exam[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -59,6 +73,12 @@ export function SeriesManager({
   const [timingMode, setTimingMode] = useState<"RELEASE_ONLY" | "WINDOW">("RELEASE_ONLY");
   const [plannedTotalTests, setPlannedTotalTests] = useState("10");
   const [published, setPublished] = useState(true);
+
+  // विक्री. रुपयांत लिहायचं, paise मध्ये साठवलं जातं.
+  const [examId, setExamId] = useState("");
+  const [price, setPrice] = useState("");
+  const [mrp, setMrp] = useState("");
+  const [validityMonths, setValidityMonths] = useState("12");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -72,6 +92,10 @@ export function SeriesManager({
     setTimingMode("RELEASE_ONLY");
     setPlannedTotalTests("10");
     setPublished(true);
+    setExamId("");
+    setPrice("");
+    setMrp("");
+    setValidityMonths("12");
     setError("");
     setSuccess(false);
     setIsOpen(true);
@@ -85,6 +109,10 @@ export function SeriesManager({
     setTimingMode(s.timingMode);
     setPlannedTotalTests(String(s.plannedTotalTests));
     setPublished(s.published);
+    setExamId(s.examId || "");
+    setPrice(toRupees(s.priceInPaise));
+    setMrp(toRupees(s.mrpInPaise));
+    setValidityMonths(String(s.validityMonths));
     setError("");
     setSuccess(false);
     setIsOpen(true);
@@ -102,6 +130,10 @@ export function SeriesManager({
         categoryId,
         timingMode,
         plannedTotalTests: Number(plannedTotalTests),
+        examId,
+        priceInRupees: Number(price),
+        mrpInRupees: Number(mrp),
+        validityMonths: Number(validityMonths),
       };
       const res = selected
         ? await updateTestSeries(selected.id, { ...payload, published })
@@ -290,6 +322,81 @@ export function SeriesManager({
               ? "Each test opens at its release time and locks at its close time."
               : "Each test opens at its release time and stays open afterwards."}
           </p>
+
+          {/* ── विक्री ── */}
+          <div className="pt-2 border-t border-border space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Selling
+            </p>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Exam
+              </label>
+              <Select value={examId} onChange={(e) => setExamId(e.target.value)}>
+                <option value="">— none —</option>
+                {exams.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.name}
+                  </option>
+                ))}
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Students browse the store by exam. Without one, this series shows up only
+                under &ldquo;All Exams&rdquo;.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Price (₹)
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  MRP (₹)
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="optional"
+                  value={mrp}
+                  onChange={(e) => setMrp(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Validity (months)
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={validityMonths}
+                  onChange={(e) => setValidityMonths(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground">
+              {Number(price) > 0
+                ? `Students pay ₹${Number(price)}${
+                    Number(mrp) > Number(price)
+                      ? ` (shown as ${Math.round(((Number(mrp) - Number(price)) / Number(mrp)) * 100)}% off ₹${Number(mrp)})`
+                      : ""
+                  } and keep access for ${
+                    Number(validityMonths) > 0 ? `${Number(validityMonths)} months` : "ever"
+                  }.`
+                : "Free — students get access the moment they tap Get, with no payment."}
+            </p>
+          </div>
 
           {selected && (
             <label className="flex items-center gap-2 text-sm">

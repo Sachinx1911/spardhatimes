@@ -70,12 +70,29 @@ async function uniqueSlug(desired: string, exists: (slug: string) => Promise<boo
 // TEST SERIES CRUD
 // ---------------------------------------------------------------------------
 
+/**
+ * किंमत रुपयांतून paise मध्ये.
+ *
+ * Admin form मध्ये रुपये लिहितो ("799"), पण साठवायचे paise मध्ये — पैसे
+ * Float मध्ये ठेवले की ₹99.99 चं 99.98999 होतं, आणि gateway सुद्धा paise
+ * घेतो. रिकामं/चुकीचं म्हणजे 0 (मोफत).
+ */
+function toPaise(rupees: unknown): number {
+  const n = Number(rupees);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.round(n * 100);
+}
+
 export async function createTestSeries(data: {
   title: string;
   description: string;
   categoryId: string;
   timingMode: TimingMode;
   plannedTotalTests: number;
+  examId: string;
+  priceInRupees: number;
+  mrpInRupees: number;
+  validityMonths: number;
 }) {
   try {
     const admin = await ensureAdmin();
@@ -94,6 +111,13 @@ export async function createTestSeries(data: {
         categoryId: data.categoryId,
         timingMode: data.timingMode === "WINDOW" ? TimingMode.WINDOW : TimingMode.RELEASE_ONLY,
         plannedTotalTests: Math.max(0, Number(data.plannedTotalTests) || 0),
+        examId: data.examId || null,
+        priceInPaise: toPaise(data.priceInRupees),
+        // MRP किंमतीपेक्षा कमी असेल तर सवलत ऋण होईल — तसं असेल तर MRP नाहीच.
+        mrpInPaise: toPaise(data.mrpInRupees) > toPaise(data.priceInRupees)
+          ? toPaise(data.mrpInRupees)
+          : null,
+        validityMonths: Math.max(0, Number(data.validityMonths) || 0),
       },
     });
 
@@ -115,6 +139,10 @@ export async function updateTestSeries(
     timingMode: TimingMode;
     plannedTotalTests: number;
     published: boolean;
+    examId: string;
+    priceInRupees: number;
+    mrpInRupees: number;
+    validityMonths: number;
   }
 ) {
   try {
@@ -130,6 +158,12 @@ export async function updateTestSeries(
         timingMode: data.timingMode === "WINDOW" ? TimingMode.WINDOW : TimingMode.RELEASE_ONLY,
         plannedTotalTests: Math.max(0, Number(data.plannedTotalTests) || 0),
         published: !!data.published,
+        examId: data.examId || null,
+        priceInPaise: toPaise(data.priceInRupees),
+        mrpInPaise: toPaise(data.mrpInRupees) > toPaise(data.priceInRupees)
+          ? toPaise(data.mrpInRupees)
+          : null,
+        validityMonths: Math.max(0, Number(data.validityMonths) || 0),
       },
     });
 

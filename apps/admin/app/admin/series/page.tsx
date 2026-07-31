@@ -7,8 +7,9 @@ export const revalidate = 0; // Dynamic administration CRUD
 export default async function AdminSeriesPage() {
   let series: any[] = [];
   let categories: any[] = [];
+  let exams: any[] = [];
   try {
-    [series, categories] = await Promise.all([
+    [series, categories, exams] = await Promise.all([
       db.testSeries.findMany({
         orderBy: { createdAt: "desc" },
         include: {
@@ -17,10 +18,17 @@ export default async function AdminSeriesPage() {
         },
       }),
       db.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+      db.exam.findMany({ orderBy: { orderIndex: "asc" }, select: { id: true, name: true } }),
     ]);
   } catch (err) {
     console.error("Error fetching test series for admin:", err);
   }
 
-  return <SeriesManager initialSeries={series as any} categories={categories as any} />;
+  return (
+    <SeriesManager
+      initialSeries={series as any}
+      categories={categories as any}
+      exams={exams as any}
+    />
+  );
 }
