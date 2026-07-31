@@ -15,6 +15,12 @@ import { TestsService } from './tests.service';
 export class TestsController {
   constructor(private readonly tests: TestsService) {}
 
+  @Get('dashboard')
+  @ApiOperation({ summary: 'Home dashboard — नाव, चालू series, आकडे' })
+  dashboard(@Req() req: AuthedRequest) {
+    return this.tests.dashboard(req.user.id);
+  }
+
   @Get('catalog')
   @ApiOperation({ summary: 'दुकान — विकत घेता येणाऱ्या सगळ्या series' })
   catalog(@Req() req: AuthedRequest) {

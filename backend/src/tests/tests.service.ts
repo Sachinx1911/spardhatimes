@@ -15,6 +15,113 @@ export class TestsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * Home dashboard साठी लागणारं सगळं, **एका फेरीत**.
+   *
+   * Design मध्ये नाव, परीक्षा, चालू series, आणि चार आकडे — सगळं एका पडद्यावर
+   * आहे. प्रत्येकासाठी वेगळी request केली असती तर मोबाइल जाळ्यावर पाच फेऱ्या
+   * झाल्या असत्या आणि पडदा तुकड्या-तुकड्याने भरला असता. म्हणून एकच endpoint.
+   */
+  async dashboard(userId: string) {
+    const now = new Date();
+    const dayStart = new Date(now);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+
+    const [user, access, attempts] = await Promise.all([
+      this.prisma.client.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      }),
+      this.prisma.client.testSeriesAccess.findMany({
+        where: { userId, testSeries: { published: true } },
+        select: {
+          expiresAt: true,
+          testSeries: {
+            select: {
+              id: true,
+              title: true,
+              plannedTotalTests: true,
+              priceInPaise: true,
+              mrpInPaise: true,
+              category: { select: { name: true } },
+              exam: { select: { name: true } },
+              _count: { select: { quizzes: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.client.quizAttempt.findMany({
+        where: { userId, status: 'COMPLETED' },
+        select: { percentage: true },
+      }),
+    ]);
+
+    // मुदत संपलेल्या series dashboard वर "चालू" म्हणून दाखवायच्या नाहीत.
+    const live = access.filter((a) => a.expiresAt === null || a.expiresAt > now);
+
+    // आजचे tests — चालू series मधले, आज प्रकाशित होणारे.
+    const todaysTests = live.length
+      ? await this.prisma.client.quiz.count({
+          where: {
+            testSeriesId: { in: live.map((a) => a.testSeries.id) },
+            status: 'PUBLISHED',
+            releaseAt: { gte: dayStart, lt: dayEnd },
+          },
+        })
+      : 0;
+
+    const attempted = attempts.length;
+    const averageScore = attempted
+      ? Math.round(attempts.reduce((sum, a) => sum + a.percentage, 0) / attempted)
+      : 0;
+
+    /**
+     * सदस्यत्व कधीपर्यंत — सगळ्यात लांबची मुदत.
+     *
+     * एखादी series कायमस्वरूपी (null) असेल तर मुदतच नाही, म्हणून null परत
+     * करतो आणि app "आजीवन" दाखवतो.
+     */
+    const hasPermanent = live.some((a) => a.expiresAt === null);
+    const validTill = hasPermanent
+      ? null
+      : live.reduce<Date | null>(
+          (max, a) => (a.expiresAt && (!max || a.expiresAt > max) ? a.expiresAt : max),
+          null
+        );
+
+    return {
+      name: user?.name ?? null,
+      /**
+       * "MPSC Aspirant" — विद्यार्थ्याने निवडलेली परीक्षा schema मध्ये नाही,
+       * म्हणून त्याच्या series वरून काढतो. एकाहून जास्त परीक्षा असतील तर
+       * काहीच दाखवत नाही, कारण कुठली निवडायची हे ठरवता येत नाही.
+       */
+      examName:
+        new Set(live.map((a) => a.testSeries.exam?.name).filter(Boolean)).size === 1
+          ? (live.find((a) => a.testSeries.exam)?.testSeries.exam?.name ?? null)
+          : null,
+      activeSeries: live.map((a) => ({
+        id: a.testSeries.id,
+        title: a.testSeries.title,
+        categoryName: a.testSeries.category.name,
+        examName: a.testSeries.exam?.name ?? null,
+        totalTests: a.testSeries._count.quizzes,
+        plannedTotalTests: a.testSeries.plannedTotalTests,
+        priceInPaise: a.testSeries.priceInPaise,
+        mrpInPaise: a.testSeries.mrpInPaise,
+        expiresAt: a.expiresAt?.toISOString() ?? null,
+      })),
+      stats: {
+        todaysTests,
+        testsAttempted: attempted,
+        averageScore,
+        validTill: validTill?.toISOString() ?? null,
+      },
+    };
+  }
+
+  /**
    * दुकान — विकत घेता येणाऱ्या सगळ्या प्रकाशित series.
    *
    * `mySeries` पेक्षा वेगळं: तो फक्त **घेतलेल्या** देतो, हा **सगळ्या** देतो आणि
