@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { EmptyState, ErrorState, Loading } from '@/components/ui/async-state';
 import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
 import { Screen } from '@/components/ui/screen';
@@ -75,9 +75,9 @@ export default function MyTestSeriesScreen() {
       <View style={styles.header}>
         <Text style={styles.screenTitle}>My Test Series</Text>
         <View style={styles.headerActions}>
-          <Ionicons name="search" size={layout.navIconSize} color={colors.text} />
+          <Icon name="search" size={layout.navIconSize} color={colors.text} />
           <View>
-            <Ionicons name="notifications-outline" size={layout.navIconSize} color={colors.text} />
+            <Icon name="notifications-outline" size={layout.navIconSize} color={colors.text} />
             <View style={styles.badge}>
               <Text style={styles.badgeText}>3</Text>
             </View>
@@ -93,7 +93,7 @@ export default function MyTestSeriesScreen() {
         <Text style={styles.bannerNote}>High quality tests designed as per latest pattern.</Text>
         <Pressable style={styles.bannerButton} onPress={() => router.push('/')}>
           <Text style={styles.bannerButtonText}>Explore Test Series</Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          <Icon name="chevron-forward" size={16} color={colors.primary} />
         </Pressable>
       </View>
 
@@ -102,7 +102,7 @@ export default function MyTestSeriesScreen() {
         <View style={styles.continueCard}>
           <View style={styles.continueTop}>
             <View style={styles.continueIcon}>
-              <Ionicons name="document-text" size={layout.cardIconSize} color={colors.primary} />
+              <Icon name="document-text" size={layout.cardIconSize} color={colors.primary} />
             </View>
             <View style={styles.continueHeadText}>
               <Text style={styles.continueLabel}>Continue Your Test</Text>
@@ -141,7 +141,7 @@ export default function MyTestSeriesScreen() {
         <View key={s.id} style={styles.seriesCard}>
           <View style={styles.seriesHead}>
             <View style={styles.seriesLogo}>
-              <Ionicons name="library" size={layout.cardIconSize} color={colors.textInverse} />
+              <Icon name="library" size={layout.cardIconSize} color={colors.textInverse} />
             </View>
             <View style={styles.seriesHeadText}>
               <Text style={styles.seriesTitle} numberOfLines={1}>
@@ -176,7 +176,7 @@ export default function MyTestSeriesScreen() {
       <View style={styles.analyticsCard}>
         <View style={styles.analyticsHead}>
           <View style={styles.analyticsIcon}>
-            <Ionicons name="stats-chart" size={layout.cardIconSize} color={colors.success} />
+            <Icon name="stats-chart" size={layout.cardIconSize} color={colors.success} />
           </View>
           <View style={styles.analyticsHeadText}>
             <Text style={styles.analyticsTitle}>Your Performance Analytics</Text>
@@ -201,7 +201,7 @@ export default function MyTestSeriesScreen() {
       <View style={styles.progressRow}>
         <View style={styles.progressCard}>
           <View style={[styles.progressIcon, { backgroundColor: colors.primaryLight }]}>
-            <Ionicons name="clipboard" size={20} color={colors.primary} />
+            <Icon name="clipboard" size={20} color={colors.primary} />
           </View>
           <Text style={styles.progressLabel}>Tests Completed</Text>
           <Text style={styles.progressValue}>
@@ -219,7 +219,7 @@ export default function MyTestSeriesScreen() {
 
         <View style={styles.progressCard}>
           <View style={[styles.progressIcon, { backgroundColor: colors.successLight }]}>
-            <Ionicons name="disc" size={20} color={colors.success} />
+            <Icon name="disc" size={20} color={colors.success} />
           </View>
           <Text style={styles.progressLabel}>Overall Score</Text>
           <Text style={styles.progressValue}>{myProgress.overallScorePercent}%</Text>
@@ -282,7 +282,7 @@ function TestRow({
  * स्थितीचा chip एका ओळीत बसत नाहीत — meta दुसऱ्या ओळीवर उडी मारत होतं. Icon
  * काढून नुसता मजकूर ठेवला की तिन्ही मापं एका ओळीत राहतात, आणि तेच design चा हेतू आहे.
  */
-function TestMeta({ text }: { icon?: keyof typeof Ionicons.glyphMap; text: string }) {
+function TestMeta({ text }: { icon?: string; text: string }) {
   // एक ओळ बंधनकारक — नाहीतर "Not Attempted" सारख्या रुंद chip शेजारी "100 Qs" चं
   // "100" आणि "Qs" दोन ओळींत तुटतं.
   return (
@@ -298,7 +298,7 @@ function Metric({
   value,
   tint,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   label: string;
   value: string;
   tint: string;
@@ -308,7 +308,7 @@ function Metric({
       {/* रंगाच्या शेवटी 1A = 10% अपारदर्शकता — प्रत्येक tint साठी वेगळा फिकट
           रंग tokens मध्ये ठेवण्यापेक्षा हे थेट आणि नेहमी जुळणारं आहे. */}
       <View style={[styles.metricIcon, { backgroundColor: `${tint}1A` }]}>
-        <Ionicons name={icon} size={16} color={tint} />
+        <Icon name={icon} size={16} color={tint} />
       </View>
       {/* "Average Score" / "Highest Score" एका ओळीत बसत नाहीत — चार stats 360dp
           मध्ये वाटल्यावर प्रत्येकाला ~72dp मिळतात. दोन ओळी दिल्या की पूर्ण दिसतात. */}

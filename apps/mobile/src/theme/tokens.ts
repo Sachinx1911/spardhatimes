@@ -20,16 +20,18 @@ import { Dimensions } from 'react-native';
 // ─── 1. COLOR PALETTE ────────────────────────────────────────────────────────
 
 export const colors = {
-  primary: '#4F46E5',
-  primaryLight: '#EDE9FE',
-  success: '#10B981',
+  primary: '#5B3DF5',
+  /** Gradient चा दुसरा टोक आणि दाबलेल्या बटणाची छटा. */
+  primaryDark: '#4427D6',
+  primaryLight: '#F3F0FF',
+  success: '#22C55E',
   warning: '#F59E0B',
   danger: '#EF4444',
 
-  text: '#0F172A',
+  text: '#1E293B',
   textSecondary: '#64748B',
-  border: '#E2E8F0',
-  background: '#F8FAFC',
+  border: '#E5E7EB',
+  background: '#F8F9FD',
   surface: '#FFFFFF',
 
   textInverse: '#FFFFFF',
@@ -37,7 +39,7 @@ export const colors = {
   error: '#EF4444',
 
   // Sheets मध्ये सुटे नाहीत, पण chips/tags/कार्डांत दिसतात — फिकट छटा.
-  successLight: '#ECFDF5',
+  successLight: '#F0FDF4',
   dangerLight: '#FEF2F2',
   errorLight: '#FEF2F2',
   warningLight: '#FFFBEB',
@@ -46,7 +48,7 @@ export const colors = {
    * (उदा. "Continue Your Test"). `primaryLight` तिथे वापरला तर तो chips आणि
    * tags शी गोंधळतो.
    */
-  primarySoft: '#EEF2FF',
+  primarySoft: '#F3F0FF',
 
   /**
    * Home वरच्या tile जाळीत आठ चौकोन आहेत आणि पाच मुख्य रंग पुरत नाहीत — दोन
@@ -58,9 +60,20 @@ export const colors = {
    */
   accentViolet: '#8B5CF6',
   accentSky: '#0EA5E9',
+  /** Spec मधले सुटे रंग — tiles आणि चिन्हांसाठी. */
+  blue: '#3B82F6',
+  pink: '#EC4899',
 } as const;
 
-// ─── 2. TYPOGRAPHY (Poppins) ─────────────────────────────────────────────────
+/**
+ * वरची पट्टी spec मध्ये gradient आहे. दोन टोकं इथे ठेवली आहेत म्हणजे
+ * `LinearGradient` ला देताना प्रत्येक screen मध्ये hex लिहावे लागत नाहीत.
+ */
+export const gradients = {
+  appBar: ['#5B3DF5', '#7C5CFF'] as const,
+} as const;
+
+// ─── 2. TYPOGRAPHY (Poppins + Mukta) ─────────────────────────────────────────
 
 /**
  * Poppins चे weights वेगवेगळ्या font families आहेत, `fontWeight` नाही — Android वर
@@ -74,20 +87,44 @@ export const fonts = {
   bold: 'Poppins_700Bold',
 } as const;
 
+/**
+ * मराठीसाठी Mukta — **हे मुद्दाम वेगळं आहे.**
+ *
+ * Poppins मध्ये देवनागरी अक्षरं नाहीत; मराठी मजकूर त्यात दिला की OS स्वतःचा
+ * पर्यायी font घालतो आणि तो प्रत्येक फोनवर वेगळा दिसतो. Mukta देवनागरीसाठीच
+ * बनवलेला आहे, म्हणून मराठी ओळी याने द्यायच्या.
+ *
+ * वापर: `{...typography.titleL, ...marathi.semibold}` — आकार तोच, फक्त family
+ * बदलते.
+ */
+export const marathiFonts = {
+  regular: 'Mukta_400Regular',
+  medium: 'Mukta_500Medium',
+  semibold: 'Mukta_600SemiBold',
+  bold: 'Mukta_700Bold',
+} as const;
+
+export const marathi = {
+  regular: { fontFamily: marathiFonts.regular },
+  medium: { fontFamily: marathiFonts.medium },
+  semibold: { fontFamily: marathiFonts.semibold },
+  bold: { fontFamily: marathiFonts.bold },
+} as const;
+
 /** Screen-पातळीवरचा scale (Android 360dp sheet). */
 export const typography = {
   /** Screen title */
-  headingXL: { fontSize: 28, fontFamily: fonts.bold, lineHeight: 36 },
+  headingXL: { fontSize: 30, fontFamily: fonts.bold, lineHeight: 38 },
   /** Section title */
-  headingL: { fontSize: 22, fontFamily: fonts.semibold, lineHeight: 30 },
+  headingL: { fontSize: 24, fontFamily: fonts.semibold, lineHeight: 32 },
   /** Card title */
-  titleL: { fontSize: 18, fontFamily: fonts.semibold, lineHeight: 26 },
-  bodyL: { fontSize: 15, fontFamily: fonts.regular, lineHeight: 22 },
-  bodyM: { fontSize: 14, fontFamily: fonts.regular, lineHeight: 20 },
-  /** Body S / meta */
-  bodyS: { fontSize: 12, fontFamily: fonts.regular, lineHeight: 18 },
-  /** Caption / small */
-  caption: { fontSize: 11, fontFamily: fonts.regular, lineHeight: 16 },
+  titleL: { fontSize: 20, fontFamily: fonts.semibold, lineHeight: 28 },
+  /** Body */
+  bodyL: { fontSize: 16, fontFamily: fonts.regular, lineHeight: 24 },
+  bodyM: { fontSize: 15, fontFamily: fonts.regular, lineHeight: 22 },
+  /** Caption */
+  bodyS: { fontSize: 14, fontFamily: fonts.regular, lineHeight: 20 },
+  caption: { fontSize: 13, fontFamily: fonts.regular, lineHeight: 18 },
 } as const;
 
 /**
@@ -140,7 +177,11 @@ export const radius = {
   md: 12,
   /** Chip / status — sheet मध्ये 14dp. */
   chip: 14,
+  /** Button — spec: 14dp. */
+  button: 14,
   lg: 16,
+  /** Card — spec: 18dp. हाच कार्डांचा नेहमीचा radius. */
+  card: 18,
   xl: 20,
   xxl: 24,
   full: 999,
@@ -153,11 +194,12 @@ export const radius = {
  * deprecated आहेत आणि web bundler warning देतो. `boxShadow` तिन्ही platforms वर.
  */
 export const shadow = {
-  /** Elevation 1 — यादीतली कार्डं. */
-  card: { boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.05)' },
-  /** Elevation 2 — उचललेली कार्डं, banner. */
-  cardRaised: { boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08)' },
-  button: { boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.10)' },
+  /** Spec चं soft shadow — blur 24, 8% अपारदर्शकता. कार्डांचं नेहमीचं. */
+  card: { boxShadow: '0px 4px 24px rgba(30, 41, 59, 0.08)' },
+  /** थोडं जास्त उचललेलं — banner, तरंगती कार्डं. */
+  cardRaised: { boxShadow: '0px 8px 24px rgba(30, 41, 59, 0.10)' },
+  /** Primary बटणाखाली त्याच रंगाची मऊ छटा. */
+  button: { boxShadow: '0px 4px 12px rgba(91, 61, 245, 0.24)' },
 } as const;
 
 // ─── 6. LAYOUT ───────────────────────────────────────────────────────────────
@@ -170,17 +212,24 @@ const screenWidth = Dimensions.get('window').width;
  */
 export const layout = {
   screenWidth,
-  screenPadding: 16,
-  /** पूर्ण रुंदीचं कार्ड: 360dp वर 328. */
-  cardWidth: screenWidth - 32,
-  /** दोन प्रति ओळ: 360dp वर 160 प्रत्येकी (12dp फट). */
-  halfCardWidth: (screenWidth - 16 * 2 - 12) / 2,
+  /** Spec: screen padding 20dp. */
+  screenPadding: 20,
+  /** Spec: card padding 16dp — कार्डाच्या **आतलं** अंतर. */
+  cardPadding: 16,
+  /** पूर्ण रुंदीचं कार्ड: 360dp वर 320. */
+  cardWidth: screenWidth - 40,
+  /** दोन प्रति ओळ: 360dp वर 154 प्रत्येकी (12dp फट). */
+  halfCardWidth: (screenWidth - 20 * 2 - 12) / 2,
 
   headerHeight: 80,
   safeAreaTop: 24,
   safeAreaBottom: 16,
 
   topBannerHeight: 140,
+  /** Home वरची सरकती पट्टी — जाहिरात आणि ताजे tests दोन्ही याच उंचीचे. */
+  carouselHeight: 180,
+  /** Home वरचे आठ शॉर्टकट — सगळे समान उंचीचे. */
+  homeTileHeight: 92,
   continueCardHeight: 120,
   examCardHeight: 72,
   featureItemHeight: 64,
@@ -194,8 +243,9 @@ export const layout = {
   searchHeight: 48,
   badgeHeight: 24,
 
-  buttonHeight: 44,
-  buttonSecondaryHeight: 40,
+  /** Spec: 52dp. */
+  buttonHeight: 52,
+  buttonSecondaryHeight: 44,
   buttonSmall: { width: 120, height: 40 },
   buyButton: { width: 96, height: 40 },
 

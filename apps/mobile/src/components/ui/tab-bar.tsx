@@ -1,42 +1,44 @@
-import { Ionicons } from '@expo/vector-icons';
 // react-navigation हे वेगळं package म्हणून install केलेलं नाही — expo-router 57 ने ते
 // आतमध्ये vendor केलं आहे आणि js-tabs मधून पुन्हा export केलं आहे.
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Icon } from '@/components/ui/icon';
 import { colors, componentType, layout, radius, spacing } from '@/theme/tokens';
 
 /**
  * Bottom navigation — design sheets मधल्या मापांप्रमाणे: उंची 56dp, icon 24dp,
- * label 11sp, active रंग #4F46E5.
+ * label 11sp, active रंग `colors.primary`.
  *
- * 🔒 **हा क्रम गोठवलेला आहे — बदलायचा नाही** (ठरलं 2026-07-29).
- * पुढच्या एखाद्या design sheet मध्ये वेगळे tabs दिसले तरी ती sheet फक्त त्या
- * screen साठी वापरायची; तिचा tab bar दुर्लक्षित करायचा. Tab bar प्रत्येक screen
- * वर दिसतो — तो एका sheet मागे बदलला की उरलेलं app विसंगत होतं.
- * तपशील: `docs/UI_DESIGN_STANDARD.md` §६.
+ * **चार tabs** (ठरलं 2026-08-01, मुख्य पानाच्या design बरोबर). आधी पाच होते —
+ * `Home · Learn · Tests · Analytics · Profile` — आणि ते गोठवलेले होते. मुख्य पान
+ * आता tiles वर उभं आहे, म्हणून Learn आणि Analytics ला स्वतःचा tab लागत नाही;
+ * ते tiles आणि drawer मधून उघडतात. तपशील: `docs/UI_DESIGN_STANDARD.md` §६.
  *
- * **सपाट आहे, मधला उंचावलेला button नाही.** आधीच्या mockups मध्ये "Tests" गोलात
- * उचललेला दिसत होता, पण नवीन design sheets मध्ये पाचही tabs सारखेच सपाट आहेत —
- * active फक्त रंगाने आणि खालच्या ठिपक्याने ओळखू येतो.
+ * ⚠️ Tab bar प्रत्येक screen वर दिसतो, म्हणून तो **एका design sheet मागे बदलायचा
+ * नाही**. बदलायचा असेल तर तो स्वतंत्र, जाणीवपूर्वक निर्णय — आणि दोन्ही वेळा तो
+ * तसाच घेतला गेला आहे.
+ *
+ * **सपाट आहे, मधला उंचावलेला button नाही.** Active फक्त रंगाने आणि खालच्या
+ * ठिपक्याने ओळखू येतो.
  *
  * Expo चा `NativeTabs` वापरलेला नाही — तो OS चा tab bar दाखवतो, त्यात हा active
  * ठिपका आणि नेमकी 56dp उंची बसवता येत नाही. म्हणून `js-tabs` + हा custom renderer.
  */
-const ICONS: Record<string, { on: keyof typeof Ionicons.glyphMap; off: keyof typeof Ionicons.glyphMap }> = {
+const ICONS: Record<string, { on: string; off: string }> = {
   index: { on: 'home', off: 'home-outline' },
-  learn: { on: 'book', off: 'book-outline' },
-  tests: { on: 'clipboard', off: 'clipboard-outline' },
-  analytics: { on: 'stats-chart', off: 'stats-chart-outline' },
-  profile: { on: 'person', off: 'person-outline' },
+  tests: { on: 'school', off: 'school-outline' },
+  'free-test': { on: 'sparkles', off: 'sparkles' },
+  profile: { on: 'person-circle', off: 'person-circle-outline' },
 };
 
 const LABELS: Record<string, string> = {
   index: 'Home',
-  learn: 'Learn',
-  tests: 'Tests',
-  analytics: 'Analytics',
+  // Route चं नाव `tests` तसंच ठेवलं — तेच पान, फक्त design मधलं नाव वेगळं.
+  // Route बदलली असती तर प्रत्येक `router.push('/tests')` शोधून बदलावी लागली असती.
+  tests: 'My Course',
+  'free-test': 'Free Test',
   profile: 'Profile',
 };
 
@@ -57,7 +59,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
 
         return (
           <Pressable key={route.key} onPress={onPress} style={styles.item} accessibilityRole="tab">
-            <Ionicons
+            <Icon
               name={focused ? icon.on : icon.off}
               size={layout.navIconSize}
               color={focused ? colors.primary : colors.textSecondary}

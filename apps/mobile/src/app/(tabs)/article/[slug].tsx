@@ -1,9 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { ErrorState, Loading } from '@/components/ui/async-state';
 import { Screen } from '@/components/ui/screen';
 import { api } from '@/lib/api';
@@ -60,11 +60,11 @@ export default function ArticleScreen() {
         <Pressable
           hitSlop={8}
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/current-affairs'))}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Icon name="arrow-back" size={24} color={colors.text} />
         </Pressable>
         <View style={styles.topActions}>
           <Pressable hitSlop={8} onPress={toggle} disabled={busy} style={busy ? styles.busy : undefined}>
-            <Ionicons
+            <Icon
               name={bookmarked ? 'bookmark' : 'bookmark-outline'}
               size={22}
               color={colors.primary}
@@ -78,7 +78,7 @@ export default function ArticleScreen() {
                 () => undefined
               );
             }}>
-            <Ionicons name="share-social-outline" size={22} color={colors.text} />
+            <Icon name="share-social-outline" size={22} color={colors.text} />
           </Pressable>
         </View>
       </View>

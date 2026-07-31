@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
   Image,
@@ -13,6 +12,7 @@ import {
   View,
 } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import type { ApiDashboard } from '@/lib/api';
 import {
   colors,
@@ -90,15 +90,15 @@ export function HomeCarousel({
         <View style={[styles.page, { width: pageWidth }]}>
           <View style={styles.testsCard}>
             <View style={styles.testsHead}>
-              <Ionicons name="sparkles" size={16} color={colors.primary} />
+              <Icon name="sparkles" size={16} color={colors.primary} />
               <Text style={styles.testsTitle}>ताजे टेस्ट</Text>
             </View>
 
             {latestTests.length > 0 ? (
-              latestTests.map((t) => (
+              latestTests.slice(0, 2).map((t) => (
                 <Pressable key={t.id} style={styles.testRow} onPress={() => onOpenTest(t.id)}>
                   <View style={styles.testIcon}>
-                    <Ionicons name="document-text" size={16} color={colors.primary} />
+                    <Icon name="document-text" size={16} color={colors.primary} />
                   </View>
                   <View style={styles.testText}>
                     <Text style={styles.testName} numberOfLines={1}>
@@ -109,7 +109,7 @@ export function HomeCarousel({
                       {t.seriesTitle ? ` · ${t.seriesTitle}` : ''}
                     </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                  <Icon name="chevron-forward" size={16} color={colors.textSecondary} />
                 </Pressable>
               ))
             ) : (
@@ -149,7 +149,7 @@ function FallbackBanner() {
         {['संपूर्ण पॅटर्न नुसार प्रश्न', 'सविस्तर स्पष्टीकरणासहित', 'लेटेस्ट चालू घडामोडी', 'टॉपिक वाईज टेस्ट'].map(
           (p) => (
             <View key={p} style={styles.fbPoint}>
-              <Ionicons name="checkmark-circle" size={13} color={colors.primary} />
+              <Icon name="checkmark-circle" size={13} color={colors.primary} />
               <Text style={styles.fbPointText} numberOfLines={1}>
                 {p}
               </Text>
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   // ── जाहिराती ──
   adRow: { gap: spacing.md },
   ad: {
-    height: layout.topBannerHeight,
+    height: layout.carouselHeight,
     borderRadius: radius.xl,
     overflow: 'hidden',
     backgroundColor: colors.primaryLight,
@@ -178,7 +178,10 @@ const styles = StyleSheet.create({
 
   // ── ताजे tests ──
   testsCard: {
-    minHeight: layout.topBannerHeight,
+    // दोन्ही पानं एकाच आडव्या ScrollView मध्ये आहेत, म्हणून ती **सर्वात उंच
+    // पानाएवढी** ताणली जातात. उंची निश्चित नसेल तर जाहिरातीखाली मोठी मोकळी
+    // जागा उरते. म्हणून दोन्हींना तीच उंची.
+    height: layout.carouselHeight,
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
     padding: spacing.lg,
@@ -244,7 +247,7 @@ const styles = StyleSheet.create({
 
   // ── जाहिरात नसताना ──
   fallback: {
-    minHeight: layout.topBannerHeight,
+    height: layout.carouselHeight,
     backgroundColor: colors.primaryLight,
     borderRadius: radius.xl,
     padding: spacing.lg,

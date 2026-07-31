@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { EmptyState, ErrorState, Loading } from '@/components/ui/async-state';
 import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
 import { Screen } from '@/components/ui/screen';
@@ -101,7 +101,7 @@ export default function StoreScreen() {
           hitSlop={8}
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
           style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Icon name="arrow-back" size={24} color={colors.text} />
         </Pressable>
         <View style={styles.headerText}>
           <Text style={styles.title}>Buy Test Series</Text>
@@ -110,10 +110,10 @@ export default function StoreScreen() {
           </Text>
         </View>
         <Pressable hitSlop={8}>
-          <Ionicons name="search-outline" size={24} color={colors.text} />
+          <Icon name="search-outline" size={24} color={colors.text} />
         </Pressable>
         <Pressable hitSlop={8}>
-          <Ionicons name="notifications-outline" size={24} color={colors.text} />
+          <Icon name="notifications-outline" size={24} color={colors.text} />
           <View style={styles.badge}>
             <Text style={styles.badgeText}>3</Text>
           </View>
@@ -123,7 +123,7 @@ export default function StoreScreen() {
       {/* ── जाहिरात पट्टी ── */}
       <View style={styles.hero}>
         <View style={styles.heroChip}>
-          <Ionicons name="ribbon-outline" size={14} color={colors.primary} />
+          <Icon name="ribbon-outline" size={14} color={colors.primary} />
           <Text style={styles.heroChipText}>Score Higher with Test Series</Text>
         </View>
         <Text style={styles.heroTitle}>Real Exam Experience.</Text>
@@ -176,7 +176,7 @@ export default function StoreScreen() {
           <Pressable key={e.id} style={styles.examTile} onPress={() => setActiveExam(e.id)}>
             <View style={styles.examIcon}>
               {/* Admin ने चिन्ह दिलं नसेल तर सामान्य चिन्ह — रिकामी जागा नको. */}
-              <Ionicons
+              <Icon
                 name={(e.icon ?? 'document-text-outline') as never}
                 size={20}
                 color={colors.primary}
@@ -197,7 +197,7 @@ export default function StoreScreen() {
             Design मध्ये त्याच्या शेजारी "More Exams" आहे — तो जोडी पूर्ण करतो. */}
         <Pressable style={styles.examTile} onPress={() => {}}>
           <View style={styles.examIcon}>
-            <Ionicons name="ellipsis-horizontal" size={20} color={colors.primary} />
+            <Icon name="ellipsis-horizontal" size={20} color={colors.primary} />
           </View>
           <View style={styles.examTextBox}>
             <Text style={styles.examName} numberOfLines={1}>
@@ -216,7 +216,7 @@ export default function StoreScreen() {
         {HIGHLIGHTS.map((h) => (
           <View key={h.title} style={styles.highlight}>
             <View style={styles.highlightIcon}>
-              <Ionicons name={h.icon} size={16} color={colors.primary} />
+              <Icon name={h.icon} size={16} color={colors.primary} />
             </View>
             <View style={styles.highlightText}>
               <Text style={styles.highlightTitle}>{h.title}</Text>
@@ -255,13 +255,13 @@ export default function StoreScreen() {
       <View style={styles.gap} />
       <View style={styles.trustRow}>
         <View style={styles.trustIcon}>
-          <Ionicons name="shield-checkmark" size={20} color={colors.primary} />
+          <Icon name="shield-checkmark" size={20} color={colors.primary} />
         </View>
         <View style={styles.trustText}>
           <Text style={styles.trustTitle}>100% Safe &amp; Secure Payments</Text>
           <Text style={styles.trustNote}>Instant Access · 24×7 Support</Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        <Icon name="chevron-forward" size={18} color={colors.textSecondary} />
       </View>
     </Screen>
   );
@@ -270,7 +270,7 @@ export default function StoreScreen() {
 function HeroPoint({ label }: { label: string }) {
   return (
     <View style={styles.heroPoint}>
-      <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
+      <Icon name="checkmark-circle" size={14} color={colors.primary} />
       <Text style={styles.heroPointText}>{label}</Text>
     </View>
   );

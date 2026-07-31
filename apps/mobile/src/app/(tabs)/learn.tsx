@@ -1,7 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { EmptyState, ErrorState, Loading } from '@/components/ui/async-state';
 import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
 import { Screen } from '@/components/ui/screen';
@@ -40,7 +40,7 @@ const TYPE_CHIPS: { key: ApiMaterialType | 'all'; label: string }[] = [
   { key: 'SHORT', label: 'Shorts' },
 ];
 
-const TYPE_ICON: Record<ApiMaterialType, keyof typeof Ionicons.glyphMap> = {
+const TYPE_ICON: Record<ApiMaterialType, string> = {
   NOTE: 'document-text',
   VIDEO: 'play-circle',
   BOOK: 'book',
@@ -220,7 +220,7 @@ function ContinueRow({ item }: { item: ApiLearnOverview['continueLearning'][numb
   return (
     <Pressable style={styles.row} onPress={() => openMaterial(item.id, item.url)}>
       <View style={[styles.rowIcon, { backgroundColor: colors.primaryLight }]}>
-        <Ionicons name={TYPE_ICON[item.type]} size={18} color={tint} />
+        <Icon name={TYPE_ICON[item.type]} size={18} color={tint} />
       </View>
       <View style={styles.rowText}>
         <Text style={styles.rowTitle} numberOfLines={1}>
@@ -233,7 +233,7 @@ function ContinueRow({ item }: { item: ApiLearnOverview['continueLearning'][numb
         </View>
         <Text style={styles.rowMeta}>{`${item.percent}% झालं`}</Text>
       </View>
-      <Ionicons name="play-circle" size={20} color={colors.primary} />
+      <Icon name="play-circle" size={20} color={colors.primary} />
     </Pressable>
   );
 }
@@ -252,7 +252,7 @@ function MaterialRow({ material }: { material: ApiMaterial }) {
   return (
     <Pressable style={styles.row} onPress={() => openMaterial(material.id, material.url)}>
       <View style={[styles.rowIcon, { backgroundColor: colors.primaryLight }]}>
-        <Ionicons name={TYPE_ICON[material.type]} size={18} color={tint} />
+        <Icon name={TYPE_ICON[material.type]} size={18} color={tint} />
       </View>
       <View style={styles.rowText}>
         <Text style={styles.rowTitle} numberOfLines={1}>
@@ -265,7 +265,7 @@ function MaterialRow({ material }: { material: ApiMaterial }) {
         ) : null}
         {meta ? <Text style={styles.rowMeta}>{meta}</Text> : null}
       </View>
-      <Ionicons name="open-outline" size={16} color={colors.textSecondary} />
+      <Icon name="open-outline" size={16} color={colors.textSecondary} />
     </Pressable>
   );
 }

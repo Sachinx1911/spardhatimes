@@ -1,12 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { colors, layout, radius, spacing, strong, typography } from '@/theme/tokens';
 
 export interface FilterChip {
   key: string;
   label: string;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: string;
 }
 
 /**
@@ -35,7 +35,7 @@ export function FilterChips({
             onPress={() => onChange(chip.key)}
             style={[styles.chip, selected && styles.chipActive]}>
             {chip.icon ? (
-              <Ionicons
+              <Icon
                 name={chip.icon}
                 size={16}
                 color={selected ? colors.textInverse : colors.textSecondary}

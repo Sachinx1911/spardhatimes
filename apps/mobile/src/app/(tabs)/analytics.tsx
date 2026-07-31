@@ -1,7 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Polyline } from 'react-native-svg';
 
+import { Icon } from '@/components/ui/icon';
 import { EmptyState, ErrorState, Loading } from '@/components/ui/async-state';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
@@ -152,7 +152,7 @@ export default function AnalyticsScreen() {
           {data.strengths.length > 0 ? (
             <View style={[styles.card, styles.splitCard]}>
               <View style={styles.splitHead}>
-                <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                <Icon name="checkmark-circle" size={16} color={colors.success} />
                 <Text style={styles.splitTitle}>बलस्थानं</Text>
               </View>
               {data.strengths.map((s) => (
@@ -171,7 +171,7 @@ export default function AnalyticsScreen() {
           {data.weaknesses.length > 0 ? (
             <View style={[styles.card, styles.splitCard]}>
               <View style={styles.splitHead}>
-                <Ionicons name="alert-circle" size={16} color={colors.warning} />
+                <Icon name="alert-circle" size={16} color={colors.warning} />
                 <Text style={styles.splitTitle}>सुधारायचं</Text>
               </View>
               {data.weaknesses.map((s) => (

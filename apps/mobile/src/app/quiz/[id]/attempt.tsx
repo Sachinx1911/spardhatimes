@@ -1,9 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Icon } from '@/components/ui/icon';
 import { ErrorState, Loading } from '@/components/ui/async-state';
 import { api } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
@@ -129,17 +129,17 @@ export default function AttemptScreen() {
       {/* ── वरची पट्टी ── */}
       <View style={styles.topBar}>
         <Pressable hitSlop={8} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
+          <Icon name="arrow-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={styles.testTitle} numberOfLines={1}>
           {quiz.title}
         </Text>
         <View style={styles.timer}>
-          <Ionicons name="time-outline" size={14} color={colors.primary} />
+          <Icon name="time-outline" size={14} color={colors.primary} />
           <Text style={styles.timerText}>{`${mm}:${ss}`}</Text>
         </View>
         <Pressable hitSlop={8}>
-          <Ionicons name="ellipsis-vertical" size={20} color={colors.text} />
+          <Icon name="ellipsis-vertical" size={20} color={colors.text} />
         </Pressable>
       </View>
 
@@ -154,7 +154,7 @@ export default function AttemptScreen() {
           style={styles.bookmark}
           hitSlop={8}
           onPress={() => setReview((r) => ({ ...r, [current.id]: !r[current.id] }))}>
-          <Ionicons
+          <Icon
             name={review[current.id] ? 'bookmark' : 'bookmark-outline'}
             size={18}
             color={review[current.id] ? colors.warning : colors.textSecondary}
@@ -186,7 +186,7 @@ export default function AttemptScreen() {
                 <Text style={[styles.optionText, selected && styles.optionTextSelected]}>
                   {opt.text}
                 </Text>
-                <Ionicons
+                <Icon
                   name={selected ? 'radio-button-on' : 'radio-button-off'}
                   size={20}
                   color={selected ? colors.primary : colors.border}
@@ -201,7 +201,7 @@ export default function AttemptScreen() {
               style={[styles.navButton, index === 0 && styles.navButtonDisabled]}
               disabled={index === 0}
               onPress={() => goTo(index - 1)}>
-              <Ionicons name="chevron-back" size={16} color={colors.textSecondary} />
+              <Icon name="chevron-back" size={16} color={colors.textSecondary} />
               <Text style={styles.navButtonText}>Previous</Text>
             </Pressable>
 
@@ -225,7 +225,7 @@ export default function AttemptScreen() {
               <Text style={styles.navButtonPrimaryText}>
                 {index === questions.length - 1 ? 'Finish' : 'Next'}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.textInverse} />
+              <Icon name="chevron-forward" size={16} color={colors.textInverse} />
             </Pressable>
           </View>
         </View>
@@ -234,10 +234,10 @@ export default function AttemptScreen() {
         <View style={styles.palette}>
           <Pressable style={styles.paletteHeader} onPress={() => setPaletteOpen((o) => !o)}>
             <View style={styles.paletteTitleBox}>
-              <Ionicons name="grid-outline" size={16} color={colors.text} />
+              <Icon name="grid-outline" size={16} color={colors.text} />
               <Text style={styles.paletteTitle}>Question Palette</Text>
             </View>
-            <Ionicons
+            <Icon
               name={paletteOpen ? 'chevron-down' : 'chevron-up'}
               size={16}
               color={colors.textSecondary}
@@ -285,7 +285,7 @@ export default function AttemptScreen() {
       {/* ── खालची पट्टी ── */}
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
         <Pressable style={styles.endButton} onPress={() => router.back()}>
-          <Ionicons name="close" size={16} color={colors.error} />
+          <Icon name="close" size={16} color={colors.error} />
           <Text style={styles.endButtonText}>End Test</Text>
         </Pressable>
 

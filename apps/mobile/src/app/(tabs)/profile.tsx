@@ -1,7 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Fragment } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
 import { useSession } from '@/lib/session';
 import {
@@ -25,7 +25,7 @@ import {
  */
 
 interface MenuItem {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   tint: string;
   title: string;
   note: string;
@@ -97,9 +97,9 @@ export default function ProfileScreen() {
       <View style={styles.header}>
         <Text style={styles.screenTitle}>Profile</Text>
         <View style={styles.headerActions}>
-          <Ionicons name="settings-outline" size={layout.navIconSize} color={colors.text} />
+          <Icon name="settings-outline" size={layout.navIconSize} color={colors.text} />
           <View>
-            <Ionicons name="notifications-outline" size={layout.navIconSize} color={colors.text} />
+            <Icon name="notifications-outline" size={layout.navIconSize} color={colors.text} />
             <View style={styles.badge}>
               <Text style={styles.badgeText}>3</Text>
             </View>
@@ -110,14 +110,14 @@ export default function ProfileScreen() {
       {/* ── ओळख ── */}
       <View style={styles.identity}>
         <View style={styles.avatar}>
-          <Ionicons name="person" size={44} color={colors.primary} />
+          <Icon name="person" size={44} color={colors.primary} />
         </View>
         <View style={styles.identityText}>
           <View style={styles.nameRow}>
             <Text style={styles.name} numberOfLines={1}>
               {user?.name ?? 'विद्यार्थी'}
             </Text>
-            <Ionicons name="pencil" size={16} color={colors.primary} />
+            <Icon name="pencil" size={16} color={colors.primary} />
           </View>
           {user?.phone ? <Text style={styles.contact}>+91 {user.phone}</Text> : null}
           {user?.email ? (
@@ -132,7 +132,7 @@ export default function ProfileScreen() {
       <MenuGroup title="App & Support" items={support} />
 
       <Pressable style={styles.logout} onPress={() => void logout()}>
-        <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+        <Icon name="log-out-outline" size={20} color={colors.danger} />
         <Text style={styles.logoutText}>Logout</Text>
       </Pressable>
     </Screen>
@@ -162,7 +162,7 @@ function MenuRow({ item }: { item: MenuItem }) {
       {/* रंगाच्या शेवटी 1A = 10% अपारदर्शकता — प्रत्येक छटेसाठी वेगळा token
           ठेवण्यापेक्षा हे icon च्या रंगाशी नेहमी जुळतं. */}
       <View style={[styles.rowIcon, { backgroundColor: `${item.tint}1A` }]}>
-        <Ionicons name={item.icon} size={20} color={item.tint} />
+        <Icon name={item.icon} size={20} color={item.tint} />
       </View>
 
       <View style={styles.rowText}>
@@ -180,7 +180,7 @@ function MenuRow({ item }: { item: MenuItem }) {
         </View>
       ) : null}
 
-      <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+      <Icon name="chevron-forward" size={18} color={colors.textSecondary} />
     </Pressable>
   );
 }

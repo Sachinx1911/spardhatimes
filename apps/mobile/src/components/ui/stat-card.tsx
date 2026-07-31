@@ -1,10 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { colors, radius, shadow, spacing, typography } from '@/theme/tokens';
 
 interface StatCardProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   /** Icon चा रंग; त्याचीच फिकट छटा चौकोनाची पार्श्वभूमी बनते. */
   tint: string;
   tintSoft: string;
@@ -36,7 +36,7 @@ export function StatCard({
   return (
     <View style={styles.card}>
       <View style={[styles.iconBox, { backgroundColor: tintSoft }]}>
-        <Ionicons name={icon} size={18} color={tint} />
+        <Icon name={icon} size={18} color={tint} />
       </View>
 
       <Text style={styles.label} numberOfLines={1}>

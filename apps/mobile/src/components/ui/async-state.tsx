@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { colors, componentType, layout, radius, spacing, typography } from '@/theme/tokens';
 
 /**
@@ -23,7 +23,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   return (
     <View style={styles.center}>
       <View style={styles.icon}>
-        <Ionicons name="cloud-offline-outline" size={28} color={colors.danger} />
+        <Icon name="cloud-offline-outline" size={28} color={colors.danger} />
       </View>
       <Text style={styles.message}>{message}</Text>
       {onRetry ? (
@@ -37,13 +37,13 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
 
 /** यादी रिकामी असताना — चूक नाही, फक्त काहीच नाही. */
 export function EmptyState({ icon = 'file-tray-outline', message }: {
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: string;
   message: string;
 }) {
   return (
     <View style={styles.center}>
       <View style={[styles.icon, { backgroundColor: colors.primaryLight }]}>
-        <Ionicons name={icon} size={28} color={colors.primary} />
+        <Icon name={icon} size={28} color={colors.primary} />
       </View>
       <Text style={styles.message}>{message}</Text>
     </View>

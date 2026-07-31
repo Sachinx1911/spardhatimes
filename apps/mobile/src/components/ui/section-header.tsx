@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { colors, spacing, typography, strong } from '@/theme/tokens';
 
 /**
@@ -22,7 +22,7 @@ export function SectionHeader({
       {onViewAll ? (
         <Pressable onPress={onViewAll} hitSlop={8} style={styles.action}>
           <Text style={styles.actionText}>{actionLabel}</Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+          <Icon name="chevron-forward" size={14} color={colors.primary} />
         </Pressable>
       ) : null}
     </View>

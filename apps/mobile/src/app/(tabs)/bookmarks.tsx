@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { EmptyState, ErrorState, Loading } from '@/components/ui/async-state';
 import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
 import { MetaPill } from '@/components/ui/meta-pill';
@@ -99,7 +99,7 @@ export default function BookmarksScreen() {
           hitSlop={8}
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
           style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <Icon name="arrow-back" size={24} color={colors.text} />
         </Pressable>
         <View style={styles.headerText}>
           <Text style={styles.title}>बुकमार्क</Text>
@@ -171,7 +171,7 @@ function BookmarkCard({
           disabled={removing}
           // काढताना अर्धपारदर्शक — दाबलं गेलं हे कळावं, पण कार्ड उडी मारू नये.
           style={removing ? styles.removingIcon : undefined}>
-          <Ionicons name="bookmark" size={22} color={colors.primary} />
+          <Icon name="bookmark" size={22} color={colors.primary} />
         </Pressable>
       </View>
 
@@ -192,7 +192,7 @@ function BookmarkCard({
                 {o.text}
               </Text>
               {isCorrect ? (
-                <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+                <Icon name="checkmark-circle" size={18} color={colors.success} />
               ) : null}
             </View>
           );

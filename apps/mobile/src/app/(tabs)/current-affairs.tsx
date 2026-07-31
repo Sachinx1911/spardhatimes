@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -14,6 +13,7 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { EmptyState, ErrorState, Loading } from '@/components/ui/async-state';
 import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
 import { Screen } from '@/components/ui/screen';
@@ -125,18 +125,18 @@ export default function CurrentAffairsScreen() {
         <Pressable
           hitSlop={8}
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
-          <Ionicons name="menu" size={26} color={colors.text} />
+          <Icon name="menu" size={26} color={colors.text} />
         </Pressable>
         <Text style={styles.screenTitle}>Current Affairs</Text>
         <View style={styles.topIcons}>
           <Pressable hitSlop={8}>
-            <Ionicons name="search-outline" size={22} color={colors.text} />
+            <Icon name="search-outline" size={22} color={colors.text} />
           </Pressable>
           <Pressable hitSlop={8}>
-            <Ionicons name="funnel-outline" size={20} color={colors.text} />
+            <Icon name="funnel-outline" size={20} color={colors.text} />
           </Pressable>
           <Pressable hitSlop={8}>
-            <Ionicons name="notifications-outline" size={22} color={colors.text} />
+            <Icon name="notifications-outline" size={22} color={colors.text} />
             <View style={styles.badge}>
               <Text style={styles.badgeText}>3</Text>
             </View>
@@ -181,14 +181,14 @@ export default function CurrentAffairsScreen() {
       <View style={styles.gap} />
       <View style={styles.quizCard}>
         <View style={styles.quizIcon}>
-          <Ionicons name="clipboard-outline" size={26} color={colors.primary} />
+          <Icon name="clipboard-outline" size={26} color={colors.primary} />
         </View>
         <View style={styles.quizText}>
           <Text style={styles.quizTitle}>Daily Current Affairs Quiz</Text>
           <Text style={styles.quizNote}>दररोज 10 प्रश्न सोडवा आणि आपली तयारी तपासा!</Text>
           <Pressable style={styles.quizButton} onPress={() => router.push('/tests')}>
             <Text style={styles.quizButtonText}>Start Quiz</Text>
-            <Ionicons name="arrow-forward" size={14} color={colors.textInverse} />
+            <Icon name="arrow-forward" size={14} color={colors.textInverse} />
           </Pressable>
         </View>
         <View style={styles.quizXp}>
@@ -206,8 +206,8 @@ export default function CurrentAffairsScreen() {
           return (
             <Pressable key={c.id} style={styles.catCard} onPress={() => setActiveCategory(c.slug)}>
               <View style={[styles.catIcon, { backgroundColor: `${tint}1A` }]}>
-                <Ionicons
-                  name={(c.icon ?? 'newspaper') as keyof typeof Ionicons.glyphMap}
+                <Icon
+                  name={(c.icon ?? 'newspaper') as string}
                   size={24}
                   color={tint}
                 />
@@ -311,8 +311,8 @@ function NewsRow({
       ) : (
         // चित्र नसेल तर गटाच्या रंगातलं चिन्ह — रिकामा करडा चौकोन नको.
         <View style={[styles.thumb, styles.thumbEmpty, { backgroundColor: `${tint}1A` }]}>
-          <Ionicons
-            name={(article.categoryIcon ?? 'newspaper') as keyof typeof Ionicons.glyphMap}
+          <Icon
+            name={(article.categoryIcon ?? 'newspaper') as string}
             size={26}
             color={tint}
           />
@@ -333,14 +333,14 @@ function NewsRow({
 
       <View style={styles.rowActions}>
         <Pressable hitSlop={8} onPress={onBookmark} disabled={busy} style={busy ? styles.busy : undefined}>
-          <Ionicons
+          <Icon
             name={bookmarked ? 'bookmark' : 'bookmark-outline'}
             size={20}
             color={bookmarked ? colors.primary : colors.textSecondary}
           />
         </Pressable>
         <Pressable hitSlop={8} onPress={onShare}>
-          <Ionicons name="share-social-outline" size={20} color={colors.textSecondary} />
+          <Icon name="share-social-outline" size={20} color={colors.textSecondary} />
         </Pressable>
       </View>
     </Pressable>

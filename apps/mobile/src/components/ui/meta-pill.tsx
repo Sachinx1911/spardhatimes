@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 /**
@@ -10,12 +10,12 @@ export function MetaPill({
   icon,
   label,
 }: {
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: string;
   label: string;
 }) {
   return (
     <View style={styles.pill}>
-      {icon ? <Ionicons name={icon} size={12} color={colors.textSecondary} /> : null}
+      {icon ? <Icon name={icon} size={12} color={colors.textSecondary} /> : null}
       <Text style={styles.text}>{label}</Text>
     </View>
   );

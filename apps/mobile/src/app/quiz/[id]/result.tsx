@@ -1,8 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { ErrorState, Loading } from '@/components/ui/async-state';
 import { Card } from '@/components/ui/card';
 import { ProgressRing } from '@/components/ui/progress-ring';
@@ -107,22 +107,22 @@ export default function ResultScreen() {
       {/* ── वरची पट्टी ── */}
       <View style={styles.topBar}>
         <Pressable hitSlop={8} onPress={goBack}>
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
+          <Icon name="arrow-back" size={22} color={colors.text} />
         </Pressable>
         <Text style={styles.screenTitle}>Test Result</Text>
         <Pressable hitSlop={8} style={styles.topAction}>
-          <Ionicons name="download-outline" size={18} color={colors.text} />
+          <Icon name="download-outline" size={18} color={colors.text} />
           <Text style={styles.topActionText}>Download</Text>
         </Pressable>
         <Pressable hitSlop={8} style={styles.topAction}>
-          <Ionicons name="share-social-outline" size={18} color={colors.text} />
+          <Icon name="share-social-outline" size={18} color={colors.text} />
         </Pressable>
       </View>
 
       {/* ── कोणता test ── */}
       <View style={styles.testCard}>
         <View style={styles.testIcon}>
-          <Ionicons name="clipboard" size={22} color={colors.primary} />
+          <Icon name="clipboard" size={22} color={colors.primary} />
         </View>
         <View style={styles.testTextBox}>
           <Text style={styles.testTitle}>{r.testTitle}</Text>
@@ -240,7 +240,7 @@ export default function ResultScreen() {
       <View style={styles.gap} />
       <View style={styles.actions}>
         <Pressable style={styles.outlineAction} onPress={() => setReviewing((v) => !v)}>
-          <Ionicons
+          <Icon
             name={reviewing ? 'chevron-up' : 'reader-outline'}
             size={16}
             color={colors.primary}
@@ -250,7 +250,7 @@ export default function ResultScreen() {
           </Text>
         </Pressable>
         <Pressable style={styles.primaryAction}>
-          <Ionicons name="refresh" size={16} color={colors.textInverse} />
+          <Icon name="refresh" size={16} color={colors.textInverse} />
           <Text style={styles.primaryActionText}>Re-attempt Test</Text>
         </Pressable>
       </View>
@@ -329,7 +329,7 @@ function ReviewRow({
           onPress={onToggle}
           disabled={busy}
           style={busy ? styles.reviewBusy : undefined}>
-          <Ionicons
+          <Icon
             name={bookmarked ? 'bookmark' : 'bookmark-outline'}
             size={22}
             color={colors.primary}
@@ -356,9 +356,9 @@ function ReviewRow({
               <Text style={styles.reviewOptionKey}>{o.key}</Text>
               <Text style={styles.reviewOptionText}>{o.text}</Text>
               {isCorrect ? (
-                <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                <Icon name="checkmark-circle" size={16} color={colors.success} />
               ) : isChosen ? (
-                <Ionicons name="close-circle" size={16} color={colors.danger} />
+                <Icon name="close-circle" size={16} color={colors.danger} />
               ) : null}
             </View>
           );
@@ -385,7 +385,7 @@ function Breakdown({
   valueText,
   note,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   tint: string;
   soft: string;
   label: string;
@@ -398,7 +398,7 @@ function Breakdown({
   return (
     <View style={[styles.breakdownBox, { backgroundColor: soft }]}>
       <View style={styles.breakdownTop}>
-        <Ionicons name={icon} size={14} color={tint} />
+        <Icon name={icon} size={14} color={tint} />
         <Text style={styles.breakdownLabel} numberOfLines={1}>
           {label}
         </Text>

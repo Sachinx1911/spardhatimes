@@ -11,9 +11,9 @@ import { TabBar } from '@/components/ui/tab-bar';
  * हे पडदे Home वरच्या tiles मागे उघडतात. आधी ते `(tabs)` च्या बाहेर होते, पण मग
  * त्यांच्यावर खालचा menu दिसत नव्हता — आणि तो app मध्ये सगळीकडे दिसला पाहिजे.
  *
- * आत आणल्यावरही सहावा tab तयार होत नाही, कारण `TabBar` फक्त `ICONS` मध्ये नाव
- * असलेले routes काढतो (`if (!icon) return null`). म्हणून गोठवलेले पाचच tabs
- * दिसतात आणि हे पडदे त्यांच्यासह उघडतात.
+ * आत आणल्यावरही जास्तीचे tabs तयार होत नाहीत, कारण `TabBar` फक्त `ICONS` मध्ये
+ * नाव असलेले routes काढतो (`if (!icon) return null`). म्हणून चारच tabs दिसतात
+ * आणि उरलेले पडदे त्यांच्यासह उघडतात.
  *
  * `(tabs)` हा कंसातला गट आहे, त्यामुळे पत्ते बदललेले नाहीत — `/current-affairs`
  * तोच राहतो.
@@ -21,13 +21,17 @@ import { TabBar } from '@/components/ui/tab-bar';
 export default function TabsLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <TabBar {...props} />}>
+      {/* ── चार tabs, याच क्रमाने ── */}
       <Tabs.Screen name="index" />
-      <Tabs.Screen name="learn" />
       <Tabs.Screen name="tests" />
-      <Tabs.Screen name="analytics" />
+      <Tabs.Screen name="free-test" />
       <Tabs.Screen name="profile" />
 
-      {/* tab bar मध्ये दिसणारे नाहीत — वरचं टिप्पण पाहा. */}
+      {/* tab bar मध्ये दिसणारे नाहीत — tiles आणि drawer मधून उघडतात.
+          Learn आणि Analytics आधी tabs होते; मुख्य पान tiles वर गेल्याने
+          त्यांना स्वतःचा tab लागत नाही, पण पानं तशीच राहिली आहेत. */}
+      <Tabs.Screen name="learn" />
+      <Tabs.Screen name="analytics" />
       <Tabs.Screen name="current-affairs" />
       <Tabs.Screen name="bookmarks" />
       <Tabs.Screen name="article/[slug]" />
