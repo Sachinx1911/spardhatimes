@@ -871,3 +871,93 @@ export async function deleteSubject(id: string) {
     return { error: err.message || "Failed to delete subject." };
   }
 }
+
+// -------------------------------------------------------------
+// BANNERS (dashboard वरची सरकती जाहिरात पट्टी)
+//
+// प्रतिमा URL म्हणून घेतो, file म्हणून नाही — `uploadCategoryIcon` फाइल
+// `public/uploads/` मध्ये लिहितं आणि Vercel वर ती प्रत्येक deploy ला पुसली
+// जाते. URL ठेवल्याने प्रतिमा कुठेही ठेवता येते.
+// -------------------------------------------------------------
+
+/** `datetime-local` चं रिकामं मूल्य म्हणजे "मुदत नाही", 1970 नाही. */
+function optionalDate(raw: FormDataEntryValue | null): Date | null {
+  const s = String(raw ?? "").trim();
+  if (!s) return null;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function bannerFields(formData: FormData) {
+  const title = String(formData.get("title") ?? "").trim();
+  const imageUrl = String(formData.get("imageUrl") ?? "").trim();
+  const linkUrl = String(formData.get("linkUrl") ?? "").trim();
+  const orderIndex = Number(formData.get("orderIndex"));
+
+  return {
+    title,
+    imageUrl,
+    linkUrl: linkUrl || null,
+    active: formData.get("active") === "on",
+    orderIndex: Number.isFinite(orderIndex) ? orderIndex : 0,
+    startsAt: optionalDate(formData.get("startsAt")),
+    endsAt: optionalDate(formData.get("endsAt")),
+  };
+}
+
+export async function createBanner(formData: FormData) {
+  try {
+    const admin = await ensureAdmin();
+    const data = bannerFields(formData);
+    if (!data.title) return { error: "Title is required." };
+    if (!data.imageUrl) return { error: "Image URL is required." };
+    if (data.startsAt && data.endsAt && data.endsAt <= data.startsAt) {
+      return { error: "The end date has to come after the start date." };
+    }
+
+    await db.banner.create({ data });
+
+    await logAdminAction(admin.id!, "banner.create", `Created banner "${data.title}"`);
+    revalidatePath("/admin/banners");
+    return { success: true };
+  } catch (err: any) {
+    console.error(err);
+    return { error: err.message || "Failed to create banner." };
+  }
+}
+
+export async function updateBanner(id: string, formData: FormData) {
+  try {
+    const admin = await ensureAdmin();
+    const data = bannerFields(formData);
+    if (!data.title) return { error: "Title is required." };
+    if (!data.imageUrl) return { error: "Image URL is required." };
+    if (data.startsAt && data.endsAt && data.endsAt <= data.startsAt) {
+      return { error: "The end date has to come after the start date." };
+    }
+
+    await db.banner.update({ where: { id }, data });
+
+    await logAdminAction(admin.id!, "banner.update", `Updated banner "${data.title}"`);
+    revalidatePath("/admin/banners");
+    return { success: true };
+  } catch (err: any) {
+    console.error(err);
+    return { error: err.message || "Failed to update banner." };
+  }
+}
+
+export async function deleteBanner(id: string) {
+  try {
+    const admin = await ensureAdmin();
+    const banner = await db.banner.findUnique({ where: { id }, select: { title: true } });
+    await db.banner.delete({ where: { id } });
+
+    await logAdminAction(admin.id!, "banner.delete", `Deleted banner "${banner?.title ?? id}"`);
+    revalidatePath("/admin/banners");
+    return { success: true };
+  } catch (err: any) {
+    console.error(err);
+    return { error: err.message || "Failed to delete banner." };
+  }
+}

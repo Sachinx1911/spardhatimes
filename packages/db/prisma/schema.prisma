@@ -97,6 +97,29 @@ model Category {
   testSeries     TestSeries[]
 }
 
+/// Dashboard वरच्या सरकत्या पट्टीतल्या जाहिराती.
+///
+/// प्रतिमा **URL** म्हणून ठेवली आहे, चढवलेली file म्हणून नाही. आजचं
+/// `uploadCategoryIcon` फाइल `public/uploads/` मध्ये लिहितं, आणि ते Vercel वर
+/// टिकत नाही — तिथली filesystem प्रत्येक deploy ला पुसली जाते. URL ठेवल्याने
+/// प्रतिमा कुठेही ठेवता येते आणि तो प्रश्नच येत नाही.
+model Banner {
+  id         String    @id @default(cuid())
+  title      String
+  imageUrl   String
+  /// दाबल्यावर कुठे न्यायचं. रिकामं = कुठेच नाही, नुसती जाहिरात.
+  linkUrl    String?
+  active     Boolean   @default(true)
+  orderIndex Int       @default(0)
+  /// कधीपासून / कधीपर्यंत दाखवायची. दोन्ही null = नेहमी.
+  startsAt   DateTime?
+  endsAt     DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([active, orderIndex])
+}
+
 /// विद्यार्थी कोणत्या **परीक्षेची** तयारी करतोय — MPSC, UPSC, SSC, Banking…
 ///
 /// हे `Category` पेक्षा वेगळं आहे आणि तो फरक महत्त्वाचा आहे:
