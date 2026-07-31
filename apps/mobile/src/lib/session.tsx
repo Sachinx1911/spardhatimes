@@ -10,7 +10,14 @@ import { api, type Me } from './api';
  */
 interface SessionValue {
   user: Me | null;
-  /** पहिली तपासणी चालू आहे — तोपर्यंत screens दाखवायचे नाहीत. */
+  /**
+   * पहिली तपासणी चालू आहे — कोण login आहे हे **अजून ठरलेलं नाही**. `user` null
+   * असणं म्हणजे "कोणी नाही" नव्हे; हा flag false होईपर्यंत काहीच ठरलेलं नाही.
+   *
+   * त्यामुळे API विनंती याच्या आधी पाठवायची नाही — token अजून जागेवर नसतो आणि
+   * 401 येतो. `useApi` हे स्वतः सांभाळतो, म्हणून screens ला याची काळजी घ्यावी
+   * लागत नाही; थेट `fetch` करणाऱ्या नवीन code ला लागेल.
+   */
   loading: boolean;
   login: (phone: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
