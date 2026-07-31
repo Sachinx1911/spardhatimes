@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { Role, Difficulty, QuizStatus, QuestionType } from "@mahatest/db";
 import * as bcrypt from "bcryptjs";
 import {
+  cleanSubjectName,
   collectSubjects,
   mapImportedRow,
   normalizeAnswerList,
@@ -727,5 +728,146 @@ export async function bulkImportQuestions(quizId: string, questions: any[]) {
   } catch (err: any) {
     console.error("Bulk import error:", err);
     return { error: err.message || "Failed to import questions. All changes rolled back." };
+  }
+}
+
+// -------------------------------------------------------------
+// SUBJECT MANAGEMENT
+//
+// Import विषय आपोआप बनवतो — Excel च्या Category column मधून. त्यामुळे यादीत
+// जे लिहिलं गेलं तेच येतं, आणि प्रत्यक्षात ते बरेचदा **उपविषय** असतात:
+// "Banking", "Banking Services", "Banking Reforms", "Rural Banking" हे चार
+// वेगळे विषय म्हणून आले आहेत, पण खरं तर ते एकच.
+//
+// Result आणि Analytics विषयानुसार गट करतात, म्हणून असे तुकडे थेट दिसतात —
+// एका ओळीत एक-दोन प्रश्न. म्हणून admin ला विषय **एकत्र करता** आले पाहिजेत.
+// -------------------------------------------------------------
+
+export async function createSubject(formData: FormData) {
+  try {
+    const admin = await ensureAdmin();
+    const name = cleanSubjectName(formData.get("name"));
+    if (!name) return { error: "Subject name is required." };
+
+    const slug = subjectSlug(name);
+    if (!slug) return { error: "That name has no usable letters." };
+
+    const existing = await db.subject.findUnique({ where: { slug }, select: { name: true } });
+    if (existing) return { error: `"${existing.name}" already covers that name.` };
+
+    await db.subject.create({ data: { name, slug } });
+
+    await logAdminAction(admin.id!, "subject.create", `Created subject "${name}"`);
+    revalidatePath("/admin/subjects");
+    return { success: true };
+  } catch (err: any) {
+    console.error(err);
+    return { error: err.message || "Failed to create subject." };
+  }
+}
+
+export async function updateSubject(id: string, formData: FormData) {
+  try {
+    const admin = await ensureAdmin();
+    const name = cleanSubjectName(formData.get("name"));
+    if (!name) return { error: "Subject name is required." };
+
+    const rawOrder = formData.get("orderIndex");
+    const orderIndex = Number.isFinite(Number(rawOrder)) ? Number(rawOrder) : 0;
+
+    // Slug हा जुळवणीचा key आहे — नाव बदललं की तोही बदलतो, नाहीतर पुढच्या
+    // import मध्ये जुन्या नावाने आलेला प्रश्न इथे जोडला जाणार नाही.
+    const slug = subjectSlug(name);
+    if (!slug) return { error: "That name has no usable letters." };
+
+    const clash = await db.subject.findFirst({
+      where: { slug, NOT: { id } },
+      select: { name: true },
+    });
+    if (clash) return { error: `"${clash.name}" already uses that name. Merge them instead.` };
+
+    await db.subject.update({ where: { id }, data: { name, slug, orderIndex } });
+
+    await logAdminAction(admin.id!, "subject.update", `Renamed subject to "${name}"`);
+    revalidatePath("/admin/subjects");
+    return { success: true };
+  } catch (err: any) {
+    console.error(err);
+    return { error: err.message || "Failed to update subject." };
+  }
+}
+
+/**
+ * अनेक विषय एकात मिसळणे.
+ *
+ * हेच खरं कारण आहे या पानाचं. `sourceIds` मधल्या विषयांचे सगळे प्रश्न
+ * `targetId` कडे हलवतो आणि मग ते रिकामे विषय काढून टाकतो.
+ *
+ * प्रश्न `updateMany` ने एकाच फेरीत हलवतो — प्रति-प्रश्न query मारली असती तर
+ * Supabase ~170ms दूर असल्याने 100 प्रश्नांना 17 सेकंद लागले असते आणि
+ * transaction चा 5s चा बांध तुटला असता.
+ */
+export async function mergeSubjects(targetId: string, sourceIds: string[]) {
+  try {
+    const admin = await ensureAdmin();
+
+    const sources = sourceIds.filter((id) => id && id !== targetId);
+    if (sources.length === 0) return { error: "Pick at least one subject to merge in." };
+
+    const target = await db.subject.findUnique({ where: { id: targetId }, select: { name: true } });
+    if (!target) return { error: "The subject you are merging into no longer exists." };
+
+    const names = await db.subject.findMany({
+      where: { id: { in: sources } },
+      select: { name: true },
+    });
+
+    const moved = await db.$transaction(async (tx) => {
+      const r = await tx.question.updateMany({
+        where: { subjectId: { in: sources } },
+        data: { subjectId: targetId },
+      });
+      await tx.subject.deleteMany({ where: { id: { in: sources } } });
+      return r.count;
+    });
+
+    await logAdminAction(
+      admin.id!,
+      "subject.merge",
+      `Merged ${names.map((n) => `"${n.name}"`).join(", ")} into "${target.name}" (${moved} questions)`
+    );
+    revalidatePath("/admin/subjects");
+    return { success: true, moved, mergedCount: sources.length };
+  } catch (err: any) {
+    console.error(err);
+    return { error: err.message || "Failed to merge subjects." };
+  }
+}
+
+export async function deleteSubject(id: string) {
+  try {
+    const admin = await ensureAdmin();
+    const subject = await db.subject.findUnique({
+      where: { id },
+      select: { name: true, _count: { select: { questions: true } } },
+    });
+    if (!subject) return { error: "Subject not found." };
+
+    // प्रश्न असलेला विषय काढला तर ते प्रश्न विषयाशिवाय उरतात आणि Result मधून
+    // गायब होतात. काढण्याऐवजी दुसऱ्यात मिसळणं हा बरोबर मार्ग.
+    if (subject._count.questions > 0) {
+      return {
+        error: `"${subject.name}" still has ${subject._count.questions} questions. Merge it into another subject instead of deleting it.`,
+      };
+    }
+
+    await db.subject.delete({ where: { id } });
+
+    await logAdminAction(admin.id!, "subject.delete", `Deleted empty subject "${subject.name}"`);
+    revalidatePath("/admin/subjects");
+    return { success: true };
+  } catch (err: any) {
+    console.error(err);
+    return { error: err.message || "Failed to delete subject." };
   }
 }
