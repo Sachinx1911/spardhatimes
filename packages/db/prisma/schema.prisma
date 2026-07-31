@@ -64,6 +64,7 @@ model User {
   notifications Notification[]
   adminLogs     AdminLog[]
   passwordResetTokens PasswordResetToken[]
+  orders        Order[]
   seriesAccess  TestSeriesAccess[]   @relation("StudentAccess")
   grantedAccess TestSeriesAccess[]   @relation("GrantedBy")
 }
@@ -96,6 +97,24 @@ model Category {
   testSeries     TestSeries[]
 }
 
+/// विद्यार्थी कोणत्या **परीक्षेची** तयारी करतोय — MPSC, UPSC, SSC, Banking…
+///
+/// हे `Category` पेक्षा वेगळं आहे आणि तो फरक महत्त्वाचा आहे:
+/// Category म्हणजे **विषय** (Mathematics, Current Affairs, History) — म्हणजे
+/// आतला मजकूर काय आहे. Exam म्हणजे विद्यार्थी काय **शोधतोय** — दुकान याच्याच
+/// आधारे मांडलेलं आहे. एकाच परीक्षेत अनेक विषय येतात, म्हणून दोन्ही लागतात.
+model Exam {
+  id         String       @id @default(cuid())
+  name       String       @unique
+  slug       String       @unique
+  icon       String?
+  orderIndex Int          @default(0)   // दुकानात कोणत्या क्रमाने दाखवायचे
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  testSeries TestSeries[]
+}
+
 // A Test Series groups several Quizzes (tests) that an admin assigns to
 // students. The admin decides up front how many tests it will hold
 // (plannedTotalTests) and schedules each test's release. Belongs to a Category.
@@ -106,16 +125,32 @@ model TestSeries {
   description String?
   categoryId  String
   category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  /// कोणत्या परीक्षेसाठी. **nullable** — आजच्या series ना exam नाही, त्यांना
+  /// तो दिल्यावर पुढे required करता येईल. Exam काढला तर series राहते.
+  examId      String?
+  exam        Exam?       @relation(fields: [examId], references: [id], onDelete: SetNull)
   timingMode  TimingMode  @default(RELEASE_ONLY)
   plannedTotalTests Int    @default(0)
   published   Boolean     @default(true)
+
+  // विक्री. पैसे **paise मध्ये Int** — Float मध्ये कधीच ठेवायचे नाहीत
+  // (₹99.99 चं 99.98999 होतं). Razorpay सुद्धा paise घेतो, म्हणून रूपांतर नाही.
+  /// 0 = मोफत. विकायची किंमत.
+  priceInPaise Int        @default(0)
+  /// छापील किंमत — सवलत दाखवायला. null असेल तर सवलत दाखवायची नाही.
+  mrpInPaise   Int?
+  /// खरेदीनंतर access किती महिने टिकतो. 0 = कायमस्वरूपी.
+  validityMonths Int      @default(12)
+
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
   quizzes     Quiz[]
   access      TestSeriesAccess[]
+  orders      Order[]
 
   @@index([categoryId])
+  @@index([examId])
 }
 
 // Join table: which student can access which test series. Created/removed by
@@ -130,7 +165,43 @@ model TestSeriesAccess {
   assignedBy    User?      @relation("GrantedBy", fields: [assignedById], references: [id], onDelete: SetNull)
   createdAt     DateTime   @default(now())
 
+  /// मुदत संपण्याची वेळ. **null = कायमस्वरूपी** — admin ने हाताने दिलेला access
+  /// असाच राहतो; विकत घेतलेल्याला series च्या `validityMonths` प्रमाणे मुदत मिळते.
+  expiresAt     DateTime?
+  /// कोणत्या खरेदीतून आला. null = admin ने दिला. फक्त नोंदीसाठी.
+  orderId       String?
+
   @@unique([userId, testSeriesId])
+  @@index([userId])
+  @@index([testSeriesId])
+}
+
+enum OrderStatus {
+  CREATED
+  PAID
+  FAILED
+}
+
+/// एक खरेदी. जुळवणी आणि परताव्यासाठी प्रत्येक प्रयत्नाची नोंद राहते —
+/// अयशस्वी झालेलेही, कारण "पैसे गेले पण access मिळाला नाही" अशा तक्रारीत
+/// तीच नोंद उपयोगी पडते.
+model Order {
+  id                String      @id @default(cuid())
+  userId            String
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testSeriesId      String
+  testSeries        TestSeries  @relation(fields: [testSeriesId], references: [id], onDelete: Cascade)
+
+  /// किंमत खरेदीच्या वेळची — पुढे series ची किंमत बदलली तरी जुनी नोंद बदलत नाही.
+  amountInPaise     Int
+  status            OrderStatus @default(CREATED)
+
+  razorpayOrderId   String      @unique
+  razorpayPaymentId String?
+
+  createdAt         DateTime    @default(now())
+  paidAt            DateTime?
+
   @@index([userId])
   @@index([testSeriesId])
 }

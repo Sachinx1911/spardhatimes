@@ -15,6 +15,18 @@ import { TestsService } from './tests.service';
 export class TestsController {
   constructor(private readonly tests: TestsService) {}
 
+  @Get('catalog')
+  @ApiOperation({ summary: 'दुकान — विकत घेता येणाऱ्या सगळ्या series' })
+  catalog(@Req() req: AuthedRequest) {
+    return this.tests.catalog(req.user.id);
+  }
+
+  @Get('exams')
+  @ApiOperation({ summary: 'परीक्षांची यादी, प्रत्येकीचा series आकडा' })
+  exams() {
+    return this.tests.exams();
+  }
+
   @Get('series')
   @ApiOperation({ summary: 'माझ्या test series, प्रगती सह' })
   mySeries(@Req() req: AuthedRequest) {

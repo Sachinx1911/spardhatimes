@@ -14,6 +14,85 @@ import { PrismaService } from '../prisma/prisma.service';
 export class TestsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * दुकान — विकत घेता येणाऱ्या सगळ्या प्रकाशित series.
+   *
+   * `mySeries` पेक्षा वेगळं: तो फक्त **घेतलेल्या** देतो, हा **सगळ्या** देतो आणि
+   * प्रत्येकीवर `owned` सांगतो, म्हणजे app "Buy" की "Start" हे ठरवू शकतो.
+   *
+   * मुदत संपलेली access म्हणजे `owned: false` — तिथे पुन्हा "Buy" च दिसलं पाहिजे.
+   */
+  async catalog(userId: string) {
+    const now = new Date();
+
+    const [series, myAccess] = await Promise.all([
+      this.prisma.client.testSeries.findMany({
+        where: { published: true },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          plannedTotalTests: true,
+          priceInPaise: true,
+          mrpInPaise: true,
+          validityMonths: true,
+          category: { select: { name: true } },
+          exam: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.client.testSeriesAccess.findMany({
+        where: { userId },
+        select: { testSeriesId: true, expiresAt: true },
+      }),
+    ]);
+
+    const ownedIds = new Set(
+      myAccess
+        .filter((a) => a.expiresAt === null || a.expiresAt > now)
+        .map((a) => a.testSeriesId)
+    );
+
+    return series.map((s) => ({
+      id: s.id,
+      title: s.title,
+      description: s.description,
+      categoryName: s.category.name,
+      examId: s.exam?.id ?? null,
+      examName: s.exam?.name ?? null,
+      plannedTotalTests: s.plannedTotalTests,
+      priceInPaise: s.priceInPaise,
+      mrpInPaise: s.mrpInPaise,
+      validityMonths: s.validityMonths,
+      owned: ownedIds.has(s.id),
+    }));
+  }
+
+  /**
+   * दुकानातली परीक्षांची जाळी.
+   *
+   * आकडा **प्रकाशित** series चाच मोजतो — नाहीतर "12 Test Series" दिसेल आणि
+   * आत गेल्यावर तीनच सापडतील.
+   */
+  async exams() {
+    const exams = await this.prisma.client.exam.findMany({
+      select: {
+        id: true,
+        name: true,
+        icon: true,
+        _count: { select: { testSeries: { where: { published: true } } } },
+      },
+      orderBy: { orderIndex: 'asc' },
+    });
+
+    return exams.map((e) => ({
+      id: e.id,
+      name: e.name,
+      icon: e.icon,
+      seriesCount: e._count.testSeries,
+    }));
+  }
+
   /** विद्यार्थ्याला दिलेल्या series, प्रत्येकीची प्रगती सह. */
   async mySeries(userId: string) {
     const access = await this.prisma.client.testSeriesAccess.findMany({
