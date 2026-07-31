@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BadgeCheck,
   BarChart3,
+  Landmark,
   Bell,
   BookMarked,
   BookOpen,
@@ -58,6 +59,7 @@ import {
   Trophy,
   User,
   UserCircle,
+  Users,
   X,
   XCircle,
   type LucideIcon,
@@ -97,6 +99,8 @@ const MAP: Record<string, LucideIcon> = {
   school: GraduationCap,
   'person-circle': UserCircle,
   person: User,
+  people: Users,
+  bank: Landmark,
   profile: UserCircle,
 
   // ── अभ्यास ──

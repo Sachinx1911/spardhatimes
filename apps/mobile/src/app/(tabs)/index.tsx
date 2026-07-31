@@ -1,12 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/ui/async-state';
-import { HomeCarousel } from '@/components/ui/home-carousel';
 import { Icon } from '@/components/ui/icon';
-import { Screen } from '@/components/ui/screen';
 import { api } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 import {
@@ -19,31 +17,25 @@ import {
   shadow,
   spacing,
   typography,
+  useCardWidths,
 } from '@/theme/tokens';
 
 /**
- * मुख्य पान — **दिशादर्शक, दुकान नाही.**
+ * मुख्य पान — design image प्रमाणे.
  *
- * वरती gradient पट्टी, मग सरकती जाहिरात, मग आठ मोठे शॉर्टकट. दुकान `/store` वर
- * आहे आणि विद्यार्थ्याच्या स्वतःच्या series `My Course` मध्ये.
+ * रचना: पांढरी पट्टी (☰ · logo · घंटा), क्रीम जाहिरात कार्ड, आठ शॉर्टकट
+ * दोन-दोन ओळीत.
  *
- * आधी इथे अभिवादन, चालू series आणि चार आकडे होते. नवीन design मध्ये ते नाहीत —
- * ते सगळं `My Course` आणि `Analytics` मध्ये आहेच, आणि इथे दोनदा दाखवण्यापेक्षा
- * मुख्य पान मोकळं ठेवलेलं बरं.
- *
- * मजकूर **मराठी-प्रथम**: मोठ्या अक्षरात मराठी, खाली बारीक ओळ. विद्यार्थी मराठी
- * माध्यमाचे आहेत, पण "PDF Notes", "TCS | IBPS" सारखी नावं इंग्रजीतच ओळखली जातात
- * म्हणून ती तशीच ठेवली आहेत.
+ * हे **दिशादर्शक पान आहे, दुकान नाही** — दुकान `/store` वर, विद्यार्थ्याच्या
+ * स्वतःच्या series `My Course` मध्ये.
  */
 
 interface Tile {
-  /** मोठं नाव — जे विद्यार्थी वाचतो. */
   title: string;
-  /** खालची ओळ — काय मिळेल ते. */
   note: string;
   icon: string;
   tint: string;
-  /** पान नसेल तर `null` — tile दिसतो पण निष्क्रिय, "लवकरच" म्हणून. */
+  /** पान नसेल तर `null`. */
   href: string | null;
 }
 
@@ -52,7 +44,7 @@ const TILES: Tile[] = [
     title: 'MPSC',
     note: 'अभ्यास साहित्य, टेस्ट आणि नोट्स',
     icon: 'document-text',
-    tint: colors.danger,
+    tint: colors.tileRed,
     href: '/store',
   },
   {
@@ -66,44 +58,44 @@ const TILES: Tile[] = [
     title: 'PDF NOTES',
     note: 'सर्व विषयांचे PDF नोट्स डाउनलोड करा',
     icon: 'file-tray',
-    tint: colors.success,
+    tint: colors.tileGreen,
     href: '/learn',
   },
-  // ── खालचे तीन अजून बांधलेले नाहीत ──
-  // schema मध्ये अभ्यासक्रम, सरळसेवा आणि दैनिक quiz यांचं एकही model नाही.
+  // ── हे तीन अजून बांधलेले नाहीत ──
+  // अभ्यासक्रम, सरळसेवा आणि दैनिक quiz यांचं schema मध्ये एकही model नाही.
   // दाबल्यावर रिकामं पान उघडण्यापेक्षा "लवकरच" दाखवणं प्रामाणिक.
   {
     title: 'अभ्यासक्रम',
     note: 'परीक्षेनुसार संपूर्ण अभ्यासक्रम पहा',
     icon: 'book',
-    tint: colors.warning,
+    tint: colors.tileOrange,
     href: null,
   },
   {
     title: 'चालू घडामोडी',
     note: 'दैनिक, साप्ताहिक आणि मासिक अपडेट्स',
     icon: 'newspaper',
-    tint: colors.accentViolet,
+    tint: colors.tileViolet,
     href: '/current-affairs',
   },
   {
     title: 'सरळसेवा',
     note: 'महत्त्वाच्या सेवा आणि उपयुक्त लिंक',
-    icon: 'globe',
-    tint: colors.accentSky,
+    icon: 'people',
+    tint: colors.tileTeal,
     href: null,
   },
   {
     title: 'चालू घडामोडी Quiz',
-    note: 'चालू घडामोडींवर आधारित विविध खेळ',
+    note: 'चालू घडामोडींवर आधारित विविध खेळा',
     icon: 'bulb',
-    tint: colors.warning,
+    tint: colors.tileAmber,
     href: null,
   },
   {
     title: 'TCS | IBPS',
     note: 'बँकिंग आणि TCS परीक्षांची तयारी',
-    icon: 'school',
+    icon: 'bank',
     tint: colors.pink,
     href: '/store',
   },
@@ -112,129 +104,263 @@ const TILES: Tile[] = [
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { halfCardWidth } = useCardWidths();
   const { data, loading, error, reload } = useApi(() => api.dashboard(), []);
 
   return (
     <View style={styles.root}>
-      {/* ── gradient पट्टी ── */}
-      <LinearGradient
-        colors={gradients.appBar}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.appBar, { paddingTop: insets.top + spacing.md }]}>
-        {/* ☰ design मध्ये आहे म्हणून जागा धरून ठेवली आहे, पण **त्यामागे अजून
-            काही नाही** — menu ची design आल्यावर इथे जोडायचा. */}
+      {/* ── वरची पट्टी — पांढरी, मधोमध logo ── */}
+      <View style={[styles.appBar, { paddingTop: insets.top + spacing.sm }]}>
         <Pressable hitSlop={8}>
-          <Icon name="menu" size={26} color={colors.textInverse} />
+          <Icon name="menu" size={26} color={colors.text} />
         </Pressable>
 
+        {/* Logo दोन ओळींत: लाल SPARDHA, गडद निळा TIMES — design प्रमाणे. */}
         <View style={styles.brandBox}>
-          <Text style={styles.brand}>SPARDHA TIMES</Text>
-          <Text style={styles.tagline}>Your Success, Our Mission</Text>
+          <Text style={styles.brandTop}>SPARDHA</Text>
+          <Text style={styles.brandBottom}>TIMES</Text>
         </View>
 
         <Pressable hitSlop={8}>
-          <Icon name="notifications" size={24} color={colors.textInverse} />
-          {/* न वाचलेल्यांचा आकडा अजून API मधून येत नाही — तो आल्यावर इथे. */}
+          <Icon name="notifications" size={24} color={colors.text} />
+          {/* आकडा अजून API मधून येत नाही — तो आल्यावर इथे जोडायचा. */}
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>3</Text>
+          </View>
         </Pressable>
-      </LinearGradient>
+      </View>
 
-      <Screen>
+      <ScrollView
+        contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing['3xl'] }]}
+        showsVerticalScrollIndicator={false}>
         {loading ? <Loading label="उघडतोय…" /> : null}
         {error ? <ErrorState message={error} onRetry={reload} /> : null}
 
-        {data ? (
-          <HomeCarousel
-            banners={data.banners}
-            latestTests={data.latestTests}
-            onOpenTest={(id) => router.push(`/quiz/${id}/attempt`)}
-          />
-        ) : null}
+        {!loading && !error ? <Banner banners={data?.banners ?? []} /> : null}
 
-        {/* ── आठ शॉर्टकट ── */}
+        {/* ── आठ शॉर्टकट, दोन प्रति ओळ ── */}
         <View style={styles.grid}>
           {TILES.map((t) => {
-            const disabled = t.href === null;
+            const off = t.href === null;
             return (
               <Pressable
                 key={t.title}
-                style={[styles.tile, disabled && styles.tileOff]}
-                disabled={disabled}
+                style={[styles.tile, { width: halfCardWidth }, off && styles.tileOff]}
+                disabled={off}
                 onPress={() => t.href && router.push(t.href as never)}>
                 <View style={[styles.tileIcon, { backgroundColor: t.tint }]}>
                   <Icon name={t.icon} size={22} color={colors.textInverse} />
                 </View>
 
                 <View style={styles.tileText}>
-                  {/* अर्ध्या रुंदीच्या कार्डात "ONLINE TEST" एका ओळीत बसत नाही —
-                      दोन ओळी दिल्या म्हणजे नाव कापलं जात नाही. */}
+                  {/* 154dp रुंद कार्डात चिन्ह, मजकूर आणि बाण बसवायचे आहेत.
+                      "ONLINE TEST" आणि "चालू घडामोडी Quiz" एका ओळीत मावत नाहीत,
+                      म्हणून दोन ओळी — नाव कापण्यापेक्षा कार्ड थोडं उंच बरं. */}
                   <Text style={styles.tileTitle} numberOfLines={2}>
                     {t.title}
                   </Text>
                   <Text style={styles.tileNote} numberOfLines={2}>
-                    {disabled ? 'लवकरच येत आहे' : t.note}
+                    {off ? 'लवकरच येत आहे' : t.note}
                   </Text>
                 </View>
 
-                <Icon name="chevron-forward" size={18} color={colors.textSecondary} />
+                <Icon name="chevron-forward" size={14} color={colors.textSecondary} />
               </Pressable>
             );
           })}
         </View>
-      </Screen>
+      </ScrollView>
+    </View>
+  );
+}
 
+/**
+ * जाहिरातीचं कार्ड.
+ *
+ * Admin ने प्रतिमा टाकली असेल तर तीच पूर्ण दाखवतो — मजकूर प्रतिमेतच, असं ठरलं
+ * आहे. एकही नसेल तर design मधला मजकूर app स्वतः दाखवतो, म्हणजे पान रिकामं
+ * दिसत नाही.
+ */
+function Banner({ banners }: { banners: { id: string; imageUrl: string }[] }) {
+  const { cardWidth } = useCardWidths();
+
+  if (banners.length > 0) {
+    return (
+      <View>
+        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+          {banners.map((b) => (
+            <Image
+              key={b.id}
+              source={{ uri: b.imageUrl }}
+              style={[styles.bannerImage, { width: cardWidth }]}
+              resizeMode="cover"
+            />
+          ))}
+        </ScrollView>
+        <Dots count={banners.length} />
+      </View>
+    );
+  }
+
+  return (
+    <View>
+      <LinearGradient
+        colors={gradients.banner}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.bannerCard}>
+        <Text style={styles.bannerTitle}>स्वप्न तुमचे,</Text>
+        <Text style={styles.bannerTitle}>
+          <Text style={styles.bannerTitleAccent}>यश</Text> आमचे!
+        </Text>
+        <Text style={styles.bannerNote}>
+          MPSC, TCS/IBPS, Railway आणि{'\n'}अनेक परीक्षांसाठी सर्वोत्तम तयारी.
+        </Text>
+        <Pressable style={styles.bannerCta}>
+          <Text style={styles.bannerCtaText}>आजच सुरुवात करा</Text>
+          <Icon name="arrow-forward" size={18} color={colors.textInverse} />
+        </Pressable>
+      </LinearGradient>
+      <Dots count={1} />
+    </View>
+  );
+}
+
+function Dots({ count }: { count: number }) {
+  return (
+    <View style={styles.dots}>
+      {Array.from({ length: Math.max(count, 1) }).map((_, i) => (
+        <View key={i} style={[styles.dot, i === 0 && styles.dotOn]} />
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: colors.surface },
 
+  // ── वरची पट्टी ──
   appBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
     paddingHorizontal: layout.screenPadding,
-    paddingBottom: spacing.lg,
-    // पट्टीचे खालचे कोपरे गोल — खालचा मजकूर तिच्यातून बाहेर येतोय असं वाटतं.
-    borderBottomLeftRadius: radius.xxl,
-    borderBottomRightRadius: radius.xxl,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.surface,
   },
   brandBox: { flex: 1, alignItems: 'center' },
-  brand: {
+  brandTop: {
     ...typography.titleL,
-    color: colors.textInverse,
-    letterSpacing: 0.5,
+    color: colors.primary,
+    letterSpacing: 1,
   },
-  tagline: {
+  brandBottom: {
+    ...typography.titleL,
+    color: colors.navy,
+    letterSpacing: 2,
+    marginTop: -spacing.xs,
+  },
+  badge: {
+    position: 'absolute',
+    top: -spacing.xs,
+    right: -spacing.sm,
+    minWidth: 18,
+    height: 18,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+  },
+  badgeText: {
     ...componentType.smallLabel,
-    color: 'rgba(255,255,255,0.85)',
+    color: colors.textInverse,
   },
 
+  body: {
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.md,
+  },
+
+  // ── जाहिरात ──
+  bannerImage: {
+    height: layout.carouselHeight,
+    borderRadius: radius.card,
+  },
+  bannerCard: {
+    borderRadius: radius.card,
+    padding: layout.cardPadding,
+    minHeight: layout.carouselHeight,
+    justifyContent: 'center',
+  },
+  bannerTitle: {
+    ...typography.headingL,
+    ...marathi.bold,
+    color: colors.text,
+  },
+  bannerTitleAccent: { color: colors.primary },
+  bannerNote: {
+    ...typography.bodyS,
+    ...marathi.regular,
+    color: colors.text,
+    marginTop: spacing.sm,
+  },
+  bannerCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.sm,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    marginTop: spacing.lg,
+  },
+  bannerCtaText: {
+    ...componentType.buttonText,
+    ...marathi.semibold,
+    color: colors.textInverse,
+  },
+
+  dots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: radius.full,
+    backgroundColor: colors.border,
+  },
+  dotOn: {
+    width: 20,
+    backgroundColor: colors.primary,
+  },
+
+  // ── शॉर्टकट ──
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.md,
     marginTop: spacing.xl,
-    marginBottom: spacing.lg,
   },
   tile: {
-    width: layout.halfCardWidth,
-    // सगळी कार्डं समान उंचीची — नाहीतर एका ओळीचं नाव असलेलं कार्ड बुटकं दिसतं.
-    minHeight: layout.homeTileHeight,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
+    minHeight: layout.homeTileHeight,
     backgroundColor: colors.surface,
     borderRadius: radius.card,
-    padding: layout.cardPadding,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
     ...shadow.card,
   },
-  // न बांधलेले फिकट — दाबता येत नाहीत हे दिसलं पाहिजे.
   tileOff: { opacity: 0.45 },
   tileIcon: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
@@ -242,14 +368,16 @@ const styles = StyleSheet.create({
   tileText: { flex: 1 },
   tileTitle: {
     ...componentType.badge,
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 17,
     ...marathi.semibold,
     color: colors.text,
   },
   tileNote: {
-    ...componentType.smallLabel,
+    fontSize: 10,
+    lineHeight: 13,
     ...marathi.regular,
     color: colors.textSecondary,
+    marginTop: 2,
   },
 });

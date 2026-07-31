@@ -29,6 +29,7 @@ import {
   spacing,
   strong,
   typography,
+  useCardWidths,
 } from '@/theme/tokens';
 
 /**
@@ -233,7 +234,7 @@ export default function CurrentAffairsScreen() {
 function TopNewsCarousel({ items }: { items: ApiArticleListItem[] }) {
   const router = useRouter();
   const [page, setPage] = useState(0);
-  const width = layout.cardWidth;
+  const { cardWidth: width } = useCardWidths();
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const next = Math.round(e.nativeEvent.contentOffset.x / width);

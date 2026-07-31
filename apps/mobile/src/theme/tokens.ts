@@ -15,15 +15,25 @@
  * NativeWind वापरलेलं नाही: Expo SDK 57 / RN 0.86 वर त्याचा support अजून
  * confirmed नाही (v4 जुना, v5 pre-release).
  */
-import { Dimensions } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 
 // ─── 1. COLOR PALETTE ────────────────────────────────────────────────────────
 
+/**
+ * ⚠️ `primary` आणि `danger` **दोन्ही लाल आहेत** — brand लाल आहे (logo बघा) आणि
+ * चूकही लालच दाखवली जाते. ते मिसळू नयेत म्हणून:
+ *
+ * - **भरीव लाल = पुढे जा** (CTA, active tab)
+ * - **चूक कधीच भरीव नसते** — चिन्ह + मजकूर + फिकट पार्श्वभूमी
+ * - **नष्ट करणारी बटणं कडांची**, भरीव नाहीत
+ */
 export const colors = {
-  primary: '#5B3DF5',
-  /** Gradient चा दुसरा टोक आणि दाबलेल्या बटणाची छटा. */
-  primaryDark: '#4427D6',
-  primaryLight: '#F3F0FF',
+  /** Brand लाल — logo आणि CTA मधला. */
+  primary: '#E11B22',
+  primaryDark: '#B4141A',
+  primaryLight: '#FDECEC',
+  /** Logo मधला गडद निळा — "TIMES" आणि काही चिन्हं. */
+  navy: '#12277D',
   success: '#22C55E',
   warning: '#F59E0B',
   danger: '#EF4444',
@@ -61,8 +71,15 @@ export const colors = {
   accentViolet: '#8B5CF6',
   accentSky: '#0EA5E9',
   /** Spec मधले सुटे रंग — tiles आणि चिन्हांसाठी. */
-  blue: '#3B82F6',
-  pink: '#EC4899',
+  blue: '#2C7BE5',
+  pink: '#D6217F',
+  /** Home tiles चे रंग — design मधून तंतोतंत. */
+  tileRed: '#E8232A',
+  tileGreen: '#1DA750',
+  tileOrange: '#F5911E',
+  tileViolet: '#7C4DFF',
+  tileTeal: '#12B5A5',
+  tileAmber: '#FDB913',
 } as const;
 
 /**
@@ -70,7 +87,8 @@ export const colors = {
  * `LinearGradient` ला देताना प्रत्येक screen मध्ये hex लिहावे लागत नाहीत.
  */
 export const gradients = {
-  appBar: ['#5B3DF5', '#7C5CFF'] as const,
+  /** Banner ची क्रीम पार्श्वभूमी — design मधल्या कार्डासारखी. */
+  banner: ['#FFF7F0', '#FDE9EC'] as const,
 } as const;
 
 // ─── 2. TYPOGRAPHY (Poppins + Mukta) ─────────────────────────────────────────
@@ -204,22 +222,15 @@ export const shadow = {
 
 // ─── 6. LAYOUT ───────────────────────────────────────────────────────────────
 
-const screenWidth = Dimensions.get('window').width;
-
 /**
  * रुंदी खऱ्या पडद्यावरून मोजायची, 360 गृहीत धरायची नाही — sheet चा implementation
  * guide सुद्धा हेच सांगतो (`SCREEN_WIDTH - M_PADDING * 2`). 360 हा फक्त आधार आहे.
  */
 export const layout = {
-  screenWidth,
   /** Spec: screen padding 20dp. */
   screenPadding: 20,
   /** Spec: card padding 16dp — कार्डाच्या **आतलं** अंतर. */
   cardPadding: 16,
-  /** पूर्ण रुंदीचं कार्ड: 360dp वर 320. */
-  cardWidth: screenWidth - 40,
-  /** दोन प्रति ओळ: 360dp वर 154 प्रत्येकी (12dp फट). */
-  halfCardWidth: (screenWidth - 20 * 2 - 12) / 2,
 
   headerHeight: 80,
   safeAreaTop: 24,
@@ -275,3 +286,26 @@ export const subjectColors: Record<string, string> = {
 };
 
 export const subjectColor = (name: string) => subjectColors[name] ?? colors.textSecondary;
+
+// ─── कार्डांची रुंदी ─────────────────────────────────────────────────────────
+
+/**
+ * कार्डांची रुंदी **hook मधून**, स्थिर मूल्य म्हणून नाही.
+ *
+ * आधी ती `Dimensions.get('window').width` ने module load च्या वेळी एकदाच मोजली
+ * जात होती. ते चुकीचं होतं: तेव्हाची रुंदी कायमची चिकटून बसायची, आणि पडदा फिरला
+ * किंवा बदलला तरी बदलत नव्हती. परिणाम — दोन प्रति ओळ बसणारी कार्डं एक प्रति
+ * ओळ दिसू लागली, कारण जुनी मोठी रुंदी वापरली जात होती.
+ *
+ * `useWindowDimensions` प्रत्येक बदलावर पुन्हा मोजतो, म्हणून हा प्रश्न मुळातून
+ * जातो.
+ */
+export function useCardWidths() {
+  const { width } = useWindowDimensions();
+  return {
+    /** पूर्ण रुंदीचं कार्ड — 360dp वर 320. */
+    cardWidth: width - layout.screenPadding * 2,
+    /** दोन प्रति ओळ, मधे 12dp फट — 360dp वर 154 प्रत्येकी. */
+    halfCardWidth: (width - layout.screenPadding * 2 - spacing.md) / 2,
+  };
+}

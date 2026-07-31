@@ -96,9 +96,10 @@ const styles = StyleSheet.create({
   labelActive: {
     color: colors.primary,
   },
+  // Design मध्ये active tab खाली **लहान दांडी** आहे, ठिपका नाही.
   dot: {
-    width: 4,
-    height: 4,
+    width: 28,
+    height: 3,
     borderRadius: radius.full,
     backgroundColor: 'transparent',
   },
