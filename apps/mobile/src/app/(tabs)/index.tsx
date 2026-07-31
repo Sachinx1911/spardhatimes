@@ -1,411 +1,559 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { EmptyState, ErrorState, Loading } from '@/components/ui/async-state';
-import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
+import { ErrorState, Loading } from '@/components/ui/async-state';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
-import { SeriesCard } from '@/components/ui/series-card';
-import { api, type ApiCatalogSeries } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
-import { colors, layout, radius, shadow, spacing, strong, typography } from '@/theme/tokens';
+import { discountPercent, rupees } from '@/types';
+import {
+  colors,
+  componentType,
+  layout,
+  radius,
+  shadow,
+  spacing,
+  strong,
+  subjectColor,
+  typography,
+} from '@/theme/tokens';
 
 /**
- * Home = **Test Series चं दुकान.**
+ * Home = **dashboard**.
  *
- * ठरलेलं: विद्यार्थी इथूनच सगळं बघतो आणि test series विकत घेतो. त्याचे स्वतःचे
- * चालू tests आणि प्रगती **Tests tab** मध्ये आहेत — इथे नाहीत.
+ * आधी Home हे दुकान होतं. नवीन design मध्ये दुकान `/store` वर हलवलं आणि इथे
+ * विद्यार्थ्याचा आढावा आला: नाव, चालू series, आठ शॉर्टकट, आणि चार आकडे.
  *
- * मापं design system च्या implementation guide मधून जशीच्या तशी: hero 170,
- * featured 280×235, exam card 171×82 (दोन प्रति ओळ), popular 150.
+ * Design मध्ये bottom nav वेगळा (My Courses · Downloads · Live) दिसतो, पण तो
+ * **मुद्दाम बदललेला नाही** — `Home · Learn · Tests · Analytics · Profile` हा
+ * क्रम गोठवलेला आहे, बघा `docs/UI_DESIGN_STANDARD.md`.
+ *
+ * मजकूर मराठी-प्रथम, खाली इंग्रजी — design प्रमाणे. विद्यार्थी मराठी माध्यमाचे
+ * आहेत, पण "Test Series" सारखे शब्द इंग्रजीतच ओळखले जातात.
  */
 
-const HIGHLIGHTS = [
-  { icon: 'document-text-outline' as const, title: 'Latest Pattern', note: 'Based on new exam pattern' },
-  { icon: 'bulb-outline' as const, title: 'Detailed Solutions', note: 'Question-wise explanations' },
-  { icon: 'podium-outline' as const, title: 'All India Ranking', note: 'Compare your performance' },
-  { icon: 'trending-up-outline' as const, title: 'Performance Analysis', note: 'Track your progress' },
+interface Tile {
+  mr: string;
+  en: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  tint: string;
+  /** पान नसेल तर `null` — tile दिसतो पण निष्क्रिय. */
+  href: string | null;
+}
+
+const TILES: Tile[] = [
+  { mr: 'माझी परीक्षा', en: 'My Test Series', icon: 'school', tint: colors.primary, href: '/tests' },
+  { mr: 'टेस्ट सिरीज खरेदी', en: 'Buy Test Series', icon: 'bag-handle', tint: colors.success, href: '/store' },
+  { mr: 'सर्व टेस्ट सिरीज', en: 'All Test Series', icon: 'clipboard', tint: colors.warning, href: '/store' },
+  { mr: 'टेस्ट घ्या', en: 'Start Test', icon: 'aperture', tint: colors.error, href: '/tests' },
+  // खालचे चार अजून बांधलेले नाहीत (टप्पा D/E). Design मध्ये आहेत म्हणून
+  // दाखवतो, पण निष्क्रिय — दाबल्यावर रिकामं पान उघडणं फसवं ठरेल.
+  { mr: 'परिणाम विश्लेषण', en: 'Performance', icon: 'stats-chart', tint: colors.primary, href: null },
+  { mr: 'चालू घडामोडी', en: 'Current Affairs', icon: 'newspaper', tint: '#8B5CF6', href: null },
+  { mr: 'अभ्यास साहित्य', en: 'Study Material', icon: 'book', tint: '#0EA5E9', href: null },
+  { mr: 'बुकमार्क', en: 'Bookmarks', icon: 'bookmark', tint: colors.error, href: null },
 ];
 
-export default function StoreScreen() {
+export default function DashboardScreen() {
   const router = useRouter();
-  const [activeExam, setActiveExam] = useState('all');
+  const { data, loading, error, reload } = useApi(() => api.dashboard(), []);
 
-  const { data, loading, error, reload } = useApi(() => api.catalog(), []);
-  const { data: examData } = useApi(() => api.exams(), []);
-  const catalog = data ?? [];
-  const exams = examData ?? [];
+  if (loading) return <Loading label="उघडतोय…" />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (!data) return null;
 
-  /**
-   * Chips परीक्षांवरून — दुकान परीक्षेनुसार मांडलेलं आहे, विषयानुसार नाही.
-   * Admin नवीन परीक्षा बनवली की ती आपोआप इथे येते.
-   */
-  const chips: FilterChip[] = [
-    { key: 'all', label: 'All Exams', icon: 'grid-outline' },
-    ...exams.map((e) => ({ key: e.id, label: e.name })),
-  ];
-
-  const visible =
-    activeExam === 'all' ? catalog : catalog.filter((s) => s.examId === activeExam);
-
-  /**
-   * Design मध्ये "Featured" आणि "Most Popular" अशा दोन याद्या आहेत, पण त्यांना
-   * schema मध्ये आधार नाही — कुठलंही `featured` किंवा `popularity` field नाही.
-   * तोपर्यंत पहिल्या तीन "Featured" आणि बाकीच्या "Most Popular" म्हणून दाखवतो.
-   * खरं ठरवायचं असेल तर admin ला ते ठरवता यायला हवं — तो वेगळा निर्णय.
-   */
-  const visibleFeatured = visible.slice(0, 3);
-  const visiblePopular = visible;
-
-  /**
-   * घेतलेली series उघडणं म्हणजे तिचे tests दाखवणं — ते My Tests मध्ये आहेत.
-   * स्वतंत्र "series तपशील" screen अजून नाही; ती लागली तर वेगळी बांधायची.
-   *
-   * न घेतलेल्यांसाठी खरेदी अजून बांधलेली नाही (Razorpay खातं नाही), म्हणून
-   * तिथे आत्ता काहीच होत नाही — गप्प राहण्यापेक्षा हे स्पष्ट नोंदवलेलं बरं.
-   */
-  const openSeries = (s: ApiCatalogSeries) => {
-    if (s.owned) router.push('/tests');
-  };
+  const firstName = data.name?.split(' ')[0] ?? 'विद्यार्थी';
+  const { stats } = data;
 
   return (
     <Screen>
       {/* ── शीर्षक ── */}
       <View style={styles.header}>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>Test Series</Text>
-          <Text style={styles.subtitle}>
-            Practice more, score higher. Choose the best test series for you.
-          </Text>
-        </View>
         <Pressable hitSlop={8}>
-          <Ionicons name="search-outline" size={24} color={colors.text} />
+          <Ionicons name="menu" size={26} color={colors.text} />
         </Pressable>
+        <View style={styles.brandBox}>
+          <Text style={styles.brand}>Spardha Times</Text>
+          <Text style={styles.tagline}>Your Success, Our Mission</Text>
+        </View>
         <Pressable hitSlop={8}>
           <Ionicons name="notifications-outline" size={24} color={colors.text} />
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>3</Text>
-          </View>
         </Pressable>
       </View>
 
-      {/* ── जाहिरात पट्टी ── */}
-      <View style={styles.hero}>
-        <View style={styles.heroChip}>
-          <Ionicons name="ribbon-outline" size={14} color={colors.primary} />
-          <Text style={styles.heroChipText}>Score Higher with Test Series</Text>
+      {/* ── अभिवादन ── */}
+      <View style={styles.greetRow}>
+        <View style={styles.greetText}>
+          <Text style={styles.hello}>{`नमस्कार, ${firstName} 👋`}</Text>
+          <Text style={styles.helloNote}>चला, आजचा अभ्यास सुरू करूया!</Text>
         </View>
-        <Text style={styles.heroTitle}>Real Exam Experience.</Text>
-        <Text style={[styles.heroTitle, styles.heroTitleAccent]}>Real Results.</Text>
-        <View style={styles.heroPoints}>
-          <HeroPoint label="Exam Pattern" />
-          <HeroPoint label="Detailed Analysis" />
-          <HeroPoint label="All India Ranking" />
+        {/* परीक्षा schema मध्ये नाही — घेतलेल्या series वरून काढली आहे.
+            एकाहून जास्त परीक्षा असतील तर काहीच दाखवत नाही. */}
+        {data.examName ? (
+          <View style={styles.examChip}>
+            <Ionicons name="locate-outline" size={14} color={colors.primary} />
+            <Text style={styles.examChipText}>{`${data.examName} Aspirant`}</Text>
+          </View>
+        ) : null}
+      </View>
+
+      {/* ── जाहिरात पट्टी ──
+          Design मध्ये इथे तयार poster आहे. ती प्रतिमा अजून मिळालेली नाही,
+          म्हणून तोच संदेश मजकुरात मांडला आहे. Poster आल्यावर हा भाग एका
+          <Image> ने बदलायचा. */}
+      <View style={styles.banner}>
+        <Text style={styles.bannerKicker}>SPARDHA TIMES</Text>
+        <Text style={styles.bannerTitle}>महाराष्ट्रातील</Text>
+        <Text style={styles.bannerTitleAccent}>सर्वोत्कृष्ट अभ्यासक्रम!</Text>
+        <View style={styles.bannerPill}>
+          <Text style={styles.bannerPillText}>परीक्षेसाठी तयार… स्पर्धा टाईम्स सोबत!</Text>
+        </View>
+        <View style={styles.bannerPoints}>
+          <BannerPoint label="संपूर्ण पॅटर्न नुसार प्रश्न" />
+          <BannerPoint label="सविस्तर स्पष्टीकरणासहित" />
+          <BannerPoint label="लेटेस्ट चालू घडामोडी" />
+          <BannerPoint label="टॉपिक वाईज टेस्ट" />
         </View>
       </View>
 
-      {/* ── परीक्षेनुसार गाळणी ── */}
-      <FilterChips chips={chips} active={activeExam} onChange={setActiveExam} />
-      <View style={styles.gap} />
-
-      {loading ? <Loading label="दुकान उघडतोय…" /> : null}
-      {error ? <ErrorState message={error} onRetry={reload} /> : null}
-      {!loading && !error && catalog.length === 0 ? (
-        <EmptyState icon="pricetag-outline" message="अजून एकही test series विक्रीसाठी नाही." />
-      ) : null}
-
-      {/* ── निवडक series ── */}
-      <SectionHeader title="Featured Test Series" onViewAll={() => {}} />
-      {visibleFeatured.length > 0 ? (
+      {/* ── चालू series ── */}
+      <SectionHeader title="चालू असलेल्या टेस्ट सिरीज" onViewAll={() => router.push('/tests')} />
+      {data.activeSeries.length > 0 ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          // पट्टी screen च्या काठापर्यंत जावी म्हणून बाहेर काढून, आत तेवढंच padding.
           style={styles.bleed}
-          contentContainerStyle={styles.featuredRow}>
-          {visibleFeatured.map((s) => (
-            <SeriesCard
-              key={s.id}
-              series={s}
-              variant="featured"
-              onPress={() => openSeries(s)}
-            />
-          ))}
+          contentContainerStyle={styles.activeRow}>
+          {data.activeSeries.map((s) => {
+            const off = discountPercent(s);
+            return (
+              <Pressable key={s.id} style={styles.activeCard} onPress={() => router.push('/tests')}>
+                <View style={styles.activeTop}>
+                  <View style={[styles.activeIcon, { backgroundColor: subjectColor(s.categoryName) }]}>
+                    <Ionicons name="school" size={18} color={colors.textInverse} />
+                  </View>
+                  <Text style={styles.activeTitle} numberOfLines={2}>
+                    {s.title}
+                  </Text>
+                </View>
+                <Text style={styles.activeMeta} numberOfLines={1}>
+                  {s.examName ?? s.categoryName}
+                </Text>
+                <Text style={styles.activeMeta}>{`${s.totalTests} टेस्ट`}</Text>
+
+                {s.priceInPaise > 0 ? (
+                  <View style={styles.activePriceRow}>
+                    <Text style={styles.activePrice}>{rupees(s.priceInPaise)}</Text>
+                    {s.mrpInPaise ? (
+                      <Text style={styles.activeMrp}>{rupees(s.mrpInPaise)}</Text>
+                    ) : null}
+                    {off ? <Text style={styles.activeOff}>{off}% OFF</Text> : null}
+                  </View>
+                ) : (
+                  <Text style={styles.activeFree}>मोफत</Text>
+                )}
+
+                <Pressable style={styles.activeButton} onPress={() => router.push('/tests')}>
+                  <Text style={styles.activeButtonText}>View Series</Text>
+                </Pressable>
+              </Pressable>
+            );
+          })}
         </ScrollView>
       ) : (
-        <Text style={styles.empty}>या परीक्षेसाठी अजून series नाही.</Text>
+        <Pressable style={styles.noSeries} onPress={() => router.push('/store')}>
+          <Ionicons name="bag-handle-outline" size={20} color={colors.primary} />
+          <Text style={styles.noSeriesText}>अजून एकही test series घेतलेली नाही — बघा</Text>
+        </Pressable>
       )}
 
-      {/* ── परीक्षेनुसार ── */}
+      {/* ── शॉर्टकट ── */}
       <View style={styles.gap} />
-      <SectionHeader title="Test Series by Exam" onViewAll={() => {}} />
-      <View style={styles.examGrid}>
-        {exams.map((e) => (
-          <Pressable key={e.id} style={styles.examTile} onPress={() => setActiveExam(e.id)}>
-            <View style={styles.examIcon}>
-              {/* Admin ने चिन्ह दिलं नसेल तर सामान्य चिन्ह — रिकामी जागा नको. */}
-              <Ionicons
-                name={(e.icon ?? 'document-text-outline') as never}
-                size={20}
-                color={colors.primary}
-              />
-            </View>
-            <View style={styles.examTextBox}>
-              <Text style={styles.examName} numberOfLines={1}>
-                {e.name}
+      <View style={styles.tileGrid}>
+        {TILES.map((t) => {
+          const disabled = t.href === null;
+          return (
+            <Pressable
+              key={t.en}
+              style={[styles.tile, disabled && styles.tileDisabled]}
+              disabled={disabled}
+              onPress={() => t.href && router.push(t.href as never)}>
+              <View style={[styles.tileIcon, { backgroundColor: t.tint + '1A' }]}>
+                <Ionicons name={t.icon} size={22} color={t.tint} />
+              </View>
+              {/* "टेस्ट सिरीज खरेदी" सारखी नावं एका ओळीत बसत नाहीत — दोन ओळी
+                  दिल्या म्हणजे कापली जात नाहीत. */}
+              <Text style={styles.tileMr} numberOfLines={2}>
+                {t.mr}
               </Text>
-              <Text style={styles.examCount} numberOfLines={1}>
-                {e.seriesCount} Test Series
+              <Text style={styles.tileEn} numberOfLines={2}>
+                {disabled ? 'लवकरच' : t.en}
               </Text>
-            </View>
-          </Pressable>
-        ))}
-
-        {/* परीक्षांची संख्या विषम असल्याने शेवटचं कार्ड एकटं पडून पूर्ण रुंदीचं होतं.
-            Design मध्ये त्याच्या शेजारी "More Exams" आहे — तो जोडी पूर्ण करतो. */}
-        <Pressable style={styles.examTile} onPress={() => {}}>
-          <View style={styles.examIcon}>
-            <Ionicons name="ellipsis-horizontal" size={20} color={colors.primary} />
-          </View>
-          <View style={styles.examTextBox}>
-            <Text style={styles.examName} numberOfLines={1}>
-              More Exams
-            </Text>
-            <Text style={styles.examCount} numberOfLines={1}>
-              View All
-            </Text>
-          </View>
-        </Pressable>
+            </Pressable>
+          );
+        })}
       </View>
 
-      {/* ── वैशिष्ट्यं ── */}
+      {/* ── आकडे ── */}
       <View style={styles.gap} />
-      <View style={styles.highlights}>
-        {HIGHLIGHTS.map((h) => (
-          <View key={h.title} style={styles.highlight}>
-            <View style={styles.highlightIcon}>
-              <Ionicons name={h.icon} size={16} color={colors.primary} />
-            </View>
-            <View style={styles.highlightText}>
-              <Text style={styles.highlightTitle}>{h.title}</Text>
-              <Text style={styles.highlightNote} numberOfLines={2}>
-                {h.note}
-              </Text>
-            </View>
-          </View>
-        ))}
-      </View>
-
-      {/* ── लोकप्रिय ── */}
-      <View style={styles.gap} />
-      <SectionHeader title="Most Popular Test Series" onViewAll={() => {}} />
-      <View style={styles.list}>
-        {visiblePopular.length > 0 ? (
-          visiblePopular.map((s) => (
-            <SeriesCard key={s.id} series={s} variant="popular" onPress={() => openSeries(s)} />
-          ))
-        ) : (
-          <Text style={styles.empty}>या परीक्षेसाठी अजून series नाही.</Text>
-        )}
+      <View style={styles.statGrid}>
+        <Stat
+          icon="clipboard-outline"
+          tint={colors.primary}
+          value={String(stats.todaysTests).padStart(2, '0')}
+          mr="आजच्या टेस्ट"
+          en="Today's Tests"
+        />
+        <Stat
+          icon="checkbox-outline"
+          tint={colors.success}
+          value={String(stats.testsAttempted)}
+          mr="टेस्ट दिलेल्या"
+          en="Tests Attempted"
+        />
+        <Stat
+          icon="trophy-outline"
+          tint={colors.warning}
+          value={`${stats.averageScore}%`}
+          mr="सरासरी स्कोर"
+          en="Average Score"
+        />
+        <Stat
+          icon="calendar-outline"
+          tint="#0EA5E9"
+          // मुदत नसेल तर "आजीवन" — रिकामी जागा किंवा खोटी तारीख दाखवण्यापेक्षा बरं.
+          value={
+            stats.validTill
+              ? new Date(stats.validTill).toLocaleDateString('mr-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })
+              : 'आजीवन'
+          }
+          mr="सदस्यत्व वैध"
+          en="Valid Till"
+        />
       </View>
     </Screen>
   );
 }
 
-function HeroPoint({ label }: { label: string }) {
+function BannerPoint({ label }: { label: string }) {
   return (
-    <View style={styles.heroPoint}>
-      <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
-      <Text style={styles.heroPointText}>{label}</Text>
+    <View style={styles.bannerPoint}>
+      <Ionicons name="checkmark-circle" size={13} color={colors.primary} />
+      <Text style={styles.bannerPointText} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function Stat({
+  icon,
+  tint,
+  value,
+  mr,
+  en,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  tint: string;
+  value: string;
+  mr: string;
+  en: string;
+}) {
+  return (
+    <View style={styles.statCard}>
+      <Ionicons name={icon} size={22} color={tint} />
+      <Text style={styles.statValue} numberOfLines={1}>
+        {value}
+      </Text>
+      <Text style={styles.statMr} numberOfLines={1}>
+        {mr}
+      </Text>
+      <Text style={styles.statEn} numberOfLines={1}>
+        {en}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // ── शीर्षक ──
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.lg,
-    marginBottom: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.md,
+    minHeight: layout.headerHeight - spacing['2xl'],
   },
-  headerText: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  title: {
-    ...typography.headingL,
+  brandBox: { flex: 1 },
+  brand: {
+    ...typography.titleL,
+    ...strong.bold,
     color: colors.text,
   },
-  subtitle: {
-    ...typography.bodyS,
-    color: colors.textSecondary,
-  },
-  badge: {
-    position: 'absolute',
-    top: -4,
-    right: -6,
-    minWidth: 16,
-    height: 16,
-    borderRadius: radius.full,
-    backgroundColor: colors.error,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  badgeText: {
-    fontSize: 9,
-    fontFamily: typography.caption.fontFamily,
-    color: colors.textInverse,
+  tagline: {
+    ...componentType.smallLabel,
+    color: colors.primary,
   },
 
-  hero: {
-    minHeight: layout.topBannerHeight,
-    backgroundColor: colors.primaryLight,
-    borderRadius: radius.xl,
-    padding: spacing.xl,
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
+  // ── अभिवादन ──
+  greetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
   },
-  heroChip: {
-    alignSelf: 'flex-start',
+  greetText: { flex: 1 },
+  hello: {
+    ...typography.headingL,
+    ...strong.bold,
+    color: colors.text,
+  },
+  helloNote: {
+    ...typography.bodyM,
+    color: colors.textSecondary,
+  },
+  examChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: colors.surface,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  heroChipText: {
-    ...typography.caption,
+  examChipText: {
+    ...componentType.smallLabel,
     ...strong.semibold,
     color: colors.primary,
   },
-  heroTitle: {
-    ...typography.headingL,
+
+  // ── पट्टी ──
+  banner: {
+    marginTop: spacing.lg,
+    backgroundColor: colors.primaryLight,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+  },
+  bannerKicker: {
+    ...componentType.smallLabel,
+    ...strong.bold,
+    color: colors.error,
+    letterSpacing: 1,
+  },
+  bannerTitle: {
+    ...typography.titleL,
+    ...strong.bold,
     color: colors.text,
+    marginTop: spacing.xs,
   },
-  heroTitleAccent: {
-    color: colors.primary,
+  bannerTitleAccent: {
+    ...typography.headingL,
+    ...strong.bold,
+    color: colors.error,
   },
-  heroPoints: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
+  bannerPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     marginTop: spacing.md,
   },
-  heroPoint: {
+  bannerPillText: {
+    ...componentType.smallLabel,
+    ...strong.semibold,
+    color: colors.textInverse,
+  },
+  bannerPoints: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: spacing.md,
+    rowGap: spacing.sm,
+  },
+  bannerPoint: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    width: '50%',
+    paddingRight: spacing.sm,
   },
-  heroPointText: {
-    ...typography.bodyS,
-    color: colors.textSecondary,
+  bannerPointText: {
+    ...componentType.smallLabel,
+    color: colors.text,
+    flex: 1,
   },
 
+  // ── चालू series ──
   bleed: {
     marginHorizontal: -layout.screenPadding,
   },
-  featuredRow: {
-    gap: spacing.md,
+  activeRow: {
     paddingHorizontal: layout.screenPadding,
-    paddingVertical: spacing.xs,
-  },
-
-  examGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  examTile: {
-    // Sheet: 160×72, दोन प्रति ओळ. निश्चित रुंदी दिली तर रुंद फोनवर मधे मोकळी
-    // जागा राहते, म्हणून उरलेली जागा वाटून घेतो — उंची मात्र sheet मधलीच.
-    flexGrow: 1,
-    flexBasis: '46%',
-    height: layout.examCardHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
+  activeCard: {
+    width: 180,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    gap: spacing.xs,
     ...shadow.card,
   },
-  examIcon: {
-    // 36 — 40 वर "Police Bharti" सारखी लांब नावं 160dp कार्डात कापली जात होती.
-    // Poppins हा Inter पेक्षा रुंद आहे, त्यामुळे मजकुराला जास्त जागा हवी.
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    backgroundColor: colors.primaryLight,
+  activeTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  activeIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  examTextBox: {
-    flex: 1,
-    gap: 2,
-  },
-  examName: {
-    ...typography.bodyS,
-    ...strong.semibold,
+  activeTitle: {
+    ...componentType.cardTitle,
     color: colors.text,
+    flex: 1,
   },
-  examCount: {
-    ...typography.caption,
+  activeMeta: {
+    ...componentType.smallLabel,
     color: colors.textSecondary,
   },
-
-  highlights: {
+  activePriceRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
+    alignItems: 'baseline',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  activePrice: {
+    ...typography.bodyL,
+    ...strong.bold,
+    color: colors.text,
+  },
+  activeMrp: {
+    ...componentType.smallLabel,
+    color: colors.textSecondary,
+    textDecorationLine: 'line-through',
+  },
+  activeOff: {
+    ...componentType.smallLabel,
+    ...strong.semibold,
+    color: colors.success,
+  },
+  activeFree: {
+    ...typography.bodyL,
+    ...strong.bold,
+    color: colors.success,
+    marginTop: spacing.xs,
+  },
+  activeButton: {
+    marginTop: spacing.sm,
+    height: 32,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeButtonText: {
+    ...componentType.smallLabel,
+    ...strong.semibold,
+    color: colors.primary,
+  },
+  noSeries: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadow.card,
   },
-  highlight: {
-    flexGrow: 1,
-    flexBasis: '44%',
-    flexDirection: 'row',
-    gap: spacing.sm,
+  noSeriesText: {
+    ...typography.bodyM,
+    color: colors.textSecondary,
+    flex: 1,
   },
-  highlightIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.sm,
-    backgroundColor: colors.primaryLight,
+
+  // ── शॉर्टकट ──
+  gap: { height: spacing.xl },
+  tileGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+  },
+  tile: {
+    // चार प्रति ओळ. गणित तंतोतंत बसवलं (22.37%) तर गोलाई मुळे बेरीज 100% च्या
+    // वर जाते आणि चौथा tile खाली उडी मारतो — म्हणून थोडी सैल जागा ठेवली आहे.
+    width: '22%',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    alignItems: 'center',
+    gap: spacing.xs,
+    ...shadow.card,
+  },
+  tileDisabled: {
+    opacity: 0.5,
+  },
+  tileIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  highlightText: {
-    flex: 1,
-  },
-  highlightTitle: {
-    ...typography.caption,
+  tileMr: {
+    fontSize: 10,
+    lineHeight: 13,
     ...strong.semibold,
     color: colors.text,
+    textAlign: 'center',
   },
-  highlightNote: {
-    ...typography.caption,
-    fontSize: 11,
+  tileEn: {
+    fontSize: 9,
+    lineHeight: 12,
     color: colors.textSecondary,
+    textAlign: 'center',
   },
 
-  list: {
+  // ── आकडे ──
+  statGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.md,
   },
-  gap: {
-    height: spacing.xl,
+  statCard: {
+    width: '47%',
+    flexGrow: 1,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    alignItems: 'center',
+    gap: 2,
+    ...shadow.card,
   },
-  empty: {
-    ...typography.bodyS,
+  statValue: {
+    ...typography.titleL,
+    ...strong.bold,
+    color: colors.text,
+  },
+  statMr: {
+    ...componentType.smallLabel,
+    color: colors.text,
+  },
+  statEn: {
+    fontSize: 10,
+    lineHeight: 13,
     color: colors.textSecondary,
-    paddingVertical: spacing.lg,
-    textAlign: 'center',
   },
 });

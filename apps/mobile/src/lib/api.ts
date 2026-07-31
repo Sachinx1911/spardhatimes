@@ -144,6 +144,48 @@ export interface Me {
  * schema मध्ये नाहीत. तोपर्यंत परीक्षेच्या जागी category वापरतो आणि भाषेचा
  * tag दाखवत नाही — खोटी माहिती दाखवण्यापेक्षा न दाखवणं बरं.
  */
+/**
+ * `GET /dashboard` — Home साठी लागणारं सगळं एका फेरीत.
+ *
+ * `examName` schema मधून येत नाही; घेतलेल्या series वरून काढलेला आहे आणि
+ * एकाहून जास्त परीक्षा असतील तर null येतो.
+ */
+export interface ApiDashboard {
+  name: string | null;
+  examName: string | null;
+  activeSeries: {
+    id: string;
+    title: string;
+    categoryName: string;
+    examName: string | null;
+    totalTests: number;
+    plannedTotalTests: number;
+    priceInPaise: number;
+    mrpInPaise: number | null;
+    /** null = कायमस्वरूपी. */
+    expiresAt: string | null;
+  }[];
+  stats: {
+    todaysTests: number;
+    testsAttempted: number;
+    averageScore: number;
+    /** null = कुठलीही मुदत नाही (आजीवन access). */
+    validTill: string | null;
+  };
+}
+
+/** `GET /orders` — माझ्या खरेदी. Profile मधल्या "My Purchases" साठी. */
+export interface ApiOrder {
+  id: string;
+  seriesId: string;
+  seriesTitle: string;
+  amountInPaise: number;
+  status: 'CREATED' | 'PAID' | 'FAILED';
+  gateway: 'RAZORPAY' | 'INSTAMOJO';
+  createdAt: string;
+  paidAt: string | null;
+}
+
 /** `GET /exams` — दुकानातली परीक्षांची जाळी. आकडा प्रकाशित series चाच. */
 export interface ApiExam {
   id: string;
@@ -298,9 +340,25 @@ export const api = {
 
   // ── tests ──
 
+  dashboard: () => request<ApiDashboard>('/dashboard'),
+
   catalog: () => request<ApiCatalogSeries[]>('/catalog'),
 
   exams: () => request<ApiExam[]>('/exams'),
+
+  /**
+   * खरेदी सुरू करणे. **रक्कम पाठवत नाही** — किंमत server database मधून घेतो.
+   *
+   * मोफत series ला `{ free: true }` येतं आणि access लगेच मिळालेला असतो.
+   * पैसे घ्यायच्या series साठी gateway जोडेपर्यंत हा चूक देतो.
+   */
+  createOrder: (seriesId: string) =>
+    request<{ free: true; expiresAt: string | null }>('/orders', {
+      method: 'POST',
+      body: JSON.stringify({ seriesId }),
+    }),
+
+  myOrders: () => request<ApiOrder[]>('/orders'),
 
   mySeries: () => request<ApiSeries[]>('/series'),
 
