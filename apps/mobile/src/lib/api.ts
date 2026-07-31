@@ -134,6 +134,39 @@ export interface Me {
  * बदलावेच लागतील — म्हणून तिथे बदल करताना इथे बघा.
  */
 
+/**
+ * `GET /catalog` — दुकानातल्या सगळ्या series.
+ *
+ * `owned` म्हणजे **चालू** access. मुदत संपलेली असेल तर तो false येतो, म्हणजे
+ * तिथे पुन्हा "Buy" दिसतं.
+ *
+ * ⚠️ Designs मध्ये दिसणारे "Bilingual" (भाषा) आणि परीक्षेचं वेगळं नाव अजून
+ * schema मध्ये नाहीत. तोपर्यंत परीक्षेच्या जागी category वापरतो आणि भाषेचा
+ * tag दाखवत नाही — खोटी माहिती दाखवण्यापेक्षा न दाखवणं बरं.
+ */
+/** `GET /exams` — दुकानातली परीक्षांची जाळी. आकडा प्रकाशित series चाच. */
+export interface ApiExam {
+  id: string;
+  name: string;
+  /** Ionicons चं नाव, admin ने ठरवलेलं. null असेल तर सामान्य चिन्ह वापरायचं. */
+  icon: string | null;
+  seriesCount: number;
+}
+
+export interface ApiCatalogSeries {
+  id: string;
+  title: string;
+  description: string | null;
+  categoryName: string;
+  examId: string | null;
+  examName: string | null;
+  plannedTotalTests: number;
+  priceInPaise: number;
+  mrpInPaise: number | null;
+  validityMonths: number;
+  owned: boolean;
+}
+
 /** `GET /series` — घेतलेल्या series, प्रगतीसह. */
 export interface ApiSeries {
   id: string;
@@ -264,6 +297,10 @@ export const api = {
   },
 
   // ── tests ──
+
+  catalog: () => request<ApiCatalogSeries[]>('/catalog'),
+
+  exams: () => request<ApiExam[]>('/exams'),
 
   mySeries: () => request<ApiSeries[]>('/series'),
 

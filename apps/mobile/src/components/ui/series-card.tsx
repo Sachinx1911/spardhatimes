@@ -9,9 +9,11 @@ import {
   shadow,
   spacing,
   strong,
+  subjectColor,
   typography,
 } from '@/theme/tokens';
-import { discountPercent, rupees, type TestSeries } from '@/types';
+import { type ApiCatalogSeries } from '@/lib/api';
+import { discountPercent, rupees } from '@/types';
 
 /**
  * दुकानातलं Test Series कार्ड — design sheets मधली तीन रूपं:
@@ -28,39 +30,51 @@ export function SeriesCard({
   onPress,
   onBuy,
 }: {
-  series: TestSeries;
+  series: ApiCatalogSeries;
   variant?: 'featured' | 'popular' | 'buy';
   onPress?: () => void;
   onBuy?: () => void;
 }) {
   const off = discountPercent(series);
-  const cover = series.coverColor ?? colors.primary;
+  // Schema मध्ये कार्डाचा रंग नाही. Category च्या नावावरून ठरवतो, म्हणजे एकाच
+  // परीक्षेची कार्डं नेहमी एकाच रंगाची दिसतात आणि यादी फिरवली तरी रंग उड्या मारत नाहीत.
+  const cover = subjectColor(series.categoryName);
 
   if (variant === 'featured') {
     return (
       <Pressable style={styles.featured} onPress={onPress}>
         <View style={[styles.featuredCover, { backgroundColor: cover }]}>
-          <Text style={styles.coverExam}>{series.examName}</Text>
+          <Text style={styles.coverExam}>{series.categoryName}</Text>
           <Text style={styles.coverTitle} numberOfLines={2}>
             {series.title}
           </Text>
         </View>
 
         <View style={styles.featuredBody}>
-          <Text style={styles.featuredSubtitle} numberOfLines={1}>
-            {series.subtitle}
-          </Text>
           <Text style={styles.metaLine}>{`${series.plannedTotalTests} Tests`}</Text>
-          <Text style={styles.metaLine}>{series.language}</Text>
+          <Text style={styles.metaLine}>{`Valid ${series.validityMonths} Months`}</Text>
 
           <View style={styles.featuredPriceRow}>
-            <Text style={styles.featuredPrice}>{rupees(series.priceInPaise)}</Text>
-            {series.mrpInPaise ? <Text style={styles.mrpSmall}>{rupees(series.mrpInPaise)}</Text> : null}
-            {off ? <Text style={styles.offSmall}>{off}% OFF</Text> : null}
+            {series.owned ? (
+              <Text style={styles.ownedNote}>तुमच्याकडे आहे</Text>
+            ) : (
+              <>
+                <Text style={styles.featuredPrice}>{rupees(series.priceInPaise)}</Text>
+                {series.mrpInPaise ? (
+                  <Text style={styles.mrpSmall}>{rupees(series.mrpInPaise)}</Text>
+                ) : null}
+                {off ? <Text style={styles.offSmall}>{off}% OFF</Text> : null}
+              </>
+            )}
           </View>
 
-          <Pressable style={styles.detailsButton} onPress={onPress}>
-            <Text style={styles.detailsButtonText}>View Details</Text>
+          <Pressable
+            style={[styles.detailsButton, series.owned && styles.detailsButtonOwned]}
+            onPress={onPress}>
+            <Text
+              style={[styles.detailsButtonText, series.owned && styles.detailsButtonTextOwned]}>
+              {series.owned ? 'Start' : 'View Details'}
+            </Text>
           </Pressable>
         </View>
       </Pressable>
@@ -80,8 +94,8 @@ export function SeriesCard({
           isBuy && styles.rowCoverBuy,
         ]}
       >
-        <Text style={styles.rowCoverExam} numberOfLines={1}>
-          {series.examName}
+        <Text style={styles.rowCoverExam} numberOfLines={2}>
+          {series.categoryName}
         </Text>
         {!isBuy ? <Text style={styles.rowCoverLabel}>Test Series</Text> : null}
       </View>
@@ -98,21 +112,29 @@ export function SeriesCard({
 
         <View style={styles.tags}>
           <Tag label={`${series.plannedTotalTests} Tests`} />
-          <Tag label={series.language} />
           <Tag label={`Valid for ${series.validityMonths} Months`} />
         </View>
 
         <View style={styles.rowFooter}>
-          <View>
-            <View style={styles.priceRow}>
-              <Text style={styles.price}>{rupees(series.priceInPaise)}</Text>
-              {series.mrpInPaise ? <Text style={styles.mrp}>{rupees(series.mrpInPaise)}</Text> : null}
+          {/* घेतलेल्या series ची किंमत दाखवायची नाही — ती आधीच भरलेली आहे. */}
+          {series.owned ? (
+            <Text style={styles.ownedNote}>तुमच्याकडे आहे</Text>
+          ) : (
+            <View>
+              <View style={styles.priceRow}>
+                <Text style={styles.price}>{rupees(series.priceInPaise)}</Text>
+                {series.mrpInPaise ? <Text style={styles.mrp}>{rupees(series.mrpInPaise)}</Text> : null}
+              </View>
+              {off ? <Text style={styles.off}>{off}% OFF</Text> : null}
             </View>
-            {off ? <Text style={styles.off}>{off}% OFF</Text> : null}
-          </View>
+          )}
 
-          <Pressable style={styles.buyButton} onPress={onBuy}>
-            <Text style={styles.buyButtonText}>Buy Now</Text>
+          {/* घेतलेल्या series वर "Buy Now" म्हणजे विद्यार्थ्याला दुसऱ्यांदा पैसे
+              मागणं. तिथे थेट उघडायचं बटण. */}
+          <Pressable
+            style={[styles.buyButton, series.owned && styles.ownedButton]}
+            onPress={series.owned ? onPress : onBuy}>
+            <Text style={styles.buyButtonText}>{series.owned ? 'Start' : 'Buy Now'}</Text>
           </Pressable>
         </View>
       </View>
@@ -197,6 +219,22 @@ const styles = StyleSheet.create({
     ...componentType.smallLabel,
     ...strong.semibold,
     color: colors.primary,
+  },
+  detailsButtonOwned: {
+    backgroundColor: colors.success,
+    borderColor: colors.success,
+  },
+  detailsButtonTextOwned: {
+    color: colors.textInverse,
+  },
+  /** घेतलेली series — किंमतीच्या जागी हेच दिसतं. */
+  ownedNote: {
+    ...componentType.cardDescription,
+    ...strong.semibold,
+    color: colors.success,
+  },
+  ownedButton: {
+    backgroundColor: colors.success,
   },
 
   // ── आडवी कार्डं (popular / buy) ──

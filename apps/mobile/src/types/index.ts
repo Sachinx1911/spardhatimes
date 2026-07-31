@@ -52,7 +52,11 @@ export interface TestSeries {
 }
 
 /** सवलतीचे टक्के — किंमत आणि MRP वरून. दोन्ही ठिकाणी सारखेच दिसावेत म्हणून इथे. */
-export function discountPercent(series: TestSeries): number | null {
+/** MRP असेल आणि किंमतीपेक्षा जास्त असेल तरच सवलत — नाहीतर null. */
+export function discountPercent(series: {
+  priceInPaise: number;
+  mrpInPaise?: number | null;
+}): number | null {
   if (!series.mrpInPaise || series.mrpInPaise <= series.priceInPaise) return null;
   return Math.round(((series.mrpInPaise - series.priceInPaise) / series.mrpInPaise) * 100);
 }

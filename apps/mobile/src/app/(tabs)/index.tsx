@@ -1,12 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { EmptyState, ErrorState, Loading } from '@/components/ui/async-state';
 import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
 import { SeriesCard } from '@/components/ui/series-card';
-import { exams, featuredSeries, popularSeries } from '@/data/mock';
+import { api, type ApiCatalogSeries } from '@/lib/api';
+import { useApi } from '@/lib/use-api';
 import { colors, layout, radius, shadow, spacing, strong, typography } from '@/theme/tokens';
 
 /**
@@ -27,19 +30,45 @@ const HIGHLIGHTS = [
 ];
 
 export default function StoreScreen() {
+  const router = useRouter();
   const [activeExam, setActiveExam] = useState('all');
 
+  const { data, loading, error, reload } = useApi(() => api.catalog(), []);
+  const { data: examData } = useApi(() => api.exams(), []);
+  const catalog = data ?? [];
+  const exams = examData ?? [];
+
+  /**
+   * Chips परीक्षांवरून — दुकान परीक्षेनुसार मांडलेलं आहे, विषयानुसार नाही.
+   * Admin नवीन परीक्षा बनवली की ती आपोआप इथे येते.
+   */
   const chips: FilterChip[] = [
     { key: 'all', label: 'All Exams', icon: 'grid-outline' },
-    ...exams.slice(0, 5).map((e) => ({ key: e.id, label: e.name })),
+    ...exams.map((e) => ({ key: e.id, label: e.name })),
   ];
 
-  const activeExamName = exams.find((e) => e.id === activeExam)?.name;
-  const byExam = <T extends { examName: string }>(list: T[]) =>
-    activeExam === 'all' ? list : list.filter((s) => s.examName === activeExamName);
+  const visible =
+    activeExam === 'all' ? catalog : catalog.filter((s) => s.examId === activeExam);
 
-  const visibleFeatured = byExam(featuredSeries);
-  const visiblePopular = byExam(popularSeries);
+  /**
+   * Design मध्ये "Featured" आणि "Most Popular" अशा दोन याद्या आहेत, पण त्यांना
+   * schema मध्ये आधार नाही — कुठलंही `featured` किंवा `popularity` field नाही.
+   * तोपर्यंत पहिल्या तीन "Featured" आणि बाकीच्या "Most Popular" म्हणून दाखवतो.
+   * खरं ठरवायचं असेल तर admin ला ते ठरवता यायला हवं — तो वेगळा निर्णय.
+   */
+  const visibleFeatured = visible.slice(0, 3);
+  const visiblePopular = visible;
+
+  /**
+   * घेतलेली series उघडणं म्हणजे तिचे tests दाखवणं — ते My Tests मध्ये आहेत.
+   * स्वतंत्र "series तपशील" screen अजून नाही; ती लागली तर वेगळी बांधायची.
+   *
+   * न घेतलेल्यांसाठी खरेदी अजून बांधलेली नाही (Razorpay खातं नाही), म्हणून
+   * तिथे आत्ता काहीच होत नाही — गप्प राहण्यापेक्षा हे स्पष्ट नोंदवलेलं बरं.
+   */
+  const openSeries = (s: ApiCatalogSeries) => {
+    if (s.owned) router.push('/tests');
+  };
 
   return (
     <Screen>
@@ -81,6 +110,12 @@ export default function StoreScreen() {
       <FilterChips chips={chips} active={activeExam} onChange={setActiveExam} />
       <View style={styles.gap} />
 
+      {loading ? <Loading label="दुकान उघडतोय…" /> : null}
+      {error ? <ErrorState message={error} onRetry={reload} /> : null}
+      {!loading && !error && catalog.length === 0 ? (
+        <EmptyState icon="pricetag-outline" message="अजून एकही test series विक्रीसाठी नाही." />
+      ) : null}
+
       {/* ── निवडक series ── */}
       <SectionHeader title="Featured Test Series" onViewAll={() => {}} />
       {visibleFeatured.length > 0 ? (
@@ -91,7 +126,12 @@ export default function StoreScreen() {
           style={styles.bleed}
           contentContainerStyle={styles.featuredRow}>
           {visibleFeatured.map((s) => (
-            <SeriesCard key={s.id} series={s} variant="featured" />
+            <SeriesCard
+              key={s.id}
+              series={s}
+              variant="featured"
+              onPress={() => openSeries(s)}
+            />
           ))}
         </ScrollView>
       ) : (
@@ -105,7 +145,12 @@ export default function StoreScreen() {
         {exams.map((e) => (
           <Pressable key={e.id} style={styles.examTile} onPress={() => setActiveExam(e.id)}>
             <View style={styles.examIcon}>
-              <Ionicons name={e.icon as never} size={20} color={colors.primary} />
+              {/* Admin ने चिन्ह दिलं नसेल तर सामान्य चिन्ह — रिकामी जागा नको. */}
+              <Ionicons
+                name={(e.icon ?? 'document-text-outline') as never}
+                size={20}
+                color={colors.primary}
+              />
             </View>
             <View style={styles.examTextBox}>
               <Text style={styles.examName} numberOfLines={1}>
@@ -158,7 +203,9 @@ export default function StoreScreen() {
       <SectionHeader title="Most Popular Test Series" onViewAll={() => {}} />
       <View style={styles.list}>
         {visiblePopular.length > 0 ? (
-          visiblePopular.map((s) => <SeriesCard key={s.id} series={s} variant="popular" />)
+          visiblePopular.map((s) => (
+            <SeriesCard key={s.id} series={s} variant="popular" onPress={() => openSeries(s)} />
+          ))
         ) : (
           <Text style={styles.empty}>या परीक्षेसाठी अजून series नाही.</Text>
         )}
