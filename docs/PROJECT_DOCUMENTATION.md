@@ -33,7 +33,7 @@ creates student accounts.
 | Icons / Charts | **lucide-react** / **recharts** | Charts lazy-loaded |
 | Backend runtime | Node.js 20+ (Next.js server) | All backend code lives in server actions + 3 API routes |
 | ORM | **Prisma 6** | Client generated at build (`postinstall` + `build` scripts) |
-| Database | **Neon PostgreSQL** (serverless cloud) | Connection string only in `.env` |
+| Database | **Supabase PostgreSQL** (managed cloud) | Connection strings only in `.env` (pooled `DATABASE_URL` + direct `DIRECT_URL`) |
 | Auth | **Auth.js / NextAuth v5 (beta)** | Credentials provider, JWT sessions, bcryptjs hashing, `trustHost: true` |
 | Email | **Resend** via `lib/mailer.ts` | Password-reset links |
 | Excel | **xlsx** | Question bulk-import + results/users export |
@@ -193,7 +193,7 @@ settings with defaults) · `utils.ts` (class merge etc.)
 | `/dashboard`, `/admin/*` unauthenticated | ✅ 307 → `/login?callbackUrl=…` |
 | Admin-only PDF report API unauthenticated | ✅ 401 |
 | Admin login → all 10 admin pages + student pages | ✅ 200, no errors |
-| **Full public test E2E** (start → answer 10 → confirm modal → submit) | ✅ graded 2/10, 20% — verified in Neon DB (guestId, score, correct/wrong) |
+| **Full public test E2E** (start → answer 10 → confirm modal → submit) | ✅ graded 2/10, 20% — verified in the database (guestId, score, correct/wrong) |
 | Admin Results with guest attempts | ✅ renders "Guest" rows (crash fixed in `fa22ed8`) |
 | Leaderboard PDF (admin) | ✅ 200, valid printable HTML |
 
@@ -208,7 +208,8 @@ settings with defaults) · `utils.ts` (class merge etc.)
 
 ## 8. Environment & deployment
 
-`.env` (never committed): `DATABASE_URL` (Neon), `AUTH_SECRET`,
+`.env` (never committed): `DATABASE_URL` (Supabase pooler, `6543`),
+`DIRECT_URL` (Supabase direct, `5432`, used for migrations), `AUTH_SECRET`,
 `NEXTAUTH_URL` (**live https domain in prod**), `RESEND_API_KEY`, `EMAIL_FROM`.
 Do **not** set `DEV_BYPASS_AUTH` in production.
 

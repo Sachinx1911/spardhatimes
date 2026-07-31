@@ -14,7 +14,7 @@ _Online test-series / mock-exam platform for competitive-exam students. Mobile-f
 | Icons / Charts | `lucide-react` · `recharts` |
 | Auth | **Auth.js / NextAuth v5** (Credentials provider, JWT sessions) |
 | ORM | **Prisma 6** |
-| Database | **PostgreSQL** (Neon serverless) |
+| Database | **PostgreSQL** (Supabase) |
 | Password hashing | `bcryptjs` |
 | Email | **Resend** (password-reset links) |
 | Excel import/export | `xlsx` |
@@ -92,7 +92,8 @@ Core models and their role:
 
 | Var | Purpose | Production value |
 |---|---|---|
-| `DATABASE_URL` | Neon Postgres connection string | the Neon URL |
+| `DATABASE_URL` | Supabase Postgres connection string | the Supabase **pooler** URL (port `6543`) |
+| `DIRECT_URL` | direct (non-pooled) connection Prisma uses for migrations | the Supabase **direct** URL (port `5432`) |
 | `AUTH_SECRET` | Auth.js JWT signing secret | **strong** value (`openssl rand -base64 32`) — do NOT use the example placeholder |
 | `NEXTAUTH_URL` | canonical app URL | the **live https domain** (not localhost) |
 | `RESEND_API_KEY` | password-reset email | Resend key |

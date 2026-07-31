@@ -54,7 +54,7 @@ export async function submitQuizAttempt(
 
     // 3. Create Attempt and Responses in a database transaction.
     // NOTE: responses are inserted with a single createMany() instead of one
-    // create() per question. On a serverless DB (Neon) the per-row round trips
+    // create() per question. Against a remote DB (Supabase) the per-row round trips
     // add up fast and a long quiz used to blow past the 5s transaction timeout,
     // making submit fail. createMany is one round trip; timeout is also raised.
     const attempt = await db.$transaction(async (tx) => {

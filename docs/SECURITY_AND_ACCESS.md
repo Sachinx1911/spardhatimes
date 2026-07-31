@@ -77,4 +77,4 @@ Two enforcement layers:
 ### Recommended hardening (gaps, not blockers)
 1. **Rate limiting** — there is currently **no rate limiting** on `/login` or password-reset. Add throttling (e.g. per-IP) to resist brute-force / email-spam before or soon after launch.
 2. **Blocked-user session revocation** — blocking a user prevents new logins but their existing JWT stays valid until it expires. If instant lockout matters, shorten session lifetime or add a server-side check.
-3. **Decide the production admin email** — seed now uses `admin@spardhatimes.com`; the current Neon data still has an older `admin@quizplatform.com`. Align before launch.
+3. **Decide the production admin email** — seed now uses `admin@spardhatimes.com`; the current Supabase data still has an older `admin@quizplatform.com`. Align before launch.
