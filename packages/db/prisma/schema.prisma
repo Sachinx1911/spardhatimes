@@ -26,6 +26,16 @@ enum QuestionType {
   TRUE_FALSE
 }
 
+/// Test कोणत्या प्रकारचा. Learn मधले "मागील वर्षांचे प्रश्न" हे वेगळं
+/// साहित्य नसून **testच** आहेत, म्हणून ते `StudyMaterial` मध्ये न ठेवता इथे
+/// प्रकार म्हणून आले आहेत — तेच प्रश्न, तेच गुण, तीच निकालाची यंत्रणा.
+enum QuizType {
+  FULL_LENGTH
+  TOPIC_WISE
+  PYQ
+  CUSTOM
+}
+
 enum QuizStatus {
   DRAFT
   PUBLISHED
@@ -137,6 +147,7 @@ model Exam {
   updatedAt  DateTime     @updatedAt
 
   testSeries TestSeries[]
+  materials  StudyMaterial[]
 }
 
 // A Test Series groups several Quizzes (tests) that an admin assigns to
@@ -254,6 +265,7 @@ model Quiz {
   negativeMarks  Float          @default(0.0)
   passingMarks   Float
   difficulty     Difficulty     @default(MEDIUM)
+  type           QuizType       @default(FULL_LENGTH)
   status         QuizStatus     @default(DRAFT)
   instructions   String?
   categoryId     String
@@ -294,6 +306,7 @@ model Subject {
   updatedAt  DateTime   @updatedAt
 
   questions  Question[]
+  materials  StudyMaterial[]
 }
 
 model Question {
@@ -435,6 +448,59 @@ model AdminLog {
 /// schema वेगळी. एका branch मधून `db push` केलं की दुसऱ्या branch ची tables उडतात.
 /// नवीन table कुठे बनवलं तरी ते **दोन्ही** schema मध्ये नोंदवा, नाहीतर पुढच्या
 /// push ला तेच पुन्हा होईल.
+
+// ─── अभ्यास साहित्य ───────────────────────────────────────────────────────────
+//
+// Learn tab मधलं सगळं. लेखांप्रमाणेच इथेही **URL** ठेवली आहे, चढवलेली file
+// नाही: R2 सारखं storage अजून जोडलेलं नाही, आणि URL ठेवल्याने ते येईपर्यंत
+// काम अडत नाही — Drive/YouTube चा दुवा आजही चालतो. Storage आल्यावर फक्त
+// admin मधला upload मार्ग बदलेल, हे model तसंच राहील.
+
+enum StudyMaterialType {
+  NOTE
+  VIDEO
+  BOOK
+  SHORT
+}
+
+model StudyMaterial {
+  id          String            @id @default(cuid())
+  title       String
+  slug        String            @unique
+  description String?
+  type        StudyMaterialType
+
+  /// फाइल / व्हिडिओचा दुवा. PDF, YouTube, काहीही.
+  url         String
+  /// यादीत दाखवायचं चित्र. नसेल तर app प्रकारानुसार चिन्ह वापरतो.
+  thumbnailUrl String?
+
+  /// विषय आणि परीक्षा — दोन्ही आधीच्याच models, नवीन गट बनवलेले नाहीत.
+  /// Nullable, कारण एखादं साहित्य सर्वसाधारण असू शकतं.
+  /// विषय काढला तरी साहित्य राहावं म्हणून `SetNull` (`Article` सारखं
+  /// `Restrict` नाही — तिथे गट अनिवार्य आहे, इथे नाही).
+  subjectId   String?
+  subject     Subject?          @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  examId      String?
+  exam        Exam?             @relation(fields: [examId], references: [id], onDelete: SetNull)
+
+  /// व्हिडिओची लांबी (सेकंद) / टिपणीची पानं. ज्याला लागू नाही तिथे null.
+  durationSeconds Int?
+  pageCount   Int?
+
+  published   Boolean           @default(false)
+  /// यादीचा क्रम याच्यावरून — जुनं साहित्य नंतर प्रकाशित केलं तरी वर यावं.
+  publishedAt DateTime?
+  orderIndex  Int               @default(0)
+
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([published, type, publishedAt])
+  @@index([subjectId])
+  @@index([examId])
+}
+
 // ─── चालू घडामोडी ──────────────────────────────────────────────────────────────
 //
 // हे quiz-आधारित models पासून मुद्दाम वेगळे आहेत. `Category` आणि `Subject` हे

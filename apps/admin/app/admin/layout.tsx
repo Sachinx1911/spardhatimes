@@ -15,6 +15,7 @@ import {
   Layers3,
   Tags,
   Image as ImageIcon,
+  GraduationCap,
   Trophy
 } from "lucide-react";
 
@@ -85,6 +86,12 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
             className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             <ImageIcon className="h-4 w-4 text-primary" /> Banners
+          </Link>
+          <Link
+            href="/admin/materials"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            <GraduationCap className="h-4 w-4 text-primary" /> Study Material
           </Link>
           <Link
             href="/admin/series"

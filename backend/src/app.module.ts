@@ -6,6 +6,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ArticlesModule } from './articles/articles.module';
 import { AuthModule } from './auth/auth.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
+import { MaterialsModule } from './materials/materials.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TestsModule } from './tests/tests.module';
@@ -26,6 +27,7 @@ import { TestsModule } from './tests/tests.module';
     AuthModule,
     TestsModule,
     PaymentsModule,
+    MaterialsModule,
     BookmarksModule,
     ArticlesModule,
   ],

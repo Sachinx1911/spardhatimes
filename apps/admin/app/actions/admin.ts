@@ -961,3 +961,131 @@ export async function deleteBanner(id: string) {
     return { error: err.message || "Failed to delete banner." };
   }
 }
+
+// -------------------------------------------------------------
+// STUDY MATERIAL (Learn tab)
+//
+// Banner आणि Article प्रमाणेच **URL**, चढवलेली file नाही. R2 सारखं storage
+// अजून जोडलेलं नाही; तोपर्यंत Drive/YouTube चा दुवा चालतो. Storage आल्यावर
+// इथे upload चा पर्याय जोडता येईल, model बदलावं लागणार नाही.
+// -------------------------------------------------------------
+
+function materialFields(formData: FormData) {
+  const title = String(formData.get("title") ?? "").trim();
+  const url = String(formData.get("url") ?? "").trim();
+  const type = String(formData.get("type") ?? "NOTE");
+  const description = String(formData.get("description") ?? "").trim();
+  const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
+  const subjectId = String(formData.get("subjectId") ?? "").trim();
+  const examId = String(formData.get("examId") ?? "").trim();
+
+  const num = (raw: FormDataEntryValue | null) => {
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+  };
+  const orderIndex = Number(formData.get("orderIndex"));
+  const published = formData.get("published") === "on";
+
+  return {
+    title,
+    url,
+    type: type as any,
+    description: description || null,
+    thumbnailUrl: thumbnailUrl || null,
+    subjectId: subjectId || null,
+    examId: examId || null,
+    // व्हिडिओची लांबी मिनिटांत विचारतो, सेकंदात साठवतो — admin ला मिनिटं
+    // सोपी, app ला सेकंद हवे असतात.
+    durationSeconds: (() => {
+      const mins = num(formData.get("durationMinutes"));
+      return mins === null ? null : mins * 60;
+    })(),
+    pageCount: num(formData.get("pageCount")),
+    orderIndex: Number.isFinite(orderIndex) ? orderIndex : 0,
+    published,
+    // प्रकाशित केल्याची वेळ एकदाच नोंदवायची — पुन्हा जतन केल्याने ती पुढे
+    // सरकली तर यादीचा क्रम विनाकारण बदलेल.
+    publishedAt: published ? new Date() : null,
+  };
+}
+
+export async function createStudyMaterial(formData: FormData) {
+  try {
+    const admin = await ensureAdmin();
+    const data = materialFields(formData);
+    if (!data.title) return { error: "Title is required." };
+    if (!data.url) return { error: "A link to the file or video is required." };
+
+    const slug = await uniqueMaterialSlug(data.title);
+    await db.studyMaterial.create({ data: { ...data, slug } });
+
+    await logAdminAction(admin.id!, "material.create", `Created ${data.type} "${data.title}"`);
+    revalidatePath("/admin/materials");
+    return { success: true };
+  } catch (err: any) {
+    console.error(err);
+    return { error: err.message || "Failed to create study material." };
+  }
+}
+
+export async function updateStudyMaterial(id: string, formData: FormData) {
+  try {
+    const admin = await ensureAdmin();
+    const data = materialFields(formData);
+    if (!data.title) return { error: "Title is required." };
+    if (!data.url) return { error: "A link to the file or video is required." };
+
+    const current = await db.studyMaterial.findUnique({
+      where: { id },
+      select: { publishedAt: true },
+    });
+
+    await db.studyMaterial.update({
+      where: { id },
+      data: {
+        ...data,
+        // आधीच प्रकाशित असेल तर मूळ वेळ ठेवायची.
+        publishedAt: data.published ? (current?.publishedAt ?? new Date()) : null,
+      },
+    });
+
+    await logAdminAction(admin.id!, "material.update", `Updated "${data.title}"`);
+    revalidatePath("/admin/materials");
+    return { success: true };
+  } catch (err: any) {
+    console.error(err);
+    return { error: err.message || "Failed to update study material." };
+  }
+}
+
+export async function deleteStudyMaterial(id: string) {
+  try {
+    const admin = await ensureAdmin();
+    const m = await db.studyMaterial.findUnique({ where: { id }, select: { title: true } });
+    await db.studyMaterial.delete({ where: { id } });
+
+    await logAdminAction(admin.id!, "material.delete", `Deleted "${m?.title ?? id}"`);
+    revalidatePath("/admin/materials");
+    return { success: true };
+  } catch (err: any) {
+    console.error(err);
+    return { error: err.message || "Failed to delete study material." };
+  }
+}
+
+/** शीर्षकावरून slug; आधीच असेल तर मागे लहान अक्षरं जोडतो. */
+async function uniqueMaterialSlug(title: string) {
+  const base =
+    String(title)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || `material-${Date.now()}`;
+
+  let candidate = base;
+  while (await db.studyMaterial.findUnique({ where: { slug: candidate }, select: { id: true } })) {
+    candidate = `${base}-${Math.random().toString(36).slice(2, 6)}`;
+  }
+  return candidate;
+}

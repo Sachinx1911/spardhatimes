@@ -225,6 +225,42 @@ export interface ApiAnalytics {
   weaknesses: ApiAnalyticsSubject[];
 }
 
+/**
+ * `GET /learn` — Learn चा पहिला पडदा.
+ *
+ * PYQ चा आकडा `Quiz` मधून येतो, `StudyMaterial` मधून नाही — मागील वर्षांचे
+ * पेपर वाचायचे नसून **सोडवायचे** असतात, म्हणून ते tests आहेत.
+ */
+export interface ApiLearnOverview {
+  counts: {
+    notes: number;
+    videos: number;
+    books: number;
+    shorts: number;
+    pyqs: number;
+  };
+  /** साहित्य असलेले विषयच येतात — रिकामे गाळलेले असतात. */
+  subjects: { id: string; name: string; materialCount: number }[];
+}
+
+export type ApiMaterialType = 'NOTE' | 'VIDEO' | 'BOOK' | 'SHORT';
+
+/** `GET /materials` — प्रकार आणि विषयानुसार गाळता येते. */
+export interface ApiMaterial {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  type: ApiMaterialType;
+  url: string;
+  thumbnailUrl: string | null;
+  durationSeconds: number | null;
+  pageCount: number | null;
+  subjectId: string | null;
+  subjectName: string | null;
+  publishedAt: string | null;
+}
+
 /** `GET /orders` — माझ्या खरेदी. Profile मधल्या "My Purchases" साठी. */
 export interface ApiOrder {
   id: string;
@@ -495,6 +531,16 @@ export const api = {
   myOrders: () => request<ApiOrder[]>('/orders'),
 
   analytics: () => request<ApiAnalytics>('/analytics'),
+
+  learn: () => request<ApiLearnOverview>('/learn'),
+
+  materials: (opts: { type?: ApiMaterialType; subjectId?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (opts.type) q.set('type', opts.type);
+    if (opts.subjectId) q.set('subject', opts.subjectId);
+    const qs = q.toString();
+    return request<ApiMaterial[]>(`/materials${qs ? `?${qs}` : ''}`);
+  },
 
   mySeries: () => request<ApiSeries[]>('/series'),
 
