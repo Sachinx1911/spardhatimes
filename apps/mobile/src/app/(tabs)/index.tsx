@@ -1,11 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/ui/async-state';
-import { Drawer } from '@/components/ui/drawer';
 import { HomeCarousel } from '@/components/ui/home-carousel';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
@@ -115,7 +113,6 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data, loading, error, reload } = useApi(() => api.dashboard(), []);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <View style={styles.root}>
@@ -125,7 +122,9 @@ export default function HomeScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.appBar, { paddingTop: insets.top + spacing.md }]}>
-        <Pressable hitSlop={8} onPress={() => setMenuOpen(true)}>
+        {/* ☰ design मध्ये आहे म्हणून जागा धरून ठेवली आहे, पण **त्यामागे अजून
+            काही नाही** — menu ची design आल्यावर इथे जोडायचा. */}
+        <Pressable hitSlop={8}>
           <Icon name="menu" size={26} color={colors.textInverse} />
         </Pressable>
 
@@ -184,7 +183,6 @@ export default function HomeScreen() {
         </View>
       </Screen>
 
-      <Drawer open={menuOpen} onClose={() => setMenuOpen(false)} name={data?.name} />
     </View>
   );
 }

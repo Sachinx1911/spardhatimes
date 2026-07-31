@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { Fragment } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -21,7 +22,8 @@ import {
  * नाव, फोन आणि email **session मधून** येतात, नकली data मधून नाहीत — `/auth/me`
  * हे तिन्ही आधीच देतो, त्यामुळे यासाठी वेगळा endpoint लागत नाही.
  *
- * यादीतले दुवे अजून कुठेही नेत नाहीत; त्या screens पुढच्या टप्प्यात.
+ * बहुतेक दुवे अजून कुठेही नेत नाहीत; त्या screens पुढच्या टप्प्यात.
+ * Bookmarks मात्र खरा आहे — त्याला दुसरा मार्गच नाही.
  */
 
 interface MenuItem {
@@ -35,9 +37,19 @@ interface MenuItem {
 }
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { user, logout } = useSession();
 
   const account: MenuItem[] = [
+    // Bookmarks ला मुख्य पानावर tile नाही आणि आता menu पण नाही, म्हणून त्याचा
+    // एकमेव मार्ग हा. काढला तर पान अस्तित्वात असून पोहोचता येणार नाही.
+    {
+      icon: 'bookmark',
+      tint: colors.warning,
+      title: 'Bookmarks',
+      note: 'जतन केलेले प्रश्न आणि लेख',
+      onPress: () => router.push('/bookmarks'),
+    },
     {
       icon: 'person-outline',
       tint: colors.primary,
