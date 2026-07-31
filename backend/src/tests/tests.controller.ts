@@ -21,6 +21,12 @@ export class TestsController {
     return this.tests.dashboard(req.user.id);
   }
 
+  @Get('analytics')
+  @ApiOperation({ summary: 'कामगिरीचं विश्लेषण — सगळं एका फेरीत' })
+  analytics(@Req() req: AuthedRequest) {
+    return this.tests.analytics(req.user.id);
+  }
+
   @Get('catalog')
   @ApiOperation({ summary: 'दुकान — विकत घेता येणाऱ्या सगळ्या series' })
   catalog(@Req() req: AuthedRequest) {

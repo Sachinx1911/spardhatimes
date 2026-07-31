@@ -191,6 +191,40 @@ export interface ApiDashboard {
   };
 }
 
+/**
+ * `GET /analytics` — कामगिरीचं विश्लेषण.
+ *
+ * सगळे आकडे attempts मधून काढलेले आहेत, वेगळं साठवलेले नाहीत.
+ * एकही test सोडवला नसेल तर आकार तोच राहतो पण याद्या रिकाम्या येतात.
+ */
+export interface ApiAnalyticsSubject {
+  id: string;
+  name: string;
+  orderIndex: number;
+  questionCount: number;
+  correct: number;
+  accuracy: number;
+}
+
+export interface ApiAnalytics {
+  testsAttempted: number;
+  averageScore: number;
+  bestScore: number;
+  hoursStudied: number;
+  /** पहिलाच attempt असेल तर null — तुलना करायला दुसरं कोणी नसतं. */
+  betterThanPercent: number | null;
+  trend: {
+    attemptId: string;
+    title: string;
+    percentage: number;
+    at: string;
+  }[];
+  subjects: ApiAnalyticsSubject[];
+  /** किमान ३ प्रश्न सोडवलेले विषयच इथे येतात. */
+  strengths: ApiAnalyticsSubject[];
+  weaknesses: ApiAnalyticsSubject[];
+}
+
 /** `GET /orders` — माझ्या खरेदी. Profile मधल्या "My Purchases" साठी. */
 export interface ApiOrder {
   id: string;
@@ -459,6 +493,8 @@ export const api = {
     }),
 
   myOrders: () => request<ApiOrder[]>('/orders'),
+
+  analytics: () => request<ApiAnalytics>('/analytics'),
 
   mySeries: () => request<ApiSeries[]>('/series'),
 

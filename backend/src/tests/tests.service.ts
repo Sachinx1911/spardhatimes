@@ -506,6 +506,147 @@ export class TestsService {
     return { attemptId: attempt.id };
   }
 
+  /**
+   * Analytics — विद्यार्थ्याची कामगिरी, सगळी एका फेरीत.
+   *
+   * इथे नवीन काहीच साठवलेलं नाही. प्रत्येक आकडा `QuizAttempt` आणि
+   * `QuestionResponse` मधून काढला आहे — वेगळं analytics table ठेवलं असतं तर ते
+   * attempts शी जुळवत ठेवावं लागलं असतं आणि एकदा चुकलं की कायमचं चुकीचं
+   * राहिलं असतं.
+   */
+  async analytics(userId: string) {
+    const attempts = await this.prisma.client.quizAttempt.findMany({
+      where: { userId, status: 'COMPLETED' },
+      select: {
+        id: true,
+        percentage: true,
+        percentile: true,
+        timeTaken: true,
+        createdAt: true,
+        quiz: { select: { title: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // एकही test सोडवला नसेल तर सगळे आकडे शून्य — app ला रिकामी स्थिती
+    // दाखवता यावी म्हणून आकार तोच ठेवतो, null परत करत नाही.
+    if (attempts.length === 0) {
+      return {
+        testsAttempted: 0,
+        averageScore: 0,
+        bestScore: 0,
+        hoursStudied: 0,
+        betterThanPercent: null,
+        trend: [],
+        subjects: [],
+        strengths: [],
+        weaknesses: [],
+      };
+    }
+
+    const percentages = attempts.map((a) => a.percentage);
+    const averageScore = Math.round(
+      percentages.reduce((sum, p) => sum + p, 0) / percentages.length
+    );
+    const bestScore = Math.round(Math.max(...percentages));
+
+    // सेकंद → तास, एका दशांशापर्यंत. "0.4 तास" हे "0 तास" पेक्षा प्रामाणिक आहे.
+    const hoursStudied =
+      Math.round((attempts.reduce((sum, a) => sum + a.timeTaken, 0) / 3600) * 10) / 10;
+
+    /**
+     * "तुम्ही ६८% विद्यार्थ्यांपेक्षा पुढे आहात" — हे `percentile` वरून येतं,
+     * जो submit करताना त्याच test च्या सगळ्या attempts मधून काढला जातो.
+     * पहिलाच attempt असेल तर percentile नसतो, म्हणून null येऊ शकतो.
+     */
+    const withPercentile = attempts.filter((a) => a.percentile !== null);
+    const betterThanPercent = withPercentile.length
+      ? Math.round(
+          withPercentile.reduce((sum, a) => sum + (a.percentile ?? 0), 0) /
+            withPercentile.length
+        )
+      : null;
+
+    // आलेख — शेवटचे 10 attempts. सगळे दाखवले तर मोबाइलवर रेषा गचडते.
+    const trend = attempts.slice(-10).map((a) => ({
+      attemptId: a.id,
+      title: a.quiz.title,
+      percentage: Math.round(a.percentage),
+      at: a.createdAt.toISOString(),
+    }));
+
+    /**
+     * विषयानुसार कामगिरी.
+     *
+     * प्रत्येक उत्तर त्याच्या प्रश्नाच्या विषयाशी जोडून मोजतो. विषय नसलेले
+     * प्रश्न वगळतो — "अज्ञात" नावाचा गट दाखवण्यात अर्थ नाही, आणि तो दिसला तर
+     * admin ला विषय नेमायचे राहिले आहेत हे कळतच नाही.
+     */
+    const responses = await this.prisma.client.questionResponse.findMany({
+      where: { attempt: { userId, status: 'COMPLETED' } },
+      select: {
+        isCorrect: true,
+        question: {
+          select: { subject: { select: { id: true, name: true, orderIndex: true } } },
+        },
+      },
+    });
+
+    const bySubject = new Map<
+      string,
+      { id: string; name: string; orderIndex: number; total: number; correct: number }
+    >();
+
+    for (const r of responses) {
+      const subject = r.question.subject;
+      if (!subject) continue;
+
+      const entry = bySubject.get(subject.id) ?? {
+        id: subject.id,
+        name: subject.name,
+        orderIndex: subject.orderIndex,
+        total: 0,
+        correct: 0,
+      };
+      entry.total += 1;
+      if (r.isCorrect) entry.correct += 1;
+      bySubject.set(subject.id, entry);
+    }
+
+    const subjects = [...bySubject.values()]
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        orderIndex: s.orderIndex,
+        questionCount: s.total,
+        correct: s.correct,
+        accuracy: Math.round((s.correct / s.total) * 100),
+      }))
+      .sort((a, b) => a.orderIndex - b.orderIndex || a.name.localeCompare(b.name));
+
+    /**
+     * बलस्थानं आणि सुधारायच्या जागा.
+     *
+     * ज्या विषयात **किमान ३ प्रश्न** सोडवले आहेत तेच विचारात घेतो. एका
+     * प्रश्नाचा विषय 0% किंवा 100% दाखवेल आणि त्यावरून "हा तुमचा कच्चा विषय
+     * आहे" म्हणणं दिशाभूल करणारं ठरेल.
+     */
+    const ranked = subjects.filter((s) => s.questionCount >= 3);
+    const byAccuracy = [...ranked].sort((a, b) => b.accuracy - a.accuracy);
+
+    return {
+      testsAttempted: attempts.length,
+      averageScore,
+      bestScore,
+      hoursStudied,
+      betterThanPercent,
+      trend,
+      subjects,
+      strengths: byAccuracy.slice(0, 3),
+      weaknesses: byAccuracy.slice(-3).reverse().filter((s) => !byAccuracy.slice(0, 3).includes(s)),
+    };
+  }
+
   /** निकाल — इथेच बरोबर उत्तरं आणि खुलासा जातात. */
   async attemptResult(userId: string, attemptId: string) {
     const attempt = await this.prisma.client.quizAttempt.findUnique({
