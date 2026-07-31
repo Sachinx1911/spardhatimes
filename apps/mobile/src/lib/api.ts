@@ -287,14 +287,20 @@ export interface ApiResultSubject {
 export interface ApiResultAnswer {
   questionId: string;
   text: string;
+  options: { key: 'A' | 'B' | 'C' | 'D'; text: string }[];
+  /** न सोडवलेला असेल तर null. MULTIPLE_CHOICE ला "A,C". */
   chosenOption: string | null;
   correctAnswer: string;
   explanation: string | null;
   isCorrect: boolean;
+  /** विषय न दिलेल्या प्रश्नांसाठी "इतर". */
+  subject: string;
 }
 
 export interface ApiResult {
   attemptId: string;
+  /** Attempt id पेक्षा वेगळा — बुकमार्क या id वर मागवतात. */
+  quizId: string;
   testTitle: string;
   submittedAt: string;
   score: number;
@@ -309,6 +315,83 @@ export interface ApiResult {
   percentile: number | null;
   subjects: ApiResultSubject[];
   answers: ApiResultAnswer[];
+}
+
+/**
+ * `GET /bookmarks` — खुणलेले प्रश्न.
+ *
+ * बरोबर उत्तर आणि खुलासा **यात येतात** — इतर endpoints मध्ये ते मुद्दाम नसतात.
+ * इथे चालतं कारण bookmark फक्त सोडवलेल्या प्रश्नाला करता येतो, म्हणजे तो प्रश्न
+ * विद्यार्थ्याने निकालाच्या पडद्यावर उत्तरासह आधीच पाहिला आहे.
+ */
+export interface ApiBookmark {
+  id: string;
+  questionId: string;
+  quizId: string;
+  testTitle: string;
+  /** Standalone quiz असेल तर null. */
+  seriesTitle: string | null;
+  /** विषय न दिलेल्या प्रश्नांसाठी "इतर". */
+  subject: string;
+  type: string;
+  text: string;
+  options: { key: 'A' | 'B' | 'C' | 'D'; text: string }[];
+  /** SINGLE_CHOICE: "A".."D"; MULTIPLE_CHOICE: "A,C". */
+  correctAnswer: string;
+  explanation: string | null;
+  createdAt: string;
+}
+
+/**
+ * `GET /current-affairs` मधली एक ओळ.
+ *
+ * `body` यात **नाही** — यादीत तो लागत नाही आणि वीस लेखांचा पूर्ण मजकूर मोबाइल
+ * जाळ्यावर वाहून नेण्यात अर्थ नाही. पूर्ण मजकूर `article(slug)` मध्ये येतो.
+ */
+export interface ApiArticleListItem {
+  id: string;
+  title: string;
+  slug: string;
+  /** आधीच कापलेला — शब्दाच्या मधोमध तुटत नाही. */
+  excerpt: string;
+  imageUrl: string | null;
+  /** मजकुरावरून मोजलेला, साठवलेला नाही. */
+  readMinutes: number;
+  isTopNews: boolean;
+  publishedAt: string | null;
+  categoryId: string;
+  /** मराठी — card वरचा tag आणि वर्तुळं. */
+  categoryName: string;
+  /** इंग्रजी — वरचे chips. null असेल तर मराठी वापरायचं. */
+  categoryNameEn: string | null;
+  categorySlug: string;
+  categoryIcon: string | null;
+  categoryColor: string | null;
+  bookmarked: boolean;
+}
+
+export interface ApiArticleCategory {
+  id: string;
+  name: string;
+  nameEn: string | null;
+  slug: string;
+  icon: string | null;
+  color: string | null;
+  /** **प्रकाशित** लेखांचाच आकडा — draft मोजलेले नाहीत. */
+  articleCount: number;
+}
+
+/** `GET /current-affairs` — पडद्याला लागणारं सगळं एका फेरीत. */
+export interface ApiCurrentAffairs {
+  topNews: ApiArticleListItem[];
+  latest: ApiArticleListItem[];
+  categories: ApiArticleCategory[];
+}
+
+/** `GET /articles/:slug` — पूर्ण मजकुरासह. */
+export interface ApiArticle extends ApiArticleListItem {
+  body: string;
+  updatedAt: string;
 }
 
 export const api = {
@@ -373,4 +456,47 @@ export const api = {
     }),
 
   attemptResult: (attemptId: string) => request<ApiResult>(`/attempts/${attemptId}`),
+
+  // ── बुकमार्क ──
+
+  bookmarks: () => request<ApiBookmark[]>('/bookmarks'),
+
+  /**
+   * या test मधले कोणते प्रश्न आधीच खुणलेले आहेत — निकालाच्या पडद्यासाठी.
+   * प्रत्येक प्रश्नाला वेगळी विनंती करण्यापेक्षा एकदाच यादी.
+   */
+  bookmarkedInQuiz: (quizId: string) => request<string[]>(`/bookmarks/quiz/${quizId}`),
+
+  /** आधीच खुणलेला असेल तरी चूक देत नाही — तीच नोंद परत येते. */
+  addBookmark: (questionId: string) =>
+    request<{ id: string; questionId: string; createdAt: string }>('/bookmarks', {
+      method: 'POST',
+      body: { questionId },
+    }),
+
+  /** नोंद नसेल तरी चूक येत नाही. */
+  removeBookmark: (questionId: string) =>
+    request<void>(`/bookmarks/${questionId}`, { method: 'DELETE' }),
+
+  // ── चालू घडामोडी ──
+
+  currentAffairs: () => request<ApiCurrentAffairs>('/current-affairs'),
+
+  /** `category` न दिला (किंवा 'all') तर सगळे लेख. */
+  articles: (categorySlug?: string) =>
+    request<ApiArticleListItem[]>(
+      categorySlug && categorySlug !== 'all'
+        ? `/articles?category=${encodeURIComponent(categorySlug)}`
+        : '/articles'
+    ),
+
+  article: (slug: string) => request<ApiArticle>(`/articles/${encodeURIComponent(slug)}`),
+
+  bookmarkedArticles: () => request<ApiArticleListItem[]>('/articles/bookmarked'),
+
+  addArticleBookmark: (articleId: string) =>
+    request<void>(`/articles/${articleId}/bookmark`, { method: 'POST' }),
+
+  removeArticleBookmark: (articleId: string) =>
+    request<void>(`/articles/${articleId}/bookmark`, { method: 'DELETE' }),
 };

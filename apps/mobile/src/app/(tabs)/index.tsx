@@ -48,12 +48,18 @@ const TILES: Tile[] = [
   { mr: 'टेस्ट सिरीज खरेदी', en: 'Buy Test Series', icon: 'bag-handle', tint: colors.success, href: '/store' },
   { mr: 'सर्व टेस्ट सिरीज', en: 'All Test Series', icon: 'clipboard', tint: colors.warning, href: '/store' },
   { mr: 'टेस्ट घ्या', en: 'Start Test', icon: 'aperture', tint: colors.error, href: '/tests' },
-  // खालचे चार अजून बांधलेले नाहीत (टप्पा D/E). Design मध्ये आहेत म्हणून
-  // दाखवतो, पण निष्क्रिय — दाबल्यावर रिकामं पान उघडणं फसवं ठरेल.
+  { mr: 'बुकमार्क', en: 'Bookmarks', icon: 'bookmark', tint: colors.error, href: '/bookmarks' },
+  { mr: 'चालू घडामोडी', en: 'Current Affairs', icon: 'newspaper', tint: colors.accentViolet, href: '/current-affairs' },
+  // हे दोन अजून बांधलेले नाहीत, म्हणून निष्क्रिय — दाबल्यावर रिकामं पान उघडणं
+  // फसवं ठरेल.
+  //
+  // `परिणाम विश्लेषण` → Analytics tab अजून सांगाडाच आहे (`analytics.tsx`), आणि
+  // `tests.tsx` मधले आकडे `mock.ts` मधून येतात. तो खऱ्या data वर आल्यावर हा
+  // tile `/analytics` कडे वळवायचा.
+  //
+  // `अभ्यास साहित्य` → लेख साठवायला schema मध्ये model नाही.
   { mr: 'परिणाम विश्लेषण', en: 'Performance', icon: 'stats-chart', tint: colors.primary, href: null },
-  { mr: 'चालू घडामोडी', en: 'Current Affairs', icon: 'newspaper', tint: '#8B5CF6', href: null },
-  { mr: 'अभ्यास साहित्य', en: 'Study Material', icon: 'book', tint: '#0EA5E9', href: null },
-  { mr: 'बुकमार्क', en: 'Bookmarks', icon: 'bookmark', tint: colors.error, href: null },
+  { mr: 'अभ्यास साहित्य', en: 'Study Material', icon: 'book', tint: colors.accentSky, href: null },
 ];
 
 export default function DashboardScreen() {

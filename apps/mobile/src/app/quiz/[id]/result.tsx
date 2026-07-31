@@ -1,15 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/ui/async-state';
 import { Card } from '@/components/ui/card';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
-import { api } from '@/lib/api';
+import { api, type ApiResultAnswer } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
-import { colors, radius, shadow, spacing, subjectColor, typography, strong } from '@/theme/tokens';
+import { colors, radius, shadow, spacing, typography, strong } from '@/theme/tokens';
 
 /**
  * निकाल.
@@ -31,6 +32,61 @@ export default function ResultScreen() {
    */
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: r, loading, error, reload } = useApi(() => api.attemptResult(id), [id]);
+
+  /**
+   * उजळणी सुरुवातीला बंद.
+   *
+   * निकालाचा पडदा उघडल्याबरोबर सगळे प्रश्न आणि उत्तरं दिसली तर वरचे आकडे —
+   * गुण, टक्केवारी, विषयवार कामगिरी — खाली ढकलले जातात. आधी "मला किती मिळाले",
+   * मग "कुठे चुकलं".
+   */
+  const [reviewing, setReviewing] = useState(false);
+
+  /**
+   * कोणते प्रश्न आधीच खुणलेले आहेत — या quiz चा **एकच** फेरा. प्रत्येक प्रश्नाला
+   * वेगळी विनंती केली असती तर 100 प्रश्नांच्या test वर 100 फेऱ्या झाल्या असत्या.
+   *
+   * `quizId` निकाल आल्यावरच कळतो, म्हणून पहिल्या render ला तो नसतो. `useApi`
+   * बिनशर्त चालतो, त्यामुळे रिकामा id पाठवला तर `/bookmarks/quiz/` वर 404 जातो —
+   * निरुपयोगी फेरी. तोपर्यंत रिकामी यादी परत करतो; id आला की deps बदलून खरी
+   * विनंती जाते.
+   */
+  const { data: markedList } = useApi(
+    () => (r?.quizId ? api.bookmarkedInQuiz(r.quizId) : Promise.resolve<string[]>([])),
+    [r?.quizId]
+  );
+
+  /**
+   * Server ची यादी स्थानिक state मध्ये **उतरवलेली नाही.**
+   *
+   * तसं केलं असतं तर "यादी आली की state भर" असा effect लागला असता, आणि तो
+   * cascading renders करतो (eslint `react-hooks/set-state-in-effect` तेच सांगतो).
+   * त्याऐवजी इथे फक्त *या* पडद्यावर केलेले बदल ठेवतो आणि खरी अवस्था दोन्ही
+   * मिळून काढतो — बदल असेल तर तो, नाहीतर server काय म्हणतो ते.
+   */
+  const [changed, setChanged] = useState<Map<string, boolean>>(new Map());
+  const [toggling, setToggling] = useState<string | null>(null);
+
+  const isMarked = (questionId: string) =>
+    changed.get(questionId) ?? (markedList?.includes(questionId) ?? false);
+
+  const toggleBookmark = async (questionId: string) => {
+    if (toggling) return;
+    setToggling(questionId);
+    const was = isMarked(questionId);
+    try {
+      if (was) await api.removeBookmark(questionId);
+      else await api.addBookmark(questionId);
+
+      setChanged((prev) => new Map(prev).set(questionId, !was));
+    } catch (err) {
+      // Server ने नकार दिला तर चिन्ह बदलत नाही — पडद्यावरचं आणि खरं वेगळं होऊ
+      // देण्यापेक्षा स्पष्ट संदेश बरा.
+      Alert.alert('खूण बदलता आली नाही', (err as Error).message);
+    } finally {
+      setToggling(null);
+    }
+  };
 
   // Test सोडवून झाल्यावर इथे `replace` ने येतो — म्हणजे मागे जायला इतिहासच नसतो
   // आणि सरळ `back()` केलं तर "GO_BACK was not handled" अशी चूक येते. इतिहास असेल
@@ -151,45 +207,10 @@ export default function ResultScreen() {
         </View>
       </Card>
 
-      {/* ── विषयवार ── */}
-      <View style={styles.gap} />
-      <Card>
-        <Text style={styles.sectionTitle}>Section / Subject Wise Performance</Text>
-        <View style={styles.tableHead}>
-          <Text style={[styles.th, styles.thSubject]}>Subject</Text>
-          <Text style={styles.th}>Score</Text>
-          <Text style={styles.thAccuracy}>Accuracy</Text>
-        </View>
-
-        {r.subjects.map((s) => {
-          const tint = subjectColor(s.subject);
-          const acc = Math.round((s.correct / s.questionCount) * 100);
-          return (
-            <View key={s.subject} style={styles.tableRow}>
-              <View style={styles.subjectCell}>
-                <View style={[styles.subjectDot, { backgroundColor: tint }]} />
-                <View style={styles.subjectTextBox}>
-                  <Text style={styles.subjectName} numberOfLines={1}>
-                    {s.subject}
-                  </Text>
-                  <Text style={styles.subjectCount}>{`${s.questionCount} Questions`}</Text>
-                </View>
-              </View>
-
-              <Text style={styles.scoreCell}>{`${s.score} / ${s.maxScore}`}</Text>
-
-              <View style={styles.accuracyCell}>
-                <View style={styles.accuracyTrack}>
-                  <View
-                    style={[styles.accuracyFill, { width: `${acc}%`, backgroundColor: tint }]}
-                  />
-                </View>
-                <Text style={styles.accuracyText}>{`${acc}%`}</Text>
-              </View>
-            </View>
-          );
-        })}
-      </Card>
+      {/* Design मध्ये इथे "Section / Subject Wise Performance" चा तक्ता होता — तो
+          काढला आहे (ठरलेलं). विषयवार कामगिरी एका test पुरती बघण्यापेक्षा सगळ्या
+          tests मिळून बघणं उपयोगी, आणि ती जागा Analytics ची. API अजून `subjects`
+          देतो — तो तिथे वापरायचा आहे, म्हणून backend मधून काढलेला नाही. */}
 
       {/* ── वेळ आणि कल ── */}
       <View style={styles.gap} />
@@ -218,16 +239,139 @@ export default function ResultScreen() {
       {/* ── कृती ── */}
       <View style={styles.gap} />
       <View style={styles.actions}>
-        <Pressable style={styles.outlineAction}>
-          <Ionicons name="reader-outline" size={16} color={colors.primary} />
-          <Text style={styles.outlineActionText}>Review Answers</Text>
+        <Pressable style={styles.outlineAction} onPress={() => setReviewing((v) => !v)}>
+          <Ionicons
+            name={reviewing ? 'chevron-up' : 'reader-outline'}
+            size={16}
+            color={colors.primary}
+          />
+          <Text style={styles.outlineActionText}>
+            {reviewing ? 'उजळणी बंद करा' : 'Review Answers'}
+          </Text>
         </Pressable>
         <Pressable style={styles.primaryAction}>
           <Ionicons name="refresh" size={16} color={colors.textInverse} />
           <Text style={styles.primaryActionText}>Re-attempt Test</Text>
         </Pressable>
       </View>
+
+      {/* ── उजळणी ── */}
+      {reviewing ? (
+        <View style={styles.review}>
+          {r.answers.map((a, i) => (
+            <ReviewRow
+              key={a.questionId}
+              index={i + 1}
+              answer={a}
+              bookmarked={isMarked(a.questionId)}
+              busy={toggling === a.questionId}
+              onToggle={() => toggleBookmark(a.questionId)}
+            />
+          ))}
+        </View>
+      ) : null}
     </Screen>
+  );
+}
+
+/**
+ * उजळणीतली एक ओळ — प्रश्न, चारही पर्याय, आणि खुलासा.
+ *
+ * `correctAnswer` बहु-पर्यायी प्रश्नात "A,C" असतो, म्हणून एका अक्षराशी तुलना करत
+ * नाही. विद्यार्थ्याच्या उत्तरालाही तेच लागू.
+ */
+function ReviewRow({
+  index,
+  answer,
+  bookmarked,
+  busy,
+  onToggle,
+}: {
+  index: number;
+  answer: ApiResultAnswer;
+  bookmarked: boolean;
+  busy: boolean;
+  onToggle: () => void;
+}) {
+  const correct = answer.correctAnswer.split(',').map((k) => k.trim());
+  const chosen = (answer.chosenOption ?? '').split(',').map((k) => k.trim()).filter(Boolean);
+
+  return (
+    <View style={styles.reviewCard}>
+      <View style={styles.reviewTop}>
+        <View style={styles.reviewNumberRow}>
+          <Text style={styles.reviewNumber}>{`प्रश्न ${index}`}</Text>
+          {/* न सोडवलेला प्रश्न "चूक" म्हणून दाखवणं दिशाभूल करणारं — तिसरी अवस्था. */}
+          <View
+            style={[
+              styles.reviewChip,
+              chosen.length === 0
+                ? styles.reviewChipSkipped
+                : answer.isCorrect
+                  ? styles.reviewChipCorrect
+                  : styles.reviewChipWrong,
+            ]}>
+            <Text
+              style={[
+                styles.reviewChipText,
+                chosen.length === 0
+                  ? styles.reviewChipTextSkipped
+                  : answer.isCorrect
+                    ? styles.reviewChipTextCorrect
+                    : styles.reviewChipTextWrong,
+              ]}>
+              {chosen.length === 0 ? 'सोडवला नाही' : answer.isCorrect ? 'बरोबर' : 'चूक'}
+            </Text>
+          </View>
+        </View>
+        <Pressable
+          hitSlop={8}
+          onPress={onToggle}
+          disabled={busy}
+          style={busy ? styles.reviewBusy : undefined}>
+          <Ionicons
+            name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+            size={22}
+            color={colors.primary}
+          />
+        </Pressable>
+      </View>
+
+      <Text style={styles.reviewQuestion}>{answer.text}</Text>
+
+      <View style={styles.reviewOptions}>
+        {answer.options.map((o) => {
+          const isCorrect = correct.includes(o.key);
+          const isChosen = chosen.includes(o.key);
+          return (
+            <View
+              key={o.key}
+              style={[
+                styles.reviewOption,
+                isCorrect && styles.reviewOptionCorrect,
+                // चुकीचं निवडलेलं उत्तर लाल — बरोबरचं हिरवं तसंच राहतं, म्हणजे
+                // "मी काय दिलं" आणि "बरोबर काय" दोन्ही एकाच नजरेत दिसतं.
+                !isCorrect && isChosen && styles.reviewOptionWrong,
+              ]}>
+              <Text style={styles.reviewOptionKey}>{o.key}</Text>
+              <Text style={styles.reviewOptionText}>{o.text}</Text>
+              {isCorrect ? (
+                <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+              ) : isChosen ? (
+                <Ionicons name="close-circle" size={16} color={colors.danger} />
+              ) : null}
+            </View>
+          );
+        })}
+      </View>
+
+      {answer.explanation ? (
+        <View style={styles.reviewExplanation}>
+          <Text style={styles.reviewExplanationLabel}>स्पष्टीकरण</Text>
+          <Text style={styles.reviewExplanationText}>{answer.explanation}</Text>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -395,101 +539,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 
-  sectionTitle: {
-    ...typography.bodyL, ...strong.semibold,
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  tableHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingBottom: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  th: {
-    ...typography.caption,
-    fontWeight: '500',
-    color: colors.textSecondary,
-    width: 62,
-    textAlign: 'right',
-  },
-  thSubject: {
-    flex: 1,
-    width: undefined,
-    textAlign: 'left',
-  },
-  thAccuracy: {
-    ...typography.caption,
-    fontWeight: '500',
-    color: colors.textSecondary,
-    width: 92,
-    textAlign: 'right',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  subjectCell: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  subjectDot: {
-    width: 8,
-    height: 8,
-    borderRadius: radius.full,
-  },
-  subjectTextBox: {
-    flex: 1,
-  },
-  subjectName: {
-    ...typography.bodyS,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  subjectCount: {
-    fontSize: 10,
-    color: colors.textSecondary,
-  },
-  scoreCell: {
-    width: 62,
-    ...typography.bodyS,
-    fontWeight: '600',
-    color: colors.text,
-    textAlign: 'right',
-    // गुण आणि accuracy bar एकमेकांना चिकटू नयेत म्हणून.
-    paddingRight: spacing.md,
-  },
-  accuracyCell: {
-    width: 92,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    justifyContent: 'flex-end',
-  },
-  accuracyTrack: {
-    flex: 1,
-    height: 5,
-    borderRadius: radius.full,
-    backgroundColor: colors.border,
-    overflow: 'hidden',
-  },
-  accuracyFill: {
-    height: '100%',
-    borderRadius: radius.full,
-  },
-  accuracyText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    width: 30,
-    textAlign: 'right',
-  },
-
   chartsRow: {
     flexDirection: 'row',
     gap: spacing.md,
@@ -554,5 +603,121 @@ const styles = StyleSheet.create({
 
   gap: {
     height: spacing.lg,
+  },
+
+  // ── उजळणी ──
+  review: {
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
+  reviewCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: spacing.md,
+    ...shadow.card,
+  },
+  reviewTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  reviewNumberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    // प्रश्न क्रमांक + अवस्थेचा chip मिळून bookmark चिन्हाला ढकलू नयेत.
+    flex: 1,
+  },
+  reviewNumber: {
+    ...typography.bodyS,
+    ...strong.semibold,
+    color: colors.textSecondary,
+  },
+  reviewChip: {
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+  },
+  reviewChipCorrect: {
+    backgroundColor: colors.successLight,
+  },
+  reviewChipWrong: {
+    backgroundColor: colors.dangerLight,
+  },
+  reviewChipSkipped: {
+    backgroundColor: colors.background,
+  },
+  reviewChipText: {
+    ...typography.caption,
+    ...strong.medium,
+  },
+  reviewChipTextCorrect: {
+    color: colors.success,
+  },
+  reviewChipTextWrong: {
+    color: colors.danger,
+  },
+  reviewChipTextSkipped: {
+    color: colors.textSecondary,
+  },
+  reviewBusy: {
+    opacity: 0.4,
+  },
+  reviewQuestion: {
+    ...typography.bodyL,
+    ...strong.semibold,
+    color: colors.text,
+  },
+  reviewOptions: {
+    gap: spacing.sm,
+  },
+  reviewOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  reviewOptionCorrect: {
+    backgroundColor: colors.successLight,
+    borderColor: colors.success,
+  },
+  reviewOptionWrong: {
+    backgroundColor: colors.dangerLight,
+    borderColor: colors.danger,
+  },
+  reviewOptionKey: {
+    ...typography.bodyM,
+    ...strong.semibold,
+    color: colors.textSecondary,
+    // चारही ओळींतली अक्षरं एकाच रेषेत यावीत म्हणून ठरलेली रुंदी.
+    width: 16,
+  },
+  reviewOptionText: {
+    // पर्यायाचा मजकूर लांब असतो; याशिवाय तो कार्डाबाहेर जातो.
+    flex: 1,
+    ...typography.bodyM,
+    color: colors.text,
+  },
+  reviewExplanation: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  reviewExplanationLabel: {
+    ...typography.caption,
+    ...strong.semibold,
+    color: colors.primary,
+  },
+  reviewExplanationText: {
+    ...typography.bodyM,
+    color: colors.text,
   },
 });

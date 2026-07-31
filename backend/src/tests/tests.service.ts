@@ -481,6 +481,14 @@ export class TestsService {
                 id: true,
                 text: true,
                 marks: true,
+                // Options इथे लागतात कारण उजळणीत "बरोबर उत्तर C" एवढंच दाखवलं तर
+                // C काय होतं ते विद्यार्थ्याला कळत नाही. `startTest` मध्ये ती
+                // मुद्दाम पाठवली जातात, पण तिथे `correctAnswer` नसतो — इथे
+                // दोन्ही चालतं, कारण test संपलेला आहे.
+                optionA: true,
+                optionB: true,
+                optionC: true,
+                optionD: true,
                 correctAnswer: true,
                 explanation: true,
                 subject: { select: { id: true, name: true, orderIndex: true } },
@@ -524,6 +532,9 @@ export class TestsService {
 
     return {
       attemptId: attempt.id,
+      // App ला हा लागतो — या test मधले खुणलेले प्रश्न मागवायला (`/bookmarks/quiz/:id`).
+      // Attempt id आणि quiz id वेगळे आहेत; एकाच test चे अनेक attempts असतात.
+      quizId: attempt.quiz.id,
       testTitle: attempt.quiz.title,
       submittedAt: attempt.createdAt.toISOString(),
       score: attempt.score,
@@ -539,10 +550,19 @@ export class TestsService {
       answers: attempt.responses.map((r) => ({
         questionId: r.question.id,
         text: r.question.text,
+        options: [
+          { key: 'A' as const, text: r.question.optionA },
+          { key: 'B' as const, text: r.question.optionB },
+          { key: 'C' as const, text: r.question.optionC },
+          { key: 'D' as const, text: r.question.optionD },
+        ],
         chosenOption: r.chosenOption,
         correctAnswer: r.question.correctAnswer,
         explanation: r.question.explanation,
         isCorrect: r.isCorrect,
+        // उजळणीत विषय दाखवायला — bookmark कार्डावर तोच दिसतो, म्हणून दोन
+        // ठिकाणी सारखं.
+        subject: r.question.subject?.name ?? 'इतर',
       })),
     };
   }
