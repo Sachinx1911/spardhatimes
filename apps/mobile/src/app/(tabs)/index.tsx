@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/ui/async-state';
+import { HomeCarousel } from '@/components/ui/home-carousel';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
 import { api } from '@/lib/api';
@@ -99,24 +100,12 @@ export default function DashboardScreen() {
         ) : null}
       </View>
 
-      {/* ── जाहिरात पट्टी ──
-          Design मध्ये इथे तयार poster आहे. ती प्रतिमा अजून मिळालेली नाही,
-          म्हणून तोच संदेश मजकुरात मांडला आहे. Poster आल्यावर हा भाग एका
-          <Image> ने बदलायचा. */}
-      <View style={styles.banner}>
-        <Text style={styles.bannerKicker}>SPARDHA TIMES</Text>
-        <Text style={styles.bannerTitle}>महाराष्ट्रातील</Text>
-        <Text style={styles.bannerTitleAccent}>सर्वोत्कृष्ट अभ्यासक्रम!</Text>
-        <View style={styles.bannerPill}>
-          <Text style={styles.bannerPillText}>परीक्षेसाठी तयार… स्पर्धा टाईम्स सोबत!</Text>
-        </View>
-        <View style={styles.bannerPoints}>
-          <BannerPoint label="संपूर्ण पॅटर्न नुसार प्रश्न" />
-          <BannerPoint label="सविस्तर स्पष्टीकरणासहित" />
-          <BannerPoint label="लेटेस्ट चालू घडामोडी" />
-          <BannerPoint label="टॉपिक वाईज टेस्ट" />
-        </View>
-      </View>
+      {/* ── सरकती पट्टी: जाहिराती + ताजे tests ── */}
+      <HomeCarousel
+        banners={data.banners}
+        latestTests={data.latestTests}
+        onOpenTest={(id) => router.push(`/quiz/${id}/attempt`)}
+      />
 
       {/* ── चालू series ── */}
       <SectionHeader title="चालू असलेल्या टेस्ट सिरीज" onViewAll={() => router.push('/tests')} />
@@ -241,17 +230,6 @@ export default function DashboardScreen() {
   );
 }
 
-function BannerPoint({ label }: { label: string }) {
-  return (
-    <View style={styles.bannerPoint}>
-      <Ionicons name="checkmark-circle" size={13} color={colors.primary} />
-      <Text style={styles.bannerPointText} numberOfLines={1}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 function Stat({
   icon,
   tint,
@@ -333,61 +311,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
 
-  // ── पट्टी ──
-  banner: {
-    marginTop: spacing.lg,
-    backgroundColor: colors.primaryLight,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-  },
-  bannerKicker: {
-    ...componentType.smallLabel,
-    ...strong.bold,
-    color: colors.error,
-    letterSpacing: 1,
-  },
-  bannerTitle: {
-    ...typography.titleL,
-    ...strong.bold,
-    color: colors.text,
-    marginTop: spacing.xs,
-  },
-  bannerTitleAccent: {
-    ...typography.headingL,
-    ...strong.bold,
-    color: colors.error,
-  },
-  bannerPill: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.primary,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginTop: spacing.md,
-  },
-  bannerPillText: {
-    ...componentType.smallLabel,
-    ...strong.semibold,
-    color: colors.textInverse,
-  },
-  bannerPoints: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: spacing.md,
-    rowGap: spacing.sm,
-  },
-  bannerPoint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    width: '50%',
-    paddingRight: spacing.sm,
-  },
-  bannerPointText: {
-    ...componentType.smallLabel,
-    color: colors.text,
-    flex: 1,
-  },
 
   // ── चालू series ──
   bleed: {

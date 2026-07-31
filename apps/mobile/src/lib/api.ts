@@ -153,6 +153,23 @@ export interface Me {
 export interface ApiDashboard {
   name: string | null;
   examName: string | null;
+  /** Admin ने ठरवलेल्या जाहिराती. रिकामं असेल तर app स्वतःची पट्टी दाखवतो. */
+  banners: {
+    id: string;
+    title: string;
+    imageUrl: string;
+    linkUrl: string | null;
+  }[];
+  /** नुकतेच **उघडलेले** tests — पुढे येणारे इथे येत नाहीत. */
+  latestTests: {
+    id: string;
+    title: string;
+    seriesTitle: string | null;
+    questionCount: number;
+    durationMinutes: number;
+    marks: number;
+    releaseAt: string | null;
+  }[];
   activeSeries: {
     id: string;
     title: string;

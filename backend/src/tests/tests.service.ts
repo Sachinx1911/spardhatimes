@@ -28,7 +28,7 @@ export class TestsService {
     const dayEnd = new Date(dayStart);
     dayEnd.setDate(dayEnd.getDate() + 1);
 
-    const [user, access, attempts] = await Promise.all([
+    const [user, access, attempts, banners] = await Promise.all([
       this.prisma.client.user.findUnique({
         where: { id: userId },
         select: { name: true },
@@ -55,21 +55,62 @@ export class TestsService {
         where: { userId, status: 'COMPLETED' },
         select: { percentage: true },
       }),
+      // चालू जाहिराती — मुदत संपलेल्या किंवा अजून सुरू न झालेल्या वगळून.
+      this.prisma.client.banner.findMany({
+        where: {
+          active: true,
+          AND: [
+            { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+            { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
+          ],
+        },
+        select: { id: true, title: true, imageUrl: true, linkUrl: true },
+        orderBy: { orderIndex: 'asc' },
+      }),
     ]);
 
     // मुदत संपलेल्या series dashboard वर "चालू" म्हणून दाखवायच्या नाहीत.
     const live = access.filter((a) => a.expiresAt === null || a.expiresAt > now);
 
+    const liveSeriesIds = live.map((a) => a.testSeries.id);
+
     // आजचे tests — चालू series मधले, आज प्रकाशित होणारे.
-    const todaysTests = live.length
+    const todaysTests = liveSeriesIds.length
       ? await this.prisma.client.quiz.count({
           where: {
-            testSeriesId: { in: live.map((a) => a.testSeries.id) },
+            testSeriesId: { in: liveSeriesIds },
             status: 'PUBLISHED',
             releaseAt: { gte: dayStart, lt: dayEnd },
           },
         })
       : 0;
+
+    /**
+     * ताजे tests — dashboard च्या सरकत्या पट्टीतल्या दुसऱ्या पानासाठी.
+     *
+     * फक्त **उघडलेले** (releaseAt निघून गेलेला) घेतो. पुढे येणारे इथे दाखवले
+     * तर विद्यार्थी दाबेल आणि "अजून उघडला नाही" असं तोंडावर आदळेल.
+     */
+    const latestTests = liveSeriesIds.length
+      ? await this.prisma.client.quiz.findMany({
+          where: {
+            testSeriesId: { in: liveSeriesIds },
+            status: 'PUBLISHED',
+            OR: [{ releaseAt: null }, { releaseAt: { lte: now } }],
+          },
+          select: {
+            id: true,
+            title: true,
+            duration: true,
+            marks: true,
+            releaseAt: true,
+            testSeries: { select: { title: true } },
+            _count: { select: { questions: true } },
+          },
+          orderBy: [{ releaseAt: 'desc' }, { createdAt: 'desc' }],
+          take: 3,
+        })
+      : [];
 
     const attempted = attempts.length;
     const averageScore = attempted
@@ -92,6 +133,16 @@ export class TestsService {
 
     return {
       name: user?.name ?? null,
+      banners,
+      latestTests: latestTests.map((q) => ({
+        id: q.id,
+        title: q.title,
+        seriesTitle: q.testSeries?.title ?? null,
+        questionCount: q._count.questions,
+        durationMinutes: q.duration,
+        marks: q.marks,
+        releaseAt: q.releaseAt?.toISOString() ?? null,
+      })),
       /**
        * "MPSC Aspirant" — विद्यार्थ्याने निवडलेली परीक्षा schema मध्ये नाही,
        * म्हणून त्याच्या series वरून काढतो. एकाहून जास्त परीक्षा असतील तर
