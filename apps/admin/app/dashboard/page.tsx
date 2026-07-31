@@ -1,6 +1,7 @@
 import React from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { isAccessLive } from "@mahatest/core";
 import { db } from "@mahatest/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -24,6 +25,7 @@ import Link from "next/link";
 import { SettingsForm } from "@/components/dashboard/SettingsForm";
 import { PerformanceCharts } from "@/components/dashboard/PerformanceChartsLazy";
 import { MyTestSeries } from "@/components/dashboard/MyTestSeries";
+import { BuyTestSeries, type BuyableSeries } from "@/components/dashboard/BuyTestSeries";
 import { syncTestSeriesReleases } from "@/lib/releases";
 import { Layers3 } from "lucide-react";
 
@@ -52,11 +54,12 @@ export default async function StudentDashboardPage() {
   let certificates: any[] = [];
   let notifications: any[] = [];
   let assignedSeries: any[] = [];
+  let buyableSeries: BuyableSeries[] = [];
 
   try {
     // Run all dashboard reads concurrently instead of awaiting them one by one
     // — the slowest single query now sets the page latency, not their sum.
-    const [u, att, bm, certs, notifs, access] = await Promise.all([
+    const [u, att, bm, certs, notifs, access, catalogue] = await Promise.all([
       db.user.findUnique({ where: { id: userId } }),
       db.quizAttempt.findMany({
         where: { userId },
@@ -86,6 +89,9 @@ export default async function StudentDashboardPage() {
         take: 10,
       }),
       // Test series assigned to this student (published only), with their tests.
+      // `expiresAt` comes along so expired access can be split out below — this
+      // query cannot filter it, because an expired row is exactly what makes a
+      // series reappear as buyable.
       db.testSeriesAccess.findMany({
         where: { userId, testSeries: { published: true } },
         orderBy: { createdAt: "desc" },
@@ -93,6 +99,7 @@ export default async function StudentDashboardPage() {
           testSeries: {
             include: {
               category: { select: { name: true } },
+              exam: { select: { name: true } },
               quizzes: {
                 orderBy: { orderIndex: "asc" },
                 select: {
@@ -110,6 +117,25 @@ export default async function StudentDashboardPage() {
           },
         },
       }),
+
+      // Everything on sale. What the student already holds is filtered out
+      // below, in one pass, rather than with a second round trip.
+      db.testSeries.findMany({
+        where: { published: true },
+        orderBy: [{ createdAt: "desc" }],
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          priceInPaise: true,
+          mrpInPaise: true,
+          validityMonths: true,
+          plannedTotalTests: true,
+          category: { select: { name: true } },
+          exam: { select: { name: true } },
+          _count: { select: { quizzes: true } },
+        },
+      }),
     ]);
 
     user = u;
@@ -117,7 +143,40 @@ export default async function StudentDashboardPage() {
     bookmarks = bm;
     certificates = certs;
     notifications = notifs;
-    assignedSeries = access.map((a) => a.testSeries);
+    /**
+     * Live access versus expired.
+     *
+     * The old code mapped every access row into "My Tests", expiry ignored, so a
+     * series whose validity had run out still looked owned here — while the
+     * attempt rules (`evaluateAttemptAccess`) correctly refused it. The student
+     * saw a series they could not open and no way to renew.
+     *
+     * `isAccessLive` is the same helper the attempt rules use, so the two agree.
+     */
+    const now = new Date();
+    const live = access.filter((a) => isAccessLive(a.expiresAt, now));
+    const expiredSeriesIds = new Set(
+      access.filter((a) => !isAccessLive(a.expiresAt, now)).map((a) => a.testSeriesId)
+    );
+    const liveSeriesIds = new Set(live.map((a) => a.testSeriesId));
+
+    assignedSeries = live.map((a) => a.testSeries);
+
+    buyableSeries = catalogue
+      .filter((s) => !liveSeriesIds.has(s.id))
+      .map((s) => ({
+        id: s.id,
+        title: s.title,
+        description: s.description,
+        categoryName: s.category?.name ?? null,
+        examName: s.exam?.name ?? null,
+        testCount: s._count.quizzes,
+        plannedTotalTests: s.plannedTotalTests,
+        priceInPaise: s.priceInPaise,
+        mrpInPaise: s.mrpInPaise,
+        validityMonths: s.validityMonths,
+        expired: expiredSeriesIds.has(s.id),
+      }));
   } catch (err) {
     console.error("Error loading student dashboard:", err);
   }
@@ -240,6 +299,16 @@ export default async function StudentDashboardPage() {
                 />
               </CardContent>
             </Card>
+
+            {/* Buying sits under My Tests rather than in its own tab: "these are
+                yours … and here is what else you can get" reads in that order,
+                and an eighth trigger did not fit the tab strip. The component
+                renders nothing when there is nothing left to sell. */}
+            {buyableSeries.length > 0 && (
+              <div className="mt-6">
+                <BuyTestSeries series={buyableSeries} />
+              </div>
+            )}
           </TabsContent>
 
           {/* Tab 1: Attempt History */}

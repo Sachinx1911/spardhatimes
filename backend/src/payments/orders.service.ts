@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { accessExpiryFor, isAccessLive } from '@mahatest/core';
 import { OrderStatus, PaymentGateway } from '@mahatest/db';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -19,23 +20,6 @@ export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * मुदत मोजणे — आजपासून `validityMonths` महिने.
-   *
-   * `0` म्हणजे कायमस्वरूपी, तेव्हा `null` (entitlement तपासणी null ला
-   * "कधीच संपत नाही" असं वाचते).
-   *
-   * `setMonth` महिन्याचे दिवस स्वतः सांभाळतो: 31 जानेवारीला एक महिना जोडला की
-   * JavaScript 3 मार्च करतो. विद्यार्थ्याच्या बाजूने तो एक दिवस जास्त आहे,
-   * कमी नाही — म्हणून तो चालेल.
-   */
-  private expiryFor(validityMonths: number, from = new Date()): Date | null {
-    if (validityMonths <= 0) return null;
-    const d = new Date(from);
-    d.setMonth(d.getMonth() + validityMonths);
-    return d;
-  }
-
-  /**
    * विद्यार्थ्याला series चा access देणे.
    *
    * `upsert` मुद्दाम — webhook तोच event दोनदा पाठवू शकतो, आणि दोनदा access
@@ -48,7 +32,7 @@ export class OrdersService {
     validityMonths: number,
     orderId: string | null
   ) {
-    const expiresAt = this.expiryFor(validityMonths);
+    const expiresAt = accessExpiryFor(validityMonths);
     await this.prisma.client.testSeriesAccess.upsert({
       where: { userId_testSeriesId: { userId, testSeriesId } },
       update: { expiresAt, orderId },
@@ -84,7 +68,7 @@ export class OrdersService {
       where: { userId_testSeriesId: { userId, testSeriesId } },
       select: { expiresAt: true },
     });
-    if (existing && (existing.expiresAt === null || existing.expiresAt > new Date())) {
+    if (existing && isAccessLive(existing.expiresAt)) {
       throw new BadRequestException('ही series तुमच्याकडे आधीच आहे.');
     }
 
@@ -183,7 +167,7 @@ export class OrdersService {
         data: { status: OrderStatus.PAID, gatewayPaymentId, paidAt: new Date() },
       });
 
-      const expiresAt = this.expiryFor(order.testSeries.validityMonths);
+      const expiresAt = accessExpiryFor(order.testSeries.validityMonths);
       await tx.testSeriesAccess.upsert({
         where: {
           userId_testSeriesId: { userId: order.userId, testSeriesId: order.testSeriesId },

@@ -60,6 +60,7 @@ model User {
   
   attempts      QuizAttempt[]
   bookmarks     Bookmark[]
+  articleBookmarks ArticleBookmark[]
   certificates  Certificate[]
   notifications Notification[]
   adminLogs     AdminLog[]
@@ -421,4 +422,92 @@ model AdminLog {
   createdAt DateTime @default(now())
 
   @@index([adminId])
+}
+
+/// जाहिरातींची पट्टी.
+///
+/// ⚠️ **हा model database मध्ये आधीच होता, schema मध्ये नव्हता.** 2026-07-31 ला
+/// `prisma migrate diff` ने दाखवलं की `db push` त्याला `DROP TABLE` करणार आहे —
+/// म्हणजे त्यातली जाहिरात नष्ट. म्हणून तो जसा आहे तसा इथे नोंदवला आहे: columns,
+/// nullability, defaults आणि index सगळं database मधून तंतोतंत घेतलं.
+///
+/// यातून धडा असा: `main` आणि ही branch **एकाच** Supabase वर आहेत पण त्यांची
+/// schema वेगळी. एका branch मधून `db push` केलं की दुसऱ्या branch ची tables उडतात.
+/// नवीन table कुठे बनवलं तरी ते **दोन्ही** schema मध्ये नोंदवा, नाहीतर पुढच्या
+/// push ला तेच पुन्हा होईल.
+// ─── चालू घडामोडी ──────────────────────────────────────────────────────────────
+//
+// हे quiz-आधारित models पासून मुद्दाम वेगळे आहेत. `Category` आणि `Subject` हे
+// प्रश्नांचे गट आहेत आणि त्यांच्यावर `totalTests` / `orderIndex` सारखी quiz ची
+// fields आहेत — तिथे लेखांचे गट कोंबले असते तर दोन्हीचे अर्थ गढूळ झाले असते.
+
+/// लेखांचे गट — "राष्ट्रीय", "आंतरराष्ट्रीय", "अर्थव्यवस्था"…
+model ArticleCategory {
+  id         String    @id @default(cuid())
+  /// मराठी नाव — cards वरचा tag आणि खालची वर्तुळं यात हेच दिसतं.
+  name       String    @unique
+  /// इंग्रजी नाव — वरचे chips design मध्ये इंग्रजीत आहेत ("Science & Tech").
+  /// Nullable, म्हणजे admin ने न दिलं तरी चालतं; app तेव्हा मराठी नाव वापरतो.
+  /// slug वरून काढता येत नाही — "science-tech" चं "Science & Tech" होत नाही.
+  nameEn     String?
+  slug       String    @unique
+  /// Ionicons चं नाव, admin ठरवतो — `Exam.icon` सारखंच.
+  icon       String?
+  /// Chip आणि गोल चिन्हाचा रंग (hex). null असेल तर app ठरलेला रंग वापरतो,
+  /// म्हणजे admin ने रंग न दिला तरी पडदा बिघडत नाही.
+  color      String?
+  orderIndex Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  articles   Article[]
+}
+
+model Article {
+  id          String            @id @default(cuid())
+  title       String
+  slug        String            @unique
+  /// यादीत दिसणारा दोन ओळींचा सारांश. नसेल तर app `body` ची सुरुवात वापरतो.
+  excerpt     String?
+  body        String
+  /// थंबनेल / hero चित्र. फाइल upload ऐवजी URL — admin कडे आधीच
+  /// `/public/uploads/` आहे आणि तिथला पत्ता इथे टाकता येतो; बाहेरचाही चालतो.
+  imageUrl    String?
+  categoryId  String
+  /// गट काढून टाकला तर त्याखालचे लेख आपोआप जाऊ नयेत — म्हणून `Restrict`.
+  /// (`Cascade` असतं तर एक चूक शंभर लेख घेऊन गेली असती.)
+  category    ArticleCategory   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  /// `TestSeries` सारखंच boolean — नवीन enum जोडण्याची गरज नाही.
+  published   Boolean           @default(false)
+  /// कधी प्रकाशित झाला. यादीचा क्रम याच्यावरून, `createdAt` वरून नाही — जुना
+  /// लेख नंतर प्रकाशित केला तर तो वरतीच यायला हवा.
+  publishedAt DateTime?
+  /// वरच्या carousel मध्ये दाखवायचा का ("Top News").
+  isTopNews   Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  bookmarks   ArticleBookmark[]
+
+  // यादी नेहमी "प्रकाशित, नवीन आधी" अशी मागवली जाते.
+  @@index([published, publishedAt])
+  @@index([categoryId])
+}
+
+/// लेखाची खूण.
+///
+/// `Bookmark` मध्ये कोंबलेली नाही — तिथे `questionId` आणि `quizId` सक्तीचे आहेत
+/// आणि `@@unique([userId, questionId])` आहे. लेखासाठी ती nullable केली असती तर
+/// तो unique नियम मोडला असता आणि "सोडवलेला प्रश्न असेल तरच" ही तपासणीही गोंधळली
+/// असती. वेगळं table स्वस्त आहे.
+model ArticleBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, articleId])
+  @@index([articleId])
 }

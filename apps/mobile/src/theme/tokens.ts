@@ -47,6 +47,17 @@ export const colors = {
    * tags शी गोंधळतो.
    */
   primarySoft: '#EEF2FF',
+
+  /**
+   * Home वरच्या tile जाळीत आठ चौकोन आहेत आणि पाच मुख्य रंग पुरत नाहीत — दोन
+   * tiles ला शेजारचाच रंग मिळाला असता आणि ते एकाच गटातले वाटले असते. म्हणून हे
+   * दोन. सुटे hex म्हणून screen मध्ये लिहिलेले होते; नियम १ प्रमाणे token केले.
+   *
+   * हेच दोन रंग `subjectColors` मध्ये Maths आणि Geography ला आहेत — तेही आता
+   * इथूनच घेतात, म्हणून एकच जागा.
+   */
+  accentViolet: '#8B5CF6',
+  accentSky: '#0EA5E9',
 } as const;
 
 // ─── 2. TYPOGRAPHY (Poppins) ─────────────────────────────────────────────────
@@ -203,12 +214,12 @@ export const layout = {
 export const subjectColors: Record<string, string> = {
   'Current Affairs': colors.success,
   'Indian Polity': colors.primary,
-  Geography: '#0EA5E9',
+  Geography: colors.accentSky,
   Economy: colors.warning,
   History: colors.danger,
   'Science & Tech': '#14B8A6',
   'General Studies': colors.primary,
-  Maths: '#8B5CF6',
+  Maths: colors.accentViolet,
   Marathi: colors.danger,
   GK: colors.primary,
 };

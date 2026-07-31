@@ -13,3 +13,5 @@ export * from './grading';
 export * from './entitlements';
 export * from './quiz-access';
 export * from './question-import';
+export * from './reading-time';
+export * from './purchase';
