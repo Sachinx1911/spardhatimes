@@ -182,6 +182,14 @@ enum OrderStatus {
   FAILED
 }
 
+/// पैसे कोणत्या gateway ने घेतले. प्रत्येक order वर नोंदवतो कारण gateway बदलला
+/// तरी जुन्या खरेदी कुठून आल्या हे कळलं पाहिजे — परतावा त्याच gateway मधून
+/// द्यावा लागतो.
+enum PaymentGateway {
+  RAZORPAY
+  INSTAMOJO
+}
+
 /// एक खरेदी. जुळवणी आणि परताव्यासाठी प्रत्येक प्रयत्नाची नोंद राहते —
 /// अयशस्वी झालेलेही, कारण "पैसे गेले पण access मिळाला नाही" अशा तक्रारीत
 /// तीच नोंद उपयोगी पडते.
@@ -194,12 +202,18 @@ model Order {
 
   /// किंमत खरेदीच्या वेळची — पुढे series ची किंमत बदलली तरी जुनी नोंद बदलत नाही.
   amountInPaise     Int
-  status            OrderStatus @default(CREATED)
+  status            OrderStatus    @default(CREATED)
 
-  razorpayOrderId   String      @unique
-  razorpayPaymentId String?
+  // Gateway ची नावं मुद्दाम निरपेक्ष आहेत. Razorpay आणि Instamojo दोन्ही
+  // चालावेत असं ठरलं आहे, म्हणून `razorpayOrderId` सारखं नाव ठेवलं असतं तर
+  // दुसरा gateway जोडताना ते खोटं ठरलं असतं.
+  gateway           PaymentGateway
+  /// Gateway ने दिलेला order/payment-request चा id.
+  gatewayOrderId    String         @unique
+  /// पैसे भरल्यावर gateway देतो तो id. भरेपर्यंत null.
+  gatewayPaymentId  String?
 
-  createdAt         DateTime    @default(now())
+  createdAt         DateTime       @default(now())
   paidAt            DateTime?
 
   @@index([userId])
