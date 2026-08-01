@@ -68,6 +68,7 @@ import {
   X,
   XCircle,
   type LucideIcon,
+  Calendar,
 } from 'lucide-react-native';
 
 import { colors } from '@/theme/tokens';
@@ -113,6 +114,7 @@ const MAP: Record<string, LucideIcon> = {
   library: BookMarked,
   learn: BookOpen,
   'document-text': FileText,
+  calendar: Calendar,
   reader: FileText,
   'file-tray': FileText,
   clipboard: ClipboardList,

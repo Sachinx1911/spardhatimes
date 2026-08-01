@@ -134,7 +134,7 @@ export default function PdfNotesScreen() {
                     <Pressable
                       key={s.id}
                       style={styles.row}
-                      onPress={() => router.push(`/learn?subject=${s.id}&type=NOTE`)}>
+                      onPress={() => router.push(`/notes/${s.id}`)}>
                       <View style={[styles.rowIcon, { backgroundColor: look.color }]}>
                         <Icon name={look.icon} size={24} color={colors.textInverse} />
                       </View>
