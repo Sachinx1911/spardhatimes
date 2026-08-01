@@ -49,7 +49,7 @@ const TILES: Tile[] = [
     title: 'ONLINE TEST',
     icon: 'clipboard',
     tint: colors.blue,
-    href: '/tests',
+    href: '/online-test',
   },
   {
     title: 'PDF NOTES',

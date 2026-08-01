@@ -36,6 +36,8 @@ export const colors = {
   surface: '#FFFFFF',
 
   blue: '#3B82F6',
+  /** ONLINE TEST sheet मधलं Info — blue सारखाच, पण नावाने वेगळा वापर. */
+  info: '#3B82F6',
   green: '#22C55E',
   orange: '#F59E0B',
   purple: '#7C3AED',
@@ -88,6 +90,12 @@ export const colors = {
  * राहतो — हे मुद्दाम.
  */
 export const screenAccent = {
+  /** ONLINE TEST — PDF Notes सारखाच जांभळा संच. */
+  onlineTest: {
+    primary: '#5B3DF5',
+    primaryDark: '#4427D6',
+    primaryLight: '#F3F0FF',
+  },
   /** Home — Home design sheet मधून. */
   home: {
     primary: '#EF4444',
@@ -166,6 +174,12 @@ export const componentType = {
   screenHeaderTitle: { fontSize: 20, fontFamily: fonts.semibold, lineHeight: 28 },
   /** Banner चं मोठं शीर्षक — 24sp ExtraBold. */
   bannerHeading: { fontSize: 24, fontFamily: fonts.extrabold, lineHeight: 32 },
+  /** ONLINE TEST sheet: आकडा Bold 22sp. */
+  statNumber: { fontSize: 22, fontFamily: fonts.bold, lineHeight: 28 },
+  /** ONLINE TEST sheet: यादीतल्या ओळीचं शीर्षक — Medium 15sp. */
+  rowTitle: { fontSize: 15, fontFamily: fonts.medium, lineHeight: 22 },
+  /** ONLINE TEST sheet: बटणाचा मजकूर — SemiBold 14sp. */
+  buttonSmall: { fontSize: 14, fontFamily: fonts.semibold, lineHeight: 20 },
   /** बिल्ल्यातला आकडा — 18dp चौकटीत मावेल एवढा. */
   badgeSmall: { fontSize: 10, fontFamily: fonts.bold, lineHeight: 14 },
   /** ओळीखालचा लहान आकडा / क्रिया. */
@@ -296,6 +310,21 @@ export const layout = {
   bannerArtWidth: 80,
   /** Sheet: promo चं बटण 96dp रुंद. मजकुराला उरलेली जागा मिळावी म्हणून निश्चित. */
   promoButtonWidth: 96,
+
+  // ── ONLINE TEST sheet मधली मापं ──
+  /** वरचं कार्ड — 128dp (PDF Notes च्या 140 पेक्षा बुटकं). */
+  testBannerHeight: 128,
+  /** चार आकड्यांची कार्डं — 80dp. */
+  statCardHeight: 80,
+  /** Test ची ओळ — 72dp, चिन्हाची चौकट 40dp. */
+  testRowHeight: 72,
+  iconBoxSmall: 40,
+  /** Free/Paid switcher — 40dp उंच, गोल. */
+  switcherHeight: 40,
+  /** खालचं promo — 64dp. */
+  testPromoHeight: 64,
+  /** ओळीतलं छोटं बटण — sheet: 40dp. */
+  buttonHeightSmall: 40,
   buttonSecondaryHeight: 44,
   buttonSmall: { width: 120, height: 40 },
   buyButton: { width: 96, height: 40 },

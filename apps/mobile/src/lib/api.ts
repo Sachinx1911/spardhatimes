@@ -261,6 +261,36 @@ export interface ApiLearnOverview {
   }[];
 }
 
+/**
+ * `GET /online-tests` — ONLINE TEST चा पडदा.
+ *
+ * मोफत आणि पैसे घेणारे **वेगळे** येतात कारण design मध्ये त्यांचा switcher आहे.
+ * `owned` म्हणजे चालू access — पैसे घेणाऱ्यावर तो false असेल तर "Buy".
+ */
+export interface ApiOnlineTest {
+  id: string;
+  title: string;
+  questionCount: number;
+  marks: number;
+  durationMinutes: number;
+  /** किती विद्यार्थ्यांनी दिला. */
+  attemptCount: number;
+  seriesId: string | null;
+  owned: boolean;
+}
+
+export interface ApiOnlineTests {
+  stats: {
+    availableTests: number;
+    attemptedTests: number;
+    averageScore: number;
+    /** एकही test सोडवला नसेल तर null. */
+    overallRank: number | null;
+  };
+  free: ApiOnlineTest[];
+  paid: ApiOnlineTest[];
+}
+
 export type ApiMaterialType = 'NOTE' | 'VIDEO' | 'BOOK' | 'SHORT';
 
 /**
@@ -564,6 +594,8 @@ export const api = {
 
   /** `GET /notes` — PDF Notes चा पडदा. */
   notes: () => request<ApiNotes>('/notes'),
+
+  onlineTests: () => request<ApiOnlineTests>('/online-tests'),
 
   learn: () => request<ApiLearnOverview>('/learn'),
 

@@ -3,6 +3,7 @@ import {
   attemptAccessInclude,
   decideAttemptAccess,
   gradeAttempt,
+  isAccessLive,
   messageForReason,
   testState,
   type SubmittedAnswer,
@@ -249,6 +250,111 @@ export class TestsService {
       icon: e.icon,
       seriesCount: e._count.testSeries,
     }));
+  }
+
+/**
+   * ONLINE TEST चा पडदा — **वैयक्तिक tests**, series नाही.
+   *
+   * मोफत आणि पैसे घेणारे वेगळे: quiz ज्या series मध्ये आहे तिची किंमत ० असेल
+   * तर मोफत. Series नसलेला पण `isPublic` quiz सुद्धा मोफतच.
+   *
+   * पैसे घेणारे **लपवत नाही** — design मध्ये त्यांचा वेगळा tab आहे. पण
+   * `owned` सांगतो, म्हणजे app "Start" की "Buy" ठरवू शकतो.
+   */
+  async onlineTests(userId: string) {
+    const now = new Date();
+
+    const [quizzes, myAccess, myAttempts] = await Promise.all([
+      this.prisma.client.quiz.findMany({
+        where: {
+          status: 'PUBLISHED',
+          // उघडलेलेच — पुढे येणारे दाखवले तर विद्यार्थी दाबेल आणि नकार मिळेल.
+          OR: [{ releaseAt: null }, { releaseAt: { lte: now } }],
+        },
+        select: {
+          id: true,
+          title: true,
+          duration: true,
+          marks: true,
+          testSeriesId: true,
+          isPublic: true,
+          testSeries: { select: { id: true, priceInPaise: true, published: true } },
+          _count: { select: { questions: true, attempts: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.client.testSeriesAccess.findMany({
+        where: { userId },
+        select: { testSeriesId: true, expiresAt: true },
+      }),
+      this.prisma.client.quizAttempt.findMany({
+        where: { userId, status: 'COMPLETED' },
+        select: { percentage: true },
+      }),
+    ]);
+
+    const ownedSeries = new Set(
+      myAccess.filter((a) => isAccessLive(a.expiresAt)).map((a) => a.testSeriesId)
+    );
+
+    // प्रश्न नसलेला quiz यादीत दाखवण्यात अर्थ नाही — तो उघडला तर रिकामा दिसेल.
+    const usable = quizzes.filter(
+      (q) => q._count.questions > 0 && (!q.testSeries || q.testSeries.published)
+    );
+
+    const shape = (q: (typeof usable)[number]) => ({
+      id: q.id,
+      title: q.title,
+      questionCount: q._count.questions,
+      marks: q.marks,
+      durationMinutes: q.duration,
+      /** किती विद्यार्थ्यांनी दिला — design मधलं "दिलेलं: 2,458". */
+      attemptCount: q._count.attempts,
+      seriesId: q.testSeries?.id ?? null,
+      owned: q.testSeries ? ownedSeries.has(q.testSeries.id) : true,
+    });
+
+    const isFree = (q: (typeof usable)[number]) =>
+      q.testSeries ? q.testSeries.priceInPaise === 0 : q.isPublic;
+
+    const attempted = myAttempts.length;
+    const averageScore = attempted
+      ? Math.round(myAttempts.reduce((n, a) => n + a.percentage, 0) / attempted)
+      : 0;
+
+    return {
+      stats: {
+        availableTests: usable.length,
+        attemptedTests: attempted,
+        averageScore,
+        overallRank: await this.overallRank(userId, attempted),
+      },
+      free: usable.filter(isFree).map(shape),
+      paid: usable.filter((q) => !isFree(q)).map(shape),
+    };
+  }
+
+  /**
+   * सगळ्या विद्यार्थ्यांत या विद्यार्थ्याचा क्रमांक — सरासरी टक्क्यांनुसार.
+   *
+   * एकही test सोडवला नसेल तर क्रमांकच नाही (`null`) — शून्य दाखवणं दिशाभूल
+   * करणारं ठरेल.
+   *
+   * ⚠️ हे सगळ्या attempts वर मोजतं. विद्यार्थी वाढल्यावर हे महाग होईल; तेव्हा
+   * सरासरी वेगळ्या स्तंभात ठेवून तिथून मोजावी लागेल.
+   */
+  private async overallRank(userId: string, attempted: number): Promise<number | null> {
+    if (attempted === 0) return null;
+
+    const perStudent = await this.prisma.client.quizAttempt.groupBy({
+      by: ['userId'],
+      where: { status: 'COMPLETED', userId: { not: null } },
+      _avg: { percentage: true },
+    });
+
+    const mine = perStudent.find((r) => r.userId === userId)?._avg.percentage ?? 0;
+    // माझ्यापेक्षा चांगले किती — त्यांच्यानंतरचा क्रमांक माझा.
+    return perStudent.filter((r) => (r._avg.percentage ?? 0) > mine).length + 1;
   }
 
   /** विद्यार्थ्याला दिलेल्या series, प्रत्येकीची प्रगती सह. */

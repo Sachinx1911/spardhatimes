@@ -34,6 +34,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="analytics" />
       <Tabs.Screen name="current-affairs" />
       <Tabs.Screen name="pdf-notes" />
+      <Tabs.Screen name="online-test" />
       <Tabs.Screen name="bookmarks" />
       <Tabs.Screen name="article/[slug]" />
     </Tabs>

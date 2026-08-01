@@ -21,6 +21,7 @@ import {
   ClipboardList,
   Clock,
   CloudOff,
+  ArrowUpDown,
   Atom,
   Download,
   Eye,
@@ -163,6 +164,8 @@ const MAP: Record<string, LucideIcon> = {
   /** PDF Notes sheet च्या icon set मधून. */
   eye: Eye,
   list: List,
+  /** क्रम बदलण्याचं चिन्ह — ONLINE TEST sheet मधून. */
+  sort: ArrowUpDown,
   /** विषयांची चिन्हं — इतिहास/भूगोल sheet मध्ये आहेत तशी. */
   atom: Atom,
   chart: LineChart,
