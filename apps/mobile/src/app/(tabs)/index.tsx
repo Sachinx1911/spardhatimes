@@ -55,7 +55,7 @@ const TILES: Tile[] = [
     title: 'PDF NOTES',
     icon: 'file-tray',
     tint: colors.green,
-    href: '/learn',
+    href: '/pdf-notes',
   },
   // ── हे तीन अजून बांधलेले नाहीत ──
   // अभ्यासक्रम, सरळसेवा आणि दैनिक quiz यांचं schema मध्ये एकही model नाही.

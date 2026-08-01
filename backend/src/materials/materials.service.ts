@@ -22,6 +22,37 @@ export class MaterialsService {
    * शिफारशी. वेगवेगळ्या requests केल्या असत्या तर पडदा तुकड्या-तुकड्याने भरला
    * असता.
    */
+/**
+   * PDF Notes चा पडदा — **विषयानुसार टिपणांची संख्या.**
+   *
+   * `overview` सगळ्या प्रकारांची संख्या देतो (व्हिडिओ, पुस्तकं धरून). इथे
+   * फक्त `NOTE` हवेत, म्हणून वेगळी मोजणी — नाहीतर "इतिहास 18 नोट्स" च्या
+   * जागी व्हिडिओसुद्धा मोजले जातील आणि आकडा खोटा ठरेल.
+   */
+  async notesBySubject() {
+    const subjects = await this.prisma.client.subject.findMany({
+      select: {
+        id: true,
+        name: true,
+        orderIndex: true,
+        _count: { select: { materials: { where: { published: true, type: 'NOTE' } } } },
+      },
+      orderBy: [{ orderIndex: 'asc' }, { name: 'asc' }],
+    });
+
+    // टिपण नसलेला विषय दाखवण्यात अर्थ नाही — तो दाबल्यावर रिकामी यादीच उघडेल.
+    const withNotes = subjects.filter((s) => s._count.materials > 0);
+
+    return {
+      totalNotes: withNotes.reduce((n, s) => n + s._count.materials, 0),
+      subjects: withNotes.map((s) => ({
+        id: s.id,
+        name: s.name,
+        noteCount: s._count.materials,
+      })),
+    };
+  }
+
   async overview(userId: string) {
     const [counts, pyqCount, subjects, progress] = await Promise.all([
       this.prisma.client.studyMaterial.groupBy({

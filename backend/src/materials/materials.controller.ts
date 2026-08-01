@@ -39,6 +39,12 @@ export class MaterialsController {
     return this.materials.overview(req.user.id);
   }
 
+  @Get('notes')
+  @ApiOperation({ summary: 'PDF Notes — विषयानुसार टिपणांची संख्या' })
+  notes() {
+    return this.materials.notesBySubject();
+  }
+
   @Get('materials')
   @ApiQuery({ name: 'type', required: false, enum: StudyMaterialType })
   @ApiQuery({ name: 'subject', required: false, description: 'विषयाचा id' })

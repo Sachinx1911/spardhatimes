@@ -263,6 +263,18 @@ export interface ApiLearnOverview {
 
 export type ApiMaterialType = 'NOTE' | 'VIDEO' | 'BOOK' | 'SHORT';
 
+/**
+ * `GET /notes` — PDF Notes चा पडदा.
+ *
+ * `learn` सगळ्या प्रकारांची संख्या देतो; इथे **फक्त `NOTE`** मोजले आहेत,
+ * नाहीतर "इतिहास 18 नोट्स" मध्ये व्हिडिओसुद्धा धरले जातील.
+ */
+export interface ApiNotes {
+  totalNotes: number;
+  /** टिपण असलेले विषयच येतात — रिकामे गाळलेले. */
+  subjects: { id: string; name: string; noteCount: number }[];
+}
+
 /** `GET /materials` — प्रकार आणि विषयानुसार गाळता येते. */
 export interface ApiMaterial {
   id: string;
@@ -549,6 +561,9 @@ export const api = {
   myOrders: () => request<ApiOrder[]>('/orders'),
 
   analytics: () => request<ApiAnalytics>('/analytics'),
+
+  /** `GET /notes` — PDF Notes चा पडदा. */
+  notes: () => request<ApiNotes>('/notes'),
 
   learn: () => request<ApiLearnOverview>('/learn'),
 

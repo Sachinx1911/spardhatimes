@@ -45,6 +45,8 @@ export const colors = {
   text: '#111827',
   textSecondary: '#64748B',
   border: '#E5E7EB',
+  /** याद्यांमधली फिकट रेघ — sheet मध्ये कडेपेक्षा फिकट. */
+  divider: '#F1F5F9',
 
   success: '#22C55E',
   /**
@@ -75,9 +77,36 @@ export const colors = {
  * वरची पट्टी spec मध्ये gradient आहे. दोन टोकं इथे ठेवली आहेत म्हणजे
  * `LinearGradient` ला देताना प्रत्येक screen मध्ये hex लिहावे लागत नाहीत.
  */
+/**
+ * **प्रत्येक screen चा स्वतःचा रंग** (ठरलं 2026-08-01).
+ *
+ * Design sheets प्रत्येक screen ला वेगळा primary देतात — Home लाल, PDF Notes
+ * जांभळा. App भर एकच रंग लादण्याऐवजी तो screen-निहाय ठेवायचा ठरलं.
+ *
+ * **पण खालची पट्टी नाही.** Tab bar प्रत्येक screen वर दिसतो; त्याचा रंग
+ * screen मागे बदलला तर तो लुकलुकल्यासारखा दिसेल. तो `colors.primary` वरच
+ * राहतो — हे मुद्दाम.
+ */
+export const screenAccent = {
+  /** Home — Home design sheet मधून. */
+  home: {
+    primary: '#EF4444',
+    primaryDark: '#DC2626',
+    primaryLight: '#FFECEC',
+  },
+  /** PDF Notes — त्याच्या sheet मधून. */
+  pdfNotes: {
+    primary: '#5B3DF5',
+    primaryDark: '#4427D6',
+    primaryLight: '#F3F0FF',
+  },
+} as const;
+
 export const gradients = {
-  /** Banner ची पार्श्वभूमी — sheet मधला gradient. */
+  /** Home च्या banner ची पार्श्वभूमी. */
   banner: ['#FFECEC', '#FFF5F5'] as const,
+  /** PDF Notes च्या banner ची — त्याच्या sheet मधून. */
+  notesBanner: ['#F5F0FF', '#FFFFFF'] as const,
 } as const;
 
 // ─── 2. TYPOGRAPHY (Mukta) ───────────────────────────────────────────────────
@@ -133,6 +162,14 @@ export const componentType = {
   badge: { fontSize: 12, fontFamily: fonts.medium, lineHeight: 16 },
   smallLabel: { fontSize: 12, fontFamily: fonts.regular, lineHeight: 16 },
   /** Bottom nav चं label. */
+  /** रंगीत पट्टीतलं शीर्षक — 20sp SemiBold, पांढरं. */
+  screenHeaderTitle: { fontSize: 20, fontFamily: fonts.semibold, lineHeight: 28 },
+  /** Banner चं मोठं शीर्षक — 24sp ExtraBold. */
+  bannerHeading: { fontSize: 24, fontFamily: fonts.extrabold, lineHeight: 32 },
+  /** बिल्ल्यातला आकडा — 18dp चौकटीत मावेल एवढा. */
+  badgeSmall: { fontSize: 10, fontFamily: fonts.bold, lineHeight: 14 },
+  /** ओळीखालचा लहान आकडा / क्रिया. */
+  actionLabel: { fontSize: 11, fontFamily: fonts.regular, lineHeight: 16 },
   navLabel: { fontSize: 12, fontFamily: fonts.medium, lineHeight: 16 },
   priceCurrent: { fontSize: 22, fontFamily: fonts.bold, lineHeight: 30 },
   priceOld: { fontSize: 14, fontFamily: fonts.medium, lineHeight: 20 },
@@ -240,6 +277,25 @@ export const layout = {
 
   /** Spec: 52dp. */
   buttonHeight: 52,
+  /** PDF Notes sheet चं बटण — 44dp. Home पेक्षा बुटकं. */
+  buttonHeightCompact: 44,
+
+  // ── PDF Notes sheet मधली मापं ──
+  /** रंगीत पट्टीचं शीर्षक — 56dp. */
+  screenHeaderHeight: 56,
+  /** विषयाची ओळ — 76dp. */
+  subjectRowHeight: 76,
+  /** ओळीतल्या चिन्हाची चौकट — 48dp. */
+  iconBoxLarge: 48,
+  /** खालचं promo कार्ड — 72dp, त्यातली चौकट 44dp. */
+  promoHeight: 72,
+  promoIconBox: 44,
+  /** Sheet: सूचनांचा बिल्ला 18dp. */
+  badgeSmall: 18,
+  /** Banner च्या उजवीकडचं चित्र किती रुंद. */
+  bannerArtWidth: 80,
+  /** Sheet: promo चं बटण 96dp रुंद. मजकुराला उरलेली जागा मिळावी म्हणून निश्चित. */
+  promoButtonWidth: 96,
   buttonSecondaryHeight: 44,
   buttonSmall: { width: 120, height: 40 },
   buyButton: { width: 96, height: 40 },
