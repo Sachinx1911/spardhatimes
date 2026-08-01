@@ -34,7 +34,11 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
 
   const port = Number(process.env.PORT ?? 4000);
-  await app.listen(port);
+  // पत्ता स्पष्ट लिहिला आहे. Nest ची चूक टाळण्यासाठी नाही — तो आधीच सगळ्या
+  // जाळ्यांवर ऐकतो — तर हे **मुद्दाम** आहे हे दिसावं म्हणून: APK चाचणीच्या
+  // वेळी त्याच wifi वरचा फोन इथे येतो, आणि कोणीतरी हे localhost पुरतं
+  // बांधून टाकलं तर ती चाचणी गपचूप तुटेल.
+  await app.listen(port, '0.0.0.0');
   console.log(`API चालू आहे: http://localhost:${port}/api  (docs: /api/docs)`);
 }
 
