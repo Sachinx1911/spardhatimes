@@ -95,6 +95,14 @@ export const colors = {
  * screen मागे बदलला तर तो लुकलुकल्यासारखा दिसेल. तो `colors.primary` वरच
  * राहतो — हे मुद्दाम.
  */
+/**
+ * चालू घडामोडींच्या गटांचे रंग — sheet मधून जसेच्या तसे.
+ *
+ * Admin प्रत्येक गटाला स्वतःचा रंग देऊ शकतो (`categoryColor`); तो दिलेला
+ * नसेल तेव्हा नावावरून यातलाच एक निवडतो, म्हणजे तोच गट नेहमी त्याच रंगाचा.
+ */
+export const categoryColors = ['#8B5CF6', '#3882F6', '#22C55E', '#F97316'] as const;
+
 export const screenAccent = {
   /** ONLINE TEST — PDF Notes सारखाच जांभळा संच. */
   /** MPSC / कुठलीही परीक्षा — तोच जांभळा संच. */
@@ -113,6 +121,12 @@ export const screenAccent = {
     primary: '#EF4444',
     primaryDark: '#DC2626',
     primaryLight: '#FFECEC',
+  },
+  /** चालू घडामोडी — त्याच्या sheet मधून (PDF Notes सारखेच). */
+  currentAffairs: {
+    primary: '#5B3DF5',
+    primaryDark: '#4427D6',
+    primaryLight: '#F3F0FF',
   },
   /** PDF Notes — त्याच्या sheet मधून. */
   pdfNotes: {
