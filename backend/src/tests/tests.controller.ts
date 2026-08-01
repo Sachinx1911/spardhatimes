@@ -39,6 +39,12 @@ export class TestsController {
     return this.tests.exams();
   }
 
+  @Get('exams/:id')
+  @ApiOperation({ summary: 'एका परीक्षेखालच्या test series' })
+  examDetail(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.tests.examDetail(req.user.id, id);
+  }
+
   @Get('online-tests')
   @ApiOperation({ summary: 'ONLINE TEST — मोफत आणि पैसे घेणारे tests, आकडेवारीसह' })
   onlineTests(@Req() req: AuthedRequest) {

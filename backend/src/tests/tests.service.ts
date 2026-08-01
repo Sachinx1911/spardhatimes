@@ -252,6 +252,58 @@ export class TestsService {
     }));
   }
 
+  /**
+   * एका परीक्षेचा पडदा — तिच्या खालच्या सगळ्या test series.
+   *
+   * Design "MPSC" दाखवते, पण पडदा परीक्षेनुसार चालतो: Home वरची MPSC आणि
+   * TCS|IBPS दोन्ही tiles याच पडद्यावर येतात, फक्त वेगळ्या `id` सह.
+   *
+   * ⚠️ Design मध्ये खाली **अभ्यासक्रम** विभाग आहे. त्याचं schema मध्ये एकही
+   * model नाही, म्हणून तो इथून येत नाही — पडदा तो रिकामा दाखवतो.
+   */
+  async examDetail(userId: string, examId: string) {
+    const exam = await this.prisma.client.exam.findUnique({
+      where: { id: examId },
+      select: {
+        id: true,
+        name: true,
+        testSeries: {
+          where: { published: true },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            priceInPaise: true,
+            _count: { select: { quizzes: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!exam) throw new NotFoundException('ही परीक्षा सापडली नाही.');
+
+    const myAccess = await this.prisma.client.testSeriesAccess.findMany({
+      where: { userId, testSeriesId: { in: exam.testSeries.map((s) => s.id) } },
+      select: { testSeriesId: true, expiresAt: true },
+    });
+    const owned = new Set(
+      myAccess.filter((a) => isAccessLive(a.expiresAt)).map((a) => a.testSeriesId)
+    );
+
+    return {
+      id: exam.id,
+      name: exam.name,
+      series: exam.testSeries.map((s) => ({
+        id: s.id,
+        title: s.title,
+        description: s.description,
+        totalTests: s._count.quizzes,
+        priceInPaise: s.priceInPaise,
+        owned: owned.has(s.id),
+      })),
+    };
+  }
 /**
    * ONLINE TEST चा पडदा — **वैयक्तिक tests**, series नाही.
    *

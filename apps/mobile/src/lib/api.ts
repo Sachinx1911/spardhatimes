@@ -291,6 +291,25 @@ export interface ApiOnlineTests {
   paid: ApiOnlineTest[];
 }
 
+/**
+ * `GET /exams/:id` — एका परीक्षेखालच्या series.
+ *
+ * ⚠️ Design मधला **अभ्यासक्रम** विभाग इथे नाही — त्याचं schema मध्ये model
+ * नाही. तो बांधल्यावर इथे `syllabus` जोडायचा.
+ */
+export interface ApiExamDetail {
+  id: string;
+  name: string;
+  series: {
+    id: string;
+    title: string;
+    description: string | null;
+    totalTests: number;
+    priceInPaise: number;
+    owned: boolean;
+  }[];
+}
+
 export type ApiMaterialType = 'NOTE' | 'VIDEO' | 'BOOK' | 'SHORT';
 
 /**
@@ -596,6 +615,8 @@ export const api = {
   notes: () => request<ApiNotes>('/notes'),
 
   onlineTests: () => request<ApiOnlineTests>('/online-tests'),
+
+  examDetail: (id: string) => request<ApiExamDetail>(`/exams/${id}`),
 
   learn: () => request<ApiLearnOverview>('/learn'),
 

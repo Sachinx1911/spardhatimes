@@ -36,6 +36,14 @@ interface Tile {
   tint: string;
   /** पान नसेल तर `null`. */
   href: string | null;
+  /**
+   * परीक्षेच्या पडद्याकडे न्यायचं असेल तर तिचं नाव.
+   *
+   * `id` इथे लिहिता येत नाही — तो database मधून येतो आणि प्रत्येक installation
+   * मध्ये वेगळा असतो. म्हणून नावाने शोधतो; ती परीक्षा admin ने बनवली नसेल तर
+   * `href` वरचं दुकान उघडतं.
+   */
+  examName?: string;
 }
 
 const TILES: Tile[] = [
@@ -44,6 +52,7 @@ const TILES: Tile[] = [
     icon: 'document-text',
     tint: colors.primary,
     href: '/store',
+    examName: 'MPSC',
   },
   {
     title: 'ONLINE TEST',
@@ -89,6 +98,7 @@ const TILES: Tile[] = [
     icon: 'bank',
     tint: colors.pink,
     href: '/store',
+    examName: 'TCS | IBPS',
   },
 ];
 
@@ -97,6 +107,21 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { halfCardWidth } = useCardWidths();
   const { data, loading, error, reload } = useApi(() => api.dashboard(), []);
+  const { data: exams } = useApi(() => api.exams(), []);
+
+  /**
+   * Tile कुठे नेतो ते ठरवतो.
+   *
+   * परीक्षेचं नाव दिलेलं असेल आणि ती admin ने बनवली असेल तर तिचा पडदा;
+   * नसेल तर दुकान. नाव जुळत नसताना तुटलेल्या पत्त्यावर पाठवण्यापेक्षा हे बरं.
+   */
+  const destinationOf = (t: Tile) => {
+    if (t.examName) {
+      const match = exams?.find((e) => e.name === t.examName);
+      if (match) return `/exam/${match.id}`;
+    }
+    return t.href;
+  };
 
   return (
     <View style={styles.root}>
@@ -138,7 +163,10 @@ export default function HomeScreen() {
                 key={t.title}
                 style={[styles.tile, { width: halfCardWidth }, off && styles.tileOff]}
                 disabled={off}
-                onPress={() => t.href && router.push(t.href as never)}>
+                onPress={() => {
+                  const to = destinationOf(t);
+                  if (to) router.push(to as never);
+                }}>
                 <View style={[styles.tileIcon, { backgroundColor: t.tint }]}>
                   <Icon name={t.icon} size={22} color={colors.textInverse} />
                 </View>

@@ -41,6 +41,8 @@ export const colors = {
   green: '#22C55E',
   orange: '#F59E0B',
   purple: '#7C3AED',
+  /** MPSC sheet: चिन्हामागचा फिकट जांभळा. */
+  purpleLight: '#EDE9FE',
   teal: '#14B8A6',
   pink: '#DB2777',
 
@@ -49,6 +51,10 @@ export const colors = {
   border: '#E5E7EB',
   /** याद्यांमधली फिकट रेघ — sheet मध्ये कडेपेक्षा फिकट. */
   divider: '#F1F5F9',
+  /** अभ्यासक्रम विभाग — sheet मधला फिकट हिरवा आणि गडद हिरवा मजकूर. */
+  syllabusBg: '#F0FDF4',
+  syllabusBadgeBg: '#DCFCE7',
+  syllabusText: '#15803D',
 
   success: '#22C55E',
   /**
@@ -91,6 +97,12 @@ export const colors = {
  */
 export const screenAccent = {
   /** ONLINE TEST — PDF Notes सारखाच जांभळा संच. */
+  /** MPSC / कुठलीही परीक्षा — तोच जांभळा संच. */
+  exam: {
+    primary: '#5B3DF5',
+    primaryDark: '#4427D6',
+    primaryLight: '#F3F0FF',
+  },
   onlineTest: {
     primary: '#5B3DF5',
     primaryDark: '#4427D6',
@@ -325,6 +337,18 @@ export const layout = {
   testPromoHeight: 64,
   /** ओळीतलं छोटं बटण — sheet: 40dp. */
   buttonHeightSmall: 40,
+
+  // ── MPSC / परीक्षा sheet मधली मापं ──
+  /** वरचं वैशिष्ट्य कार्ड — 72dp. */
+  featureCardHeight: 72,
+  /** यादीतली ओळ — 64dp. */
+  categoryRowHeight: 64,
+  /** अभ्यासक्रमाची ओळ — 56dp. */
+  syllabusRowHeight: 56,
+  /** शीर्षकाखालची पट्टी — सक्रिय 28dp, निष्क्रिय 20dp, जाडी 4dp. */
+  indicatorActiveWidth: 28,
+  indicatorWidth: 20,
+  indicatorHeight: 4,
   buttonSecondaryHeight: 44,
   buttonSmall: { width: 120, height: 40 },
   buyButton: { width: 96, height: 40 },
