@@ -128,9 +128,7 @@ export default function ExamScreen() {
               )}
             </View>
 
-            {/* ── अभ्यासक्रम ──
-                Design मध्ये इथे विषयांची यादी आहे, पण schema मध्ये syllabus चं
-                model नाही. रचना ठेवली आहे; मजकूर model आल्यावर भरेल. */}
+            {/* ── अभ्यासक्रम ── */}
             <View style={styles.syllabus}>
               <View style={styles.syllabusHead}>
                 <View style={styles.syllabusIcon}>
@@ -144,11 +142,29 @@ export default function ExamScreen() {
                 </View>
               </View>
 
-              <View style={styles.empty}>
-                <Text style={styles.emptyText}>
-                  अभ्यासक्रम अजून जोडलेला नाही.
-                </Text>
-              </View>
+              {data.syllabi.length > 0 ? (
+                data.syllabi.map((y, i) => (
+                  <Pressable
+                    key={y.id}
+                    style={[styles.syllabusRow, i > 0 && styles.rowDivided]}
+                    onPress={() => router.push(`/syllabus/${y.id}`)}>
+                    <View style={styles.syllabusRowIcon}>
+                      <Icon name="book" size={20} color={colors.success} />
+                    </View>
+                    <Text style={[styles.rowTitle, styles.grow]} numberOfLines={1}>
+                      {y.title}
+                    </Text>
+                    <View style={styles.countBadge}>
+                      <Text style={styles.countBadgeText}>{y.topicCount} टॉपिक</Text>
+                    </View>
+                    <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
+                  </Pressable>
+                ))
+              ) : (
+                <View style={styles.empty}>
+                  <Text style={styles.emptyText}>अभ्यासक्रम अजून जोडलेला नाही.</Text>
+                </View>
+              )}
             </View>
           </>
         ) : null}
@@ -270,6 +286,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rowText: { flex: 1 },
+  grow: { flex: 1 },
   rowTitle: {
     ...componentType.rowTitle,
     color: colors.text,
@@ -304,6 +321,34 @@ const styles = StyleSheet.create({
   syllabusTitle: {
     ...typography.bodyL,
     ...strong.semibold,
+    color: colors.syllabusText,
+  },
+
+  // ── अभ्यासक्रमाची ओळ (56dp) ──
+  syllabusRow: {
+    height: layout.syllabusRowHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: layout.cardPadding,
+    backgroundColor: colors.surface,
+  },
+  syllabusRowIcon: {
+    width: layout.badgeHeight,
+    height: layout.badgeHeight,
+    borderRadius: radius.sm,
+    backgroundColor: colors.syllabusBadgeBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
+    backgroundColor: colors.syllabusBadgeBg,
+  },
+  countBadgeText: {
+    ...componentType.smallLabel,
     color: colors.syllabusText,
   },
 

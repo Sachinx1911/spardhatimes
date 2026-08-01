@@ -258,8 +258,6 @@ export class TestsService {
    * Design "MPSC" दाखवते, पण पडदा परीक्षेनुसार चालतो: Home वरची MPSC आणि
    * TCS|IBPS दोन्ही tiles याच पडद्यावर येतात, फक्त वेगळ्या `id` सह.
    *
-   * ⚠️ Design मध्ये खाली **अभ्यासक्रम** विभाग आहे. त्याचं schema मध्ये एकही
-   * model नाही, म्हणून तो इथून येत नाही — पडदा तो रिकामा दाखवतो.
    */
   async examDetail(userId: string, examId: string) {
     const exam = await this.prisma.client.exam.findUnique({
@@ -291,9 +289,28 @@ export class TestsService {
       myAccess.filter((a) => isAccessLive(a.expiresAt)).map((a) => a.testSeriesId)
     );
 
+    // अभ्यासक्रम — परीक्षेच्या पडद्यावर यादी म्हणून दाखवायचे.
+    const syllabi = await this.prisma.client.syllabus.findMany({
+      where: { examId, published: true },
+      select: {
+        id: true,
+        title: true,
+        _count: { select: { sections: true } },
+        sections: { select: { _count: { select: { topics: true } } } },
+      },
+      orderBy: { orderIndex: 'asc' },
+    });
+
     return {
       id: exam.id,
       name: exam.name,
+      syllabi: syllabi.map((y) => ({
+        id: y.id,
+        title: y.title,
+        subjectCount: y._count.sections,
+        // "12 टॉपिक" — सगळ्या विषयांतले मुद्दे मिळून.
+        topicCount: y.sections.reduce((n, sec) => n + sec._count.topics, 0),
+      })),
       series: exam.testSeries.map((s) => ({
         id: s.id,
         title: s.title,
@@ -304,6 +321,86 @@ export class TestsService {
       })),
     };
   }
+  /**
+   * एका अभ्यासक्रमाचा तपशील — विषयवार मुद्दे.
+   *
+   * प्रत्येक विषयाची मुद्द्यांची संख्या आणि अंदाजित वेळ इथेच मोजतो, म्हणजे
+   * app ला यादी फिरवून बेरीज करावी लागत नाही.
+   */
+  async syllabusDetail(syllabusId: string) {
+    const syllabus = await this.prisma.client.syllabus.findUnique({
+      where: { id: syllabusId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        pdfUrl: true,
+        published: true,
+        exam: { select: { id: true, name: true } },
+        sections: {
+          select: {
+            id: true,
+            estimatedMinutes: true,
+            subject: { select: { id: true, name: true } },
+            _count: { select: { topics: true } },
+          },
+          orderBy: { orderIndex: 'asc' },
+        },
+      },
+    });
+
+    if (!syllabus || !syllabus.published) {
+      throw new NotFoundException('हा अभ्यासक्रम सापडला नाही.');
+    }
+
+    const sections = syllabus.sections.map((sec) => ({
+      id: sec.id,
+      subjectId: sec.subject.id,
+      subjectName: sec.subject.name,
+      topicCount: sec._count.topics,
+      estimatedMinutes: sec.estimatedMinutes,
+    }));
+
+    return {
+      id: syllabus.id,
+      title: syllabus.title,
+      description: syllabus.description,
+      pdfUrl: syllabus.pdfUrl,
+      examId: syllabus.exam.id,
+      examName: syllabus.exam.name,
+      totalTopics: sections.reduce((n, s) => n + s.topicCount, 0),
+      sections,
+    };
+  }
+
+  /** एका विषयाचे मुद्दे — "पहा" दाबल्यावर उघडणारी यादी. */
+  async syllabusSection(sectionId: string) {
+    const section = await this.prisma.client.syllabusSection.findUnique({
+      where: { id: sectionId },
+      select: {
+        id: true,
+        estimatedMinutes: true,
+        subject: { select: { name: true } },
+        syllabus: { select: { id: true, title: true } },
+        topics: {
+          select: { id: true, title: true, note: true },
+          orderBy: { orderIndex: 'asc' },
+        },
+      },
+    });
+
+    if (!section) throw new NotFoundException('हा विषय सापडला नाही.');
+
+    return {
+      id: section.id,
+      subjectName: section.subject.name,
+      syllabusId: section.syllabus.id,
+      syllabusTitle: section.syllabus.title,
+      estimatedMinutes: section.estimatedMinutes,
+      topics: section.topics,
+    };
+  }
+
 /**
    * ONLINE TEST चा पडदा — **वैयक्तिक tests**, series नाही.
    *

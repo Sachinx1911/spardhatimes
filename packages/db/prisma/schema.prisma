@@ -109,6 +109,70 @@ model Category {
   testSeries     TestSeries[]
 }
 
+
+/// एका परीक्षेचा (किंवा तिच्या गटाचा) अधिकृत अभ्यासक्रम — "MPSC गट ब".
+///
+/// एक परीक्षा अनेक अभ्यासक्रम ठेवू शकते (गट ब, गट क…), म्हणून हे वेगळं model
+/// आहे, `Exam` वरचं field नाही.
+model Syllabus {
+  id          String   @id @default(cuid())
+  examId      String
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  /// पूर्ण अभ्यासक्रमाची PDF — design मधलं "PDF डाउनलोड" बटण याच्यावर चालतं.
+  /// नसेल तर बटण दाखवायचं नाही.
+  pdfUrl      String?
+
+  published   Boolean  @default(true)
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sections    SyllabusSection[]
+
+  @@index([examId, orderIndex])
+}
+
+/// अभ्यासक्रमातला एक विषय — "इतिहासाचा अभ्यासक्रम".
+///
+/// विषय `Subject` मधूनच घेतो, नवीन नाव लिहीत नाही. त्यामुळे तोच विषय
+/// निकालात, विश्लेषणात आणि इथे **एकच** राहतो; नाहीतर "इतिहास" आणि
+/// "इतिहासाचा अभ्यासक्रम" असे दोन तुकडे पडले असते.
+model SyllabusSection {
+  id         String   @id @default(cuid())
+  syllabusId String
+  syllabus   Syllabus @relation(fields: [syllabusId], references: [id], onDelete: Cascade)
+  subjectId  String
+  subject    Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  /// अभ्यासाला किती वेळ लागेल — design मधलं "6 तास 30 मिनिटे".
+  /// 0 म्हणजे ठरवलेलं नाही; तेव्हा वेळ दाखवायची नाही.
+  estimatedMinutes Int   @default(0)
+  orderIndex Int         @default(0)
+
+  topics     SyllabusTopic[]
+
+  // एका अभ्यासक्रमात एकच विषय दोनदा येऊ नये.
+  @@unique([syllabusId, subjectId])
+  @@index([syllabusId, orderIndex])
+}
+
+/// विषयातला एक मुद्दा. संख्या मोजून "18 टॉपिक्स" दाखवतो.
+model SyllabusTopic {
+  id         String          @id @default(cuid())
+  sectionId  String
+  section    SyllabusSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  title      String
+  /// उपमुद्दे किंवा टीप.
+  note       String?
+  orderIndex Int             @default(0)
+
+  @@index([sectionId, orderIndex])
+}
+
 /// Dashboard वरच्या सरकत्या पट्टीतल्या जाहिराती.
 ///
 /// प्रतिमा **URL** म्हणून ठेवली आहे, चढवलेली file म्हणून नाही. आजचं
@@ -149,6 +213,7 @@ model Exam {
 
   testSeries TestSeries[]
   materials  StudyMaterial[]
+  syllabi    Syllabus[]
 }
 
 // A Test Series groups several Quizzes (tests) that an admin assigns to
@@ -308,6 +373,7 @@ model Subject {
 
   questions  Question[]
   materials  StudyMaterial[]
+  syllabusSections SyllabusSection[]
 }
 
 model Question {

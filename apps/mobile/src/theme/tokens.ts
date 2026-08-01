@@ -127,6 +127,8 @@ export const gradients = {
   banner: ['#FFECEC', '#FFF5F5'] as const,
   /** PDF Notes च्या banner ची — त्याच्या sheet मधून. */
   notesBanner: ['#F5F0FF', '#FFFFFF'] as const,
+  /** Syllabus sheet चा hero — 135° जांभळा. */
+  heroPurple: ['#F6F3FF', '#EEE9FF'] as const,
 } as const;
 
 // ─── 2. TYPOGRAPHY (Mukta) ───────────────────────────────────────────────────
@@ -349,6 +351,16 @@ export const layout = {
   indicatorActiveWidth: 28,
   indicatorWidth: 20,
   indicatorHeight: 4,
+
+  // ── Syllabus sheet मधली मापं ──
+  /** वरचं कार्ड — 112dp. */
+  heroBannerHeight: 112,
+  /** विषयाची ओळ — 72dp. */
+  syllabusSubjectRow: 72,
+  /** "सर्व पहा" ओळ — 56dp. */
+  viewAllRowHeight: 56,
+  /** गोल चिन्हाची चौकट — 40dp. */
+  iconCircle: 40,
   buttonSecondaryHeight: 44,
   buttonSmall: { width: 120, height: 40 },
   buyButton: { width: 96, height: 40 },

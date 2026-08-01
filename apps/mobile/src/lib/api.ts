@@ -300,6 +300,12 @@ export interface ApiOnlineTests {
 export interface ApiExamDetail {
   id: string;
   name: string;
+  syllabi: {
+    id: string;
+    title: string;
+    subjectCount: number;
+    topicCount: number;
+  }[];
   series: {
     id: string;
     title: string;
@@ -308,6 +314,36 @@ export interface ApiExamDetail {
     priceInPaise: number;
     owned: boolean;
   }[];
+}
+
+/** `GET /syllabus/:id` — अभ्यासक्रमातले विषय. */
+export interface ApiSyllabus {
+  id: string;
+  title: string;
+  description: string | null;
+  /** नसेल तर "PDF डाउनलोड" बटण दाखवायचं नाही. */
+  pdfUrl: string | null;
+  examId: string;
+  examName: string;
+  totalTopics: number;
+  sections: {
+    id: string;
+    subjectId: string;
+    subjectName: string;
+    topicCount: number;
+    /** 0 = वेळ ठरवलेली नाही; तेव्हा दाखवायची नाही. */
+    estimatedMinutes: number;
+  }[];
+}
+
+/** `GET /syllabus-section/:id` — एका विषयाचे मुद्दे. */
+export interface ApiSyllabusSection {
+  id: string;
+  subjectName: string;
+  syllabusId: string;
+  syllabusTitle: string;
+  estimatedMinutes: number;
+  topics: { id: string; title: string; note: string | null }[];
 }
 
 export type ApiMaterialType = 'NOTE' | 'VIDEO' | 'BOOK' | 'SHORT';
@@ -617,6 +653,10 @@ export const api = {
   onlineTests: () => request<ApiOnlineTests>('/online-tests'),
 
   examDetail: (id: string) => request<ApiExamDetail>(`/exams/${id}`),
+
+  syllabus: (id: string) => request<ApiSyllabus>(`/syllabus/${id}`),
+
+  syllabusSection: (id: string) => request<ApiSyllabusSection>(`/syllabus-section/${id}`),
 
   learn: () => request<ApiLearnOverview>('/learn'),
 

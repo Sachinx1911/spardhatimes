@@ -45,6 +45,18 @@ export class TestsController {
     return this.tests.examDetail(req.user.id, id);
   }
 
+  @Get('syllabus/:id')
+  @ApiOperation({ summary: 'एका अभ्यासक्रमाचे विषय' })
+  syllabus(@Param('id') id: string) {
+    return this.tests.syllabusDetail(id);
+  }
+
+  @Get('syllabus-section/:id')
+  @ApiOperation({ summary: 'एका विषयाचे मुद्दे' })
+  syllabusSection(@Param('id') id: string) {
+    return this.tests.syllabusSection(id);
+  }
+
   @Get('online-tests')
   @ApiOperation({ summary: 'ONLINE TEST — मोफत आणि पैसे घेणारे tests, आकडेवारीसह' })
   onlineTests(@Req() req: AuthedRequest) {
