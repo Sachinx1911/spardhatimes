@@ -188,10 +188,45 @@ export class ArticlesService {
     });
     if (!a) throw new NotFoundException('लेख सापडला नाही.');
 
-    const mark = await this.prisma.client.articleBookmark.findUnique({
-      where: { userId_articleId: { userId, articleId: a.id } },
-      select: { id: true },
-    });
+    const [mark, reactions, mine, source, prev, next] = await Promise.all([
+      this.prisma.client.articleBookmark.findUnique({
+        where: { userId_articleId: { userId, articleId: a.id } },
+        select: { id: true },
+      }),
+      this.prisma.client.articleReaction.groupBy({
+        by: ['type'],
+        where: { articleId: a.id },
+        _count: true,
+      }),
+      this.prisma.client.articleReaction.findUnique({
+        where: { userId_articleId: { userId, articleId: a.id } },
+        select: { type: true },
+      }),
+      this.prisma.client.article.findUnique({
+        where: { id: a.id },
+        select: { sourceName: true, sourceUrl: true, viewCount: true, publishedAt: true },
+      }),
+      // मागील / पुढील — प्रकाशनाच्या क्रमाने शेजारचा लेख.
+      this.prisma.client.article.findFirst({
+        where: { published: true, publishedAt: { lt: a.publishedAt ?? new Date() } },
+        orderBy: { publishedAt: 'desc' },
+        select: { slug: true, title: true },
+      }),
+      this.prisma.client.article.findFirst({
+        where: { published: true, publishedAt: { gt: a.publishedAt ?? new Date() } },
+        orderBy: { publishedAt: 'asc' },
+        select: { slug: true, title: true },
+      }),
+    ]);
+
+    // वाचकसंख्या वाढवणे — निकालाची वाट बघत नाही. ती एका आकड्याने चुकली तरी
+    // चालेल, पण त्यासाठी लेख उघडायला उशीर होणं चालणार नाही.
+    this.prisma.client.article
+      .update({ where: { id: a.id }, data: { viewCount: { increment: 1 } } })
+      .catch(() => {});
+
+    const countOf = (t: 'LIKE' | 'DISLIKE') =>
+      reactions.find((r) => r.type === t)?._count ?? 0;
 
     return {
       ...this.toListItem(a),
@@ -199,6 +234,58 @@ export class ArticlesService {
       body: a.body,
       updatedAt: a.updatedAt.toISOString(),
       bookmarked: !!mark,
+      sourceName: source?.sourceName ?? null,
+      sourceUrl: source?.sourceUrl ?? null,
+      // वाढवलेली संख्या लगेच दिसावी म्हणून +1 — वरचं update मागे चालू आहे.
+      viewCount: (source?.viewCount ?? 0) + 1,
+      likes: countOf('LIKE'),
+      dislikes: countOf('DISLIKE'),
+      myReaction: mine?.type ?? null,
+      prev: prev ? { slug: prev.slug, title: prev.title } : null,
+      next: next ? { slug: next.slug, title: next.title } : null,
+    };
+  }
+
+  /**
+   * आवडलं / आवडलं नाही.
+   *
+   * तेच बटण पुन्हा दाबलं तर पसंती **मागे घेतली** जाते; दुसरं दाबलं तर बदलते.
+   * एका विद्यार्थ्याची एकच नोंद असते, म्हणून आकडा फुगवता येत नाही.
+   */
+  async react(userId: string, articleId: string, type: 'LIKE' | 'DISLIKE') {
+    const exists = await this.prisma.client.article.findFirst({
+      where: { id: articleId, published: true },
+      select: { id: true },
+    });
+    if (!exists) throw new NotFoundException('लेख सापडला नाही.');
+
+    const current = await this.prisma.client.articleReaction.findUnique({
+      where: { userId_articleId: { userId, articleId } },
+      select: { type: true },
+    });
+
+    if (current?.type === type) {
+      await this.prisma.client.articleReaction.delete({
+        where: { userId_articleId: { userId, articleId } },
+      });
+    } else {
+      await this.prisma.client.articleReaction.upsert({
+        where: { userId_articleId: { userId, articleId } },
+        update: { type },
+        create: { userId, articleId, type },
+      });
+    }
+
+    const counts = await this.prisma.client.articleReaction.groupBy({
+      by: ['type'],
+      where: { articleId },
+      _count: true,
+    });
+
+    return {
+      likes: counts.find((c) => c.type === 'LIKE')?._count ?? 0,
+      dislikes: counts.find((c) => c.type === 'DISLIKE')?._count ?? 0,
+      myReaction: current?.type === type ? null : type,
     };
   }
 

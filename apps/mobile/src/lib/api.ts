@@ -594,6 +594,17 @@ export interface ApiCurrentAffairs {
 export interface ApiArticle extends ApiArticleListItem {
   body: string;
   updatedAt: string;
+  /** बातमीचा स्रोत — नाव नसेल तर तो भाग दाखवायचाच नाही. */
+  sourceName: string | null;
+  sourceUrl: string | null;
+  viewCount: number;
+  likes: number;
+  dislikes: number;
+  /** माझी पसंती — null म्हणजे काहीच दिलेलं नाही. */
+  myReaction: 'LIKE' | 'DISLIKE' | null;
+  /** प्रकाशनाच्या क्रमाने शेजारचे लेख; टोकाला असेल तर null. */
+  prev: { slug: string; title: string } | null;
+  next: { slug: string; title: string } | null;
 }
 
 export const api = {
@@ -728,6 +739,13 @@ export const api = {
   article: (slug: string) => request<ApiArticle>(`/articles/${encodeURIComponent(slug)}`),
 
   bookmarkedArticles: () => request<ApiArticleListItem[]>('/articles/bookmarked'),
+
+  /** आवडलं / आवडलं नाही. तेच पुन्हा पाठवलं तर पसंती मागे घेतली जाते. */
+  reactToArticle: (articleId: string, type: 'LIKE' | 'DISLIKE') =>
+    request<{ likes: number; dislikes: number; myReaction: 'LIKE' | 'DISLIKE' | null }>(
+      `/articles/${articleId}/react`,
+      { method: 'POST', body: { type } }
+    ),
 
   addArticleBookmark: (articleId: string) =>
     request<void>(`/articles/${articleId}/bookmark`, { method: 'POST' }),

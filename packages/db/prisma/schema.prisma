@@ -71,6 +71,7 @@ model User {
   attempts      QuizAttempt[]
   bookmarks     Bookmark[]
   articleBookmarks ArticleBookmark[]
+  articleReactions ArticleReaction[]
   certificates  Certificate[]
   notifications Notification[]
   adminLogs     AdminLog[]
@@ -171,6 +172,30 @@ model SyllabusTopic {
   orderIndex Int             @default(0)
 
   @@index([sectionId, orderIndex])
+}
+
+
+enum ReactionType {
+  LIKE
+  DISLIKE
+}
+
+/// लेखावरची पसंती.
+///
+/// नुसते आकडे `Article` वर ठेवले असते तर एकच विद्यार्थी वारंवार दाबून आकडा
+/// फुगवू शकला असता, आणि आपली पसंती मागे घेता आली नसती. म्हणून प्रत्येकाची
+/// एकच नोंद — तीच बदलते किंवा निघून जाते.
+model ArticleReaction {
+  id        String       @id @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  articleId String
+  article   Article      @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  type      ReactionType
+  createdAt DateTime     @default(now())
+
+  @@unique([userId, articleId])
+  @@index([articleId, type])
 }
 
 /// Dashboard वरच्या सरकत्या पट्टीतल्या जाहिराती.
@@ -649,10 +674,21 @@ model Article {
   publishedAt DateTime?
   /// वरच्या carousel मध्ये दाखवायचा का ("Top News").
   isTopNews   Boolean           @default(false)
+
+  /// बातमी कुठून आली — विश्वासार्हतेसाठी लेखाच्या तळाशी दाखवतो.
+  /// दोन्ही ऐच्छिक; नाव नसेल तर तो भाग दाखवायचाच नाही.
+  sourceName  String?
+  sourceUrl   String?
+
+  /// किती वेळा उघडला. लेख उघडताना वाढवतो — वेगळं table ठेवण्याइतकं
+  /// अचूक असण्याची गरज नाही, आणि प्रत्येक वाचनाची नोंद ठेवली असती तर
+  /// ते table सर्वात वेगाने फुगलं असतं.
+  viewCount   Int               @default(0)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
   bookmarks   ArticleBookmark[]
+  reactions   ArticleReaction[]
 
   // यादी नेहमी "प्रकाशित, नवीन आधी" अशी मागवली जाते.
   @@index([published, publishedAt])

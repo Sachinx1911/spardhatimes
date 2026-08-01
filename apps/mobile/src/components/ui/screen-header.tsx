@@ -26,6 +26,9 @@ export function ScreenHeader({
   onBack,
   onMenu,
   onSearch,
+  onShare,
+  onBookmark,
+  bookmarked = false,
   showBell = false,
   badgeCount,
 }: {
@@ -36,6 +39,10 @@ export function ScreenHeader({
   /** ☰ — मुख्य पडद्यांवर मागे जाण्याऐवजी हे येतं. */
   onMenu?: () => void;
   onSearch?: () => void;
+  onShare?: () => void;
+  /** खूण करायचं बटण. `bookmarked` ने भरलेलं की रिकामं ते ठरतं. */
+  onBookmark?: () => void;
+  bookmarked?: boolean;
   showBell?: boolean;
   badgeCount?: number;
 }) {
@@ -61,6 +68,22 @@ export function ScreenHeader({
         {onSearch ? (
           <Pressable hitSlop={8} onPress={onSearch}>
             <Icon name="search" size={24} color={colors.textInverse} />
+          </Pressable>
+        ) : null}
+
+        {onBookmark ? (
+          <Pressable hitSlop={8} onPress={onBookmark}>
+            <Icon
+              name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+              size={24}
+              color={colors.textInverse}
+            />
+          </Pressable>
+        ) : null}
+
+        {onShare ? (
+          <Pressable hitSlop={8} onPress={onShare}>
+            <Icon name="share" size={24} color={colors.textInverse} />
           </Pressable>
         ) : null}
 

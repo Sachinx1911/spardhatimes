@@ -1,8 +1,15 @@
-import { Controller, Delete, Get, HttpCode, Param, Post, Query, Req } from '@nestjs/common';
+import {  Body, Controller, Delete, Get, HttpCode, Param, Post, Query, Req } from '@nestjs/common';
+import { IsIn } from 'class-validator';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import type { AuthedRequest } from '../auth/jwt-auth.guard';
 import { ArticlesService } from './articles.service';
+
+/** आवडलं / आवडलं नाही — यापैकी एकच चालतं. */
+class ReactDto {
+  @IsIn(['LIKE', 'DISLIKE'])
+  type!: 'LIKE' | 'DISLIKE';
+}
 
 /**
  * सगळे मार्ग login लागणारे — `JwtAuthGuard` हा APP_GUARD आहे आणि इथे कुठेही
@@ -43,6 +50,16 @@ export class ArticlesController {
   @ApiOperation({ summary: 'एक पूर्ण लेख' })
   one(@Req() req: AuthedRequest, @Param('slug') slug: string) {
     return this.articles.one(req.user.id, slug);
+  }
+
+  @Post('articles/:id/react')
+  @ApiOperation({ summary: 'आवडलं / आवडलं नाही (पुन्हा दाबल्यास मागे घेतं)' })
+  react(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body() dto: ReactDto
+  ) {
+    return this.articles.react(req.user.id, id, dto.type);
   }
 
   @Post('articles/:id/bookmark')

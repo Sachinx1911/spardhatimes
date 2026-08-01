@@ -69,6 +69,8 @@ import {
   XCircle,
   type LucideIcon,
   Calendar,
+  ThumbsUp,
+  ThumbsDown,
 } from 'lucide-react-native';
 
 import { colors } from '@/theme/tokens';
@@ -115,6 +117,11 @@ const MAP: Record<string, LucideIcon> = {
   learn: BookOpen,
   'document-text': FileText,
   calendar: Calendar,
+  'thumbs-up': ThumbsUp,
+  'thumbs-down': ThumbsDown,
+  share: Share2,
+  // Lucide मध्ये भरलेला/रिकामा असा भेद नाही — तेच चिन्ह, रंगाने फरक दाखवतो.
+  'bookmark-outline': Bookmark,
   reader: FileText,
   'file-tray': FileText,
   clipboard: ClipboardList,
