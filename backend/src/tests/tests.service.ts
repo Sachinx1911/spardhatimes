@@ -327,6 +327,36 @@ export class TestsService {
    * प्रत्येक विषयाची मुद्द्यांची संख्या आणि अंदाजित वेळ इथेच मोजतो, म्हणजे
    * app ला यादी फिरवून बेरीज करावी लागत नाही.
    */
+/**
+   * सगळे अभ्यासक्रम — Syllabus पडद्याची पहिली यादी.
+   *
+   * "राज्य सेवा (MPSC)", "गट ब (MPSC)" असे प्रत्येक अभ्यासक्रम इथे येतात,
+   * प्रत्येकाच्या विषयांच्या संख्येसह. परीक्षेनुसार गट केलेले नाहीत — design
+   * एकच सलग यादी दाखवते, आणि परीक्षेचं नाव आधीच शीर्षकात असतं.
+   */
+  async syllabusList() {
+    const rows = await this.prisma.client.syllabus.findMany({
+      where: { published: true },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        exam: { select: { id: true, name: true } },
+        _count: { select: { sections: true } },
+      },
+      orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
+    });
+
+    return rows.map((y) => ({
+      id: y.id,
+      title: y.title,
+      description: y.description,
+      examId: y.exam.id,
+      examName: y.exam.name,
+      subjectCount: y._count.sections,
+    }));
+  }
+
   async syllabusDetail(syllabusId: string) {
     const syllabus = await this.prisma.client.syllabus.findUnique({
       where: { id: syllabusId },
@@ -341,6 +371,7 @@ export class TestsService {
           select: {
             id: true,
             estimatedMinutes: true,
+            pdfUrl: true,
             subject: { select: { id: true, name: true } },
             _count: { select: { topics: true } },
           },
@@ -359,6 +390,7 @@ export class TestsService {
       subjectName: sec.subject.name,
       topicCount: sec._count.topics,
       estimatedMinutes: sec.estimatedMinutes,
+      pdfUrl: sec.pdfUrl,
     }));
 
     return {

@@ -128,6 +128,12 @@ export const screenAccent = {
     primaryDark: '#4427D6',
     primaryLight: '#F3F0FF',
   },
+  /** अभ्यासक्रम — त्याच्या sheet मधून. गडद जांभळा, PDF Notes पेक्षा वेगळा. */
+  syllabus: {
+    primary: '#5B21B6',
+    primaryDark: '#4C1D95',
+    primaryLight: '#EDE9FE',
+  },
   /** PDF Notes — त्याच्या sheet मधून. */
   pdfNotes: {
     primary: '#5B3DF5',

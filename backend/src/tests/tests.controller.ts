@@ -45,6 +45,12 @@ export class TestsController {
     return this.tests.examDetail(req.user.id, id);
   }
 
+  @Get('syllabus')
+  @ApiOperation({ summary: 'सगळे अभ्यासक्रम, विषयांच्या संख्येसह' })
+  syllabusList() {
+    return this.tests.syllabusList();
+  }
+
   @Get('syllabus/:id')
   @ApiOperation({ summary: 'एका अभ्यासक्रमाचे विषय' })
   syllabus(@Param('id') id: string) {

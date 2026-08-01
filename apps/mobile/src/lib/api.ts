@@ -333,6 +333,8 @@ export interface ApiSyllabus {
     topicCount: number;
     /** 0 = वेळ ठरवलेली नाही; तेव्हा दाखवायची नाही. */
     estimatedMinutes: number;
+    /** **या एका विषयाची** PDF. null असेल तर ओळीवर बटण दाखवायचं नाही. */
+    pdfUrl: string | null;
   }[];
 }
 
@@ -354,6 +356,16 @@ export type ApiMaterialType = 'NOTE' | 'VIDEO' | 'BOOK' | 'SHORT';
  * `learn` सगळ्या प्रकारांची संख्या देतो; इथे **फक्त `NOTE`** मोजले आहेत,
  * नाहीतर "इतिहास 18 नोट्स" मध्ये व्हिडिओसुद्धा धरले जातील.
  */
+/** `GET /syllabus` — Syllabus पडद्याची पहिली यादी. */
+export interface ApiSyllabusListItem {
+  id: string;
+  title: string;
+  description: string | null;
+  examId: string;
+  examName: string;
+  subjectCount: number;
+}
+
 export interface ApiNotes {
   totalNotes: number;
   /** टिपण असलेले विषयच येतात — रिकामे गाळलेले. */
@@ -657,6 +669,9 @@ export const api = {
   myOrders: () => request<ApiOrder[]>('/orders'),
 
   analytics: () => request<ApiAnalytics>('/analytics'),
+
+  /** `GET /syllabus` — सगळे अभ्यासक्रम. */
+  syllabusList: () => request<ApiSyllabusListItem[]>('/syllabus'),
 
   /** `GET /notes` — PDF Notes चा पडदा. */
   notes: () => request<ApiNotes>('/notes'),

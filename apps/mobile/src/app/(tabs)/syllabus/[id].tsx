@@ -1,230 +1,144 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/ui/async-state';
 import { Icon } from '@/components/ui/icon';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { api } from '@/lib/api';
 import { useApi } from '@/lib/use-api';
 import {
   colors,
   componentType,
-  gradients,
   layout,
   radius,
   screenAccent,
+  shadow,
   spacing,
   strong,
   typography,
 } from '@/theme/tokens';
 
 /**
- * एका अभ्यासक्रमाचे विषय.
+ * एका अभ्यासक्रमाचे विषय — क्रमांकित यादी, प्रत्येकावर PDF.
  *
- * रंग या पडद्याचा स्वतःचा (जांभळा); खालची पट्टी नेहमीप्रमाणे बदलत नाही.
+ * Sheet प्रमाणे: header → अभ्यासक्रमाचं कार्ड → "विषयांची यादी" → आठ विषय →
+ * "सर्व विषय पहा (N)".
  *
- * मापं sheet मधून: header 56, वरचं कार्ड 112/r16, विषयाची ओळ 72/r12,
- * "सर्व पहा" 56, promo 72, गोल चिन्ह 40.
+ * **आठच का:** design आठ दाखवते आणि खाली उघडायचं बटण ठेवते. मोठ्या
+ * अभ्यासक्रमात वीस विषय एकदम दाखवले तर खालचं काहीच दिसत नाही आणि पडदा
+ * नुसता लांब होतो.
  */
 
-const A = screenAccent.exam;
+const A = screenAccent.syllabus;
 
-/** विषयाचं चिन्ह आणि रंग — PDF Notes प्रमाणेच, म्हणजे दोन्ही पडद्यांवर एकच दिसतो. */
-const SUBJECT_LOOK: Record<string, { icon: string; color: string }> = {
-  इतिहास: { icon: 'bank', color: colors.purple },
-  History: { icon: 'bank', color: colors.purple },
-  भूगोल: { icon: 'globe', color: colors.green },
-  Geography: { icon: 'globe', color: colors.green },
-  राज्यशास्त्र: { icon: 'bank', color: colors.orange },
-  Polity: { icon: 'bank', color: colors.orange },
-  अर्थशास्त्र: { icon: 'chart', color: colors.info },
-  Economy: { icon: 'chart', color: colors.info },
-  'विज्ञान व तंत्रज्ञान': { icon: 'atom', color: colors.danger },
-  Science: { icon: 'atom', color: colors.danger },
-  'चालू घडामोडी': { icon: 'star', color: colors.teal },
-  'Current Affairs': { icon: 'star', color: colors.teal },
-};
-
-/**
- * यादीत नसलेल्या विषयांसाठी रंगांचं चाक.
- *
- * वरची यादी डिझाइनमधल्या सहा विषयांची आहे. पण विषय **admin बनवतो**, म्हणून
- * यादीत नसलेले नेहमीच येणार — आणि सगळ्यांना एकच रंग दिला तर डिझाइनमधली
- * रंगीबेरंगी ओळख नाहीशी होते.
- *
- * म्हणून नावावरून रंग ठरवतो. तोच विषय नेहमी त्याच रंगाचा दिसतो आणि यादी
- * फिरवली तरी रंग उड्या मारत नाहीत — क्रमाने दिलं असतं तर एक विषय काढल्यावर
- * खालच्या सगळ्यांचे रंग बदलले असते.
- */
-const FALLBACK_COLORS = [
-  colors.purple,
-  colors.green,
-  colors.orange,
-  colors.info,
-  colors.danger,
-  colors.teal,
-];
-
-function colorFromName(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
-  return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length];
-}
-
-const lookFor = (name: string) =>
-  SUBJECT_LOOK[name] ?? { icon: 'book', color: colorFromName(name) };
-
-/** 390 → "6 तास 30 मिनिटे". शून्य म्हणजे ठरवलेलं नाही, तेव्हा काहीच नाही. */
-function readableTime(minutes: number): string | null {
-  if (minutes <= 0) return null;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m} मिनिटे`;
-  if (m === 0) return `${h} तास`;
-  return `${h} तास ${m} मिनिटे`;
-}
+/** सुरुवातीला किती विषय दाखवायचे — बाकीचे "सर्व विषय पहा" ने. */
+const PREVIEW_COUNT = 8;
 
 export default function SyllabusScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const [expanded, setExpanded] = useState(false);
 
   const { data, loading, error, reload } = useApi(() => api.syllabus(id), [id]);
 
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  if (loading) return <Loading label="अभ्यासक्रम उघडतोय…" />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
+  if (!data) return <ErrorState message="हा अभ्यासक्रम सापडला नाही." />;
+
+  const all = data.sections;
+  const shown = expanded ? all : all.slice(0, PREVIEW_COUNT);
+  const hasMore = all.length > PREVIEW_COUNT;
 
   return (
     <View style={styles.root}>
-      {/* ── वरची पट्टी ── */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <View style={styles.headerRow}>
-          <Pressable hitSlop={8} onPress={goBack}>
-            <Icon name="arrow-back" size={24} color={colors.textInverse} />
-          </Pressable>
-          <Text style={styles.headerTitle}>Syllabus</Text>
-          <Pressable hitSlop={8}>
-            <Icon name="search" size={24} color={colors.textInverse} />
-          </Pressable>
+      <ScreenHeader
+        title={data.title}
+        background={A.primaryDark}
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/syllabus'))}
+        onSearch={() => {}}
+      />
+
+      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+        {/* ── अभ्यासक्रमाचं कार्ड ── */}
+        <View style={styles.card}>
+          <View style={styles.cardIcon}>
+            <Icon name="book" size={24} color={A.primary} />
+          </View>
+          <View style={styles.cardText}>
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {data.title}
+            </Text>
+            <Text style={styles.cardMeta}>{`एकूण ${all.length} विषय`}</Text>
+          </View>
         </View>
-      </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing['3xl'] }]}
-        showsVerticalScrollIndicator={false}>
-        {loading ? <Loading label="अभ्यासक्रम उघडतोय…" /> : null}
-        {error ? <ErrorState message={error} onRetry={reload} /> : null}
+        <Text style={styles.sectionTitle}>विषयांची यादी</Text>
 
-        {data ? (
-          <>
-            {/* ── वरचं कार्ड ── */}
-            <LinearGradient
-              colors={gradients.heroPurple}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.hero}>
-              <View style={styles.heroIcon}>
-                <Icon name="clipboard" size={24} color={A.primary} />
-              </View>
-              <View style={styles.heroText}>
-                <Text style={styles.heroTitle} numberOfLines={1}>
-                  {data.title}
+        {all.length === 0 ? (
+          <Text style={styles.empty}>या अभ्यासक्रमात अजून विषय टाकलेले नाहीत.</Text>
+        ) : (
+          <View style={styles.list}>
+            {shown.map((sec, i) => (
+              <Pressable
+                key={sec.id}
+                style={[styles.row, i === shown.length - 1 && styles.rowLast]}
+                // Design मध्ये बाण नाही, पण ओळ दाबता येते — नाहीतर मुद्द्यांचा
+                // पडदा कुठूनच उघडणार नाही.
+                onPress={() => router.push(`/syllabus/section/${sec.id}`)}>
+                <View style={styles.number}>
+                  <Text style={styles.numberText}>{i + 1}</Text>
+                </View>
+
+                <Text style={styles.rowTitle} numberOfLines={1}>
+                  {sec.subjectName}
                 </Text>
-                {data.description ? (
-                  <Text style={styles.heroSub} numberOfLines={2}>
-                    {data.description}
-                  </Text>
+
+                {/* PDF नसेल तर बटणच दाखवायचं नाही — दाबल्यावर काहीच न होणं
+                    हे बटण नसण्यापेक्षा जास्त गोंधळात टाकतं. */}
+                {sec.pdfUrl ? (
+                  <Pressable
+                    style={styles.pdfButton}
+                    hitSlop={6}
+                    onPress={() => Linking.openURL(sec.pdfUrl!)}>
+                    <Icon name="download" size={18} color={A.primary} />
+                    <Text style={styles.pdfText}>PDF</Text>
+                  </Pressable>
                 ) : null}
-              </View>
-            </LinearGradient>
-
-            {/* ── यादीचं शीर्षक ── */}
-            <View style={styles.listHead}>
-              <Text style={styles.listTitle}>
-                Syllabus <Text style={styles.listCount}>({data.totalTopics} टॉपिक्स)</Text>
-              </Text>
-              <Pressable style={styles.filter}>
-                <Icon name="filter" size={16} color={colors.text} />
-                <Text style={styles.filterText}>फिल्टर</Text>
-                <Icon name="chevron-down" size={16} color={colors.textSecondary} />
               </Pressable>
+            ))}
+          </View>
+        )}
+
+        {/* ── सगळे विषय ── */}
+        {hasMore ? (
+          <Pressable style={styles.expand} onPress={() => setExpanded((v) => !v)}>
+            <Text style={styles.expandText}>
+              {expanded ? 'कमी दाखवा' : `सर्व विषय पहा (${all.length})`}
+            </Text>
+            <Icon
+              name={expanded ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={A.primary}
+            />
+          </Pressable>
+        ) : null}
+
+        {/* ── पूर्ण अभ्यासक्रमाची PDF ── */}
+        {data.pdfUrl ? (
+          <Pressable style={styles.promo} onPress={() => Linking.openURL(data.pdfUrl!)}>
+            <View style={styles.promoIcon}>
+              <Icon name="download" size={20} color={A.primary} />
             </View>
-
-            {/* ── विषय ── */}
-            {data.sections.length > 0 ? (
-              <View style={styles.list}>
-                {data.sections.map((sec, i) => {
-                  const look = lookFor(sec.subjectName);
-                  const time = readableTime(sec.estimatedMinutes);
-                  return (
-                    <Pressable
-                      key={sec.id}
-                      style={[styles.row, i > 0 && styles.rowDivided]}
-                      onPress={() => router.push(`/syllabus/section/${sec.id}`)}>
-                      <View style={[styles.rowIcon, { backgroundColor: look.color }]}>
-                        <Icon name={look.icon} size={24} color={colors.textInverse} />
-                      </View>
-
-                      <View style={styles.rowText}>
-                        <Text style={styles.rowTitle} numberOfLines={1}>
-                          {sec.subjectName}
-                        </Text>
-                        <View style={styles.rowMetaBox}>
-                          <Text style={styles.rowMeta}>{sec.topicCount} टॉपिक्स</Text>
-                          {/* वेळ ठरवली नसेल तर घड्याळही दाखवत नाही. */}
-                          {time ? (
-                            <>
-                              <Icon name="time" size={13} color={colors.textSecondary} />
-                              <Text style={styles.rowMeta}>{time}</Text>
-                            </>
-                          ) : null}
-                        </View>
-                      </View>
-
-                      <View style={styles.rowButton}>
-                        <Text style={styles.rowButtonText}>पहा</Text>
-                        <Icon name="chevron-forward" size={16} color={A.primary} />
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            ) : (
-              <View style={styles.empty}>
-                <Text style={styles.emptyText}>या अभ्यासक्रमात अजून विषय जोडलेले नाहीत.</Text>
-              </View>
-            )}
-
-            {/* ── सगळं बघा ── */}
-            <Pressable style={styles.allRow} onPress={() => router.push(`/exam/${data.examId}`)}>
-              <Icon name="list" size={20} color={colors.textSecondary} />
-              <Text style={styles.allText}>सर्व Syllabus पहा</Text>
-              <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
-            </Pressable>
-
-            {/* ── PDF ──
-                Admin ने PDF जोडली असेल तरच. नसताना बटण दाखवलं तर ते दाबल्यावर
-                काहीच होत नाही. */}
-            {data.pdfUrl ? (
-              <View style={styles.promo}>
-                <View style={styles.promoIcon}>
-                  <Icon name="document-text" size={22} color={A.primary} />
-                </View>
-                <View style={styles.promoText}>
-                  <Text style={styles.promoTitle}>अभ्यासक्रम PDF डाउनलोड करा!</Text>
-                  <Text style={styles.promoSub} numberOfLines={2}>
-                    संपूर्ण अभ्यासक्रम एकाच PDF मध्ये डाउनलोड करा.
-                  </Text>
-                </View>
-                <Pressable
-                  style={styles.promoButton}
-                  onPress={() => Linking.openURL(data.pdfUrl!)}>
-                  <Icon name="download" size={18} color={colors.textInverse} />
-                  <Text style={styles.promoButtonText}>PDF</Text>
-                </Pressable>
-              </View>
-            ) : null}
-          </>
+            <View style={styles.promoText}>
+              <Text style={styles.promoTitle} numberOfLines={2}>
+                अभ्यासक्रम PDF डाउनलोड करा!
+              </Text>
+              <Text style={styles.promoNote} numberOfLines={1}>
+                संपूर्ण अभ्यासक्रम एकाच PDF मध्ये.
+              </Text>
+            </View>
+          </Pressable>
         ) : null}
       </ScrollView>
     </View>
@@ -233,209 +147,103 @@ export default function SyllabusScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-
-  header: { backgroundColor: A.primaryDark },
-  headerRow: {
-    height: layout.screenHeaderHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-    paddingHorizontal: layout.cardPadding,
-  },
-  headerTitle: {
-    flex: 1,
-    ...componentType.screenHeaderTitle,
-    color: colors.textInverse,
+  body: {
+    padding: layout.screenPadding,
+    paddingBottom: spacing['4xl'],
+    gap: spacing.md,
   },
 
-  body: { paddingHorizontal: layout.cardPadding, paddingTop: spacing.lg },
-
-  // ── वरचं कार्ड (112dp, r16) ──
-  hero: {
-    height: layout.heroBannerHeight,
-    borderRadius: radius.lg,
-    padding: layout.cardPadding,
+  // ── वरचं कार्ड ──
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    backgroundColor: A.primaryLight,
+    borderRadius: radius.md,
+    padding: spacing.lg,
   },
-  heroIcon: {
-    width: layout.iconCircle,
-    height: layout.iconCircle,
-    borderRadius: radius.full,
-    backgroundColor: colors.purpleLight,
+  cardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroText: { flex: 1 },
-  heroTitle: {
-    ...typography.titleL,
-    ...strong.semibold,
-    color: colors.text,
-  },
-  heroSub: {
-    ...typography.bodyS,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-  },
+  cardText: { flex: 1, gap: 2 },
+  cardTitle: { ...typography.titleL, ...strong.semibold, color: colors.text },
+  cardMeta: { ...componentType.cardDescription, color: colors.textSecondary },
 
-  // ── यादीचं शीर्षक ──
-  listHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.xl,
-    marginBottom: spacing.md,
-  },
-  listTitle: {
-    ...typography.headingL,
-    color: colors.text,
-  },
-  listCount: {
-    ...typography.bodyS,
-    color: colors.textSecondary,
-  },
-  filter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    height: layout.categoryChipHeight,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  filterText: {
-    ...componentType.smallLabel,
-    color: colors.text,
-  },
+  sectionTitle: { ...typography.headingL, ...strong.semibold, color: colors.text },
 
-  // ── विषयाची ओळ (72dp) ──
+  // ── विषयांची यादी ──
   list: {
-    borderRadius: radius.md,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radius.md,
     overflow: 'hidden',
+    ...shadow.card,
   },
   row: {
-    height: layout.syllabusSubjectRow,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    paddingHorizontal: layout.cardPadding,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  rowDivided: { borderTopWidth: 1, borderTopColor: colors.border },
-  rowIcon: {
-    width: layout.iconCircle,
-    height: layout.iconCircle,
-    borderRadius: radius.md,
+  rowLast: { borderBottomWidth: 0 },
+  number: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.full,
+    backgroundColor: A.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowText: { flex: 1 },
-  rowTitle: {
-    ...componentType.rowTitle,
-    color: colors.text,
-  },
-  rowMetaBox: {
+  numberText: { ...componentType.smallLabel, ...strong.semibold, color: A.primary },
+  rowTitle: { flex: 1, ...componentType.cardTitle, color: colors.text },
+  pdfButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  pdfText: { ...componentType.smallLabel, ...strong.medium, color: A.primary },
+
+  // ── सगळे विषय ──
+  expand: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    marginTop: 2,
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: A.primaryLight,
+    borderRadius: radius.md,
   },
-  rowMeta: {
-    ...componentType.smallLabel,
-    color: colors.textSecondary,
-  },
-  rowButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    height: layout.buttonHeightSmall,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: A.primary,
-  },
-  rowButtonText: {
-    ...componentType.buttonSmall,
-    color: A.primary,
-  },
+  expandText: { ...componentType.cardTitle, ...strong.medium, color: A.primary },
 
   empty: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  emptyText: {
-    ...typography.bodyS,
+    ...typography.bodyM,
     color: colors.textSecondary,
     textAlign: 'center',
+    paddingVertical: spacing['3xl'],
   },
 
-  // ── सर्व पहा (56dp) ──
-  allRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    height: layout.viewAllRowHeight,
-    paddingHorizontal: layout.cardPadding,
-    marginTop: spacing.lg,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  allText: {
-    flex: 1,
-    ...componentType.rowTitle,
-    color: colors.text,
-  },
-
-  // ── PDF (72dp) ──
+  // ── पूर्ण PDF ──
   promo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    minHeight: layout.promoHeight,
-    padding: layout.cardPadding,
-    marginTop: spacing.lg,
-    borderRadius: radius.md,
     backgroundColor: A.primaryLight,
+    borderRadius: radius.md,
+    padding: spacing.lg,
   },
   promoIcon: {
-    width: layout.iconCircle,
-    height: layout.iconCircle,
-    borderRadius: radius.full,
-    backgroundColor: colors.purpleLight,
+    width: 40,
+    height: 40,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  promoText: { flex: 1 },
-  promoTitle: {
-    ...componentType.rowTitle,
-    ...strong.semibold,
-    color: A.primaryDark,
-  },
-  promoSub: {
-    ...componentType.smallLabel,
-    color: colors.textSecondary,
-  },
-  promoButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    height: layout.buttonHeightCompact,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.md,
-    backgroundColor: A.primary,
-  },
-  promoButtonText: {
-    ...componentType.buttonSmall,
-    color: colors.textInverse,
-  },
+  promoText: { flex: 1, gap: 2 },
+  promoTitle: { ...componentType.cardTitle, ...strong.semibold, color: A.primary },
+  promoNote: { ...componentType.smallLabel, color: colors.textSecondary },
 });

@@ -151,6 +151,11 @@ model SyllabusSection {
   /// अभ्यासाला किती वेळ लागेल — design मधलं "6 तास 30 मिनिटे".
   /// 0 म्हणजे ठरवलेलं नाही; तेव्हा वेळ दाखवायची नाही.
   estimatedMinutes Int   @default(0)
+
+  /// **या एका विषयाची** PDF. `Syllabus.pdfUrl` पूर्ण अभ्यासक्रमाची असते;
+  /// विद्यार्थ्याला बहुतेकदा एकच विषय हवा असतो, म्हणून दोन्ही लागतात.
+  /// नसेल तर त्या ओळीवर डाउनलोडचं बटण दाखवायचं नाही.
+  pdfUrl     String?
   orderIndex Int         @default(0)
 
   topics     SyllabusTopic[]
