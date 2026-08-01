@@ -32,27 +32,25 @@ import {
 const A = screenAccent.syllabus;
 
 /**
- * ओळीच्या चिन्हाचा रंग.
+ * ओळींचे रंग आणि चिन्हं — **यादीतल्या क्रमाने**, sheet प्रमाणे.
  *
- * अभ्यासक्रम admin बनवतो, म्हणून नावांची ठरलेली यादी ठेवता येत नाही. रंग
- * नावावरून काढतो — तोच अभ्यासक्रम नेहमी त्याच रंगाचा दिसतो, आणि मधला एक
- * काढला तरी बाकीच्यांचे रंग बदलत नाहीत (क्रमाने दिले असते तर बदलले असते).
+ * आधी नावावरून काढत होतो, म्हणजे एकच अभ्यासक्रम नेहमी त्याच रंगाचा राहिला
+ * असता. पण त्यामुळे शेजारच्या ओळी सहज एकाच रंगाच्या यायच्या — sheet मध्ये
+ * पाच ओळी पाच वेगळ्या रंगांच्या आहेत, आणि तेच दिसायला हवं.
+ *
+ * क्रमाने दिल्याने एक अभ्यासक्रम काढला तर खालच्यांचे रंग सरकतात. इथे ते
+ * चालतं: यादी लहान आहे, admin स्वतः ठरवतो, आणि रंग हा फक्त ओळखीचा आधार आहे —
+ * त्यावर काही अवलंबून नाही.
  */
-const ROW_COLORS = [A.primary, colors.green, colors.orange, colors.danger, colors.teal];
+const ROW_LOOK = [
+  { color: A.primary, icon: 'bank' },
+  { color: colors.green, icon: 'learn' },
+  { color: colors.orange, icon: 'book' },
+  { color: colors.danger, icon: 'shield' },
+  { color: colors.teal, icon: 'shield' },
+] as const;
 
-function colorFor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
-  return ROW_COLORS[Math.abs(hash) % ROW_COLORS.length];
-}
-
-const ROW_ICONS = ['bank', 'learn', 'book', 'shield', 'document-text'] as const;
-
-function iconFor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 17 + name.charCodeAt(i)) | 0;
-  return ROW_ICONS[Math.abs(hash) % ROW_ICONS.length];
-}
+const lookAt = (i: number) => ROW_LOOK[i % ROW_LOOK.length];
 
 export default function SyllabusListScreen() {
   const router = useRouter();
@@ -64,17 +62,26 @@ export default function SyllabusListScreen() {
       <ScreenHeader
         title="Syllabus"
         background={A.primaryDark}
-        onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+        onMenu={() => router.replace('/')}
         onSearch={() => {}}
       />
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         {/* ── वरचं कार्ड ── */}
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>संपूर्ण अभ्यासक्रम</Text>
-          <Text style={styles.heroTitleAccent}>एकाच ठिकाणी!</Text>
-          <Text style={styles.heroNote}>तयारी करा स्मार्ट,</Text>
-          <Text style={styles.heroNote}>यश मिळवा नक्की!</Text>
+          <View style={styles.heroText}>
+            <Text style={styles.heroTitle}>संपूर्ण अभ्यासक्रम</Text>
+            <Text style={styles.heroTitleAccent}>एकाच ठिकाणी!</Text>
+            <Text style={styles.heroNote}>तयारी करा स्मार्ट,</Text>
+            <Text style={styles.heroNote}>यश मिळवा नक्की!</Text>
+          </View>
+
+          {/* Sheet मध्ये इथे पुस्तकं, टोपी आणि रोपाचं चित्र आहे. ती प्रतिमा
+              अजून मिळालेली नाही, म्हणून तेवढी जागा धरून त्याच अर्थाचं चिन्ह
+              ठेवलं आहे — PNG आल्यावर फक्त हा भाग बदलेल, मापं तीच राहतील. */}
+          <View style={styles.heroArt}>
+            <Icon name="learn" size={56} color={A.primary} />
+          </View>
         </View>
 
         <Text style={styles.sectionTitle}>परीक्षा निवडा</Text>
@@ -85,15 +92,15 @@ export default function SyllabusListScreen() {
           <EmptyState icon="book" message="अजून एकही अभ्यासक्रम टाकलेला नाही." />
         ) : null}
 
-        {syllabi.map((y: ApiSyllabusListItem) => {
-          const tint = colorFor(y.title);
+        {syllabi.map((y: ApiSyllabusListItem, i: number) => {
+          const look = lookAt(i);
           return (
             <Pressable
               key={y.id}
               style={styles.row}
               onPress={() => router.push(`/syllabus/${y.id}`)}>
-              <View style={[styles.rowIcon, { backgroundColor: tint }]}>
-                <Icon name={iconFor(y.title)} size={24} color={colors.textInverse} />
+              <View style={[styles.rowIcon, { backgroundColor: look.color }]}>
+                <Icon name={look.icon} size={24} color={colors.textInverse} />
               </View>
 
               <View style={styles.rowText}>
@@ -121,10 +128,15 @@ const styles = StyleSheet.create({
   },
 
   hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
     backgroundColor: A.primaryLight,
     borderRadius: radius.md,
     padding: spacing.lg,
   },
+  heroText: { flex: 1 },
+  heroArt: { width: 88, alignItems: 'center', justifyContent: 'center' },
   heroTitle: { ...typography.titleL, ...strong.bold, color: colors.text },
   heroTitleAccent: { ...typography.titleL, ...strong.bold, color: A.primary },
   heroNote: {

@@ -28,6 +28,10 @@ import {
  * **आठच का:** design आठ दाखवते आणि खाली उघडायचं बटण ठेवते. मोठ्या
  * अभ्यासक्रमात वीस विषय एकदम दाखवले तर खालचं काहीच दिसत नाही आणि पडदा
  * नुसता लांब होतो.
+ *
+ * ⚠️ Sheet मध्ये "सर्व विषय पहा" नंतर **काहीच नाही**, म्हणून पूर्ण
+ * अभ्यासक्रमाच्या PDF चं कार्ड इथून काढलं आहे. त्यामुळे `Syllabus.pdfUrl`
+ * ला सध्या app मध्ये जागा उरलेली नाही — तो कुठे दाखवायचा हे ठरलं की जोडायचा.
  */
 
 const A = screenAccent.syllabus;
@@ -124,22 +128,6 @@ export default function SyllabusScreen() {
           </Pressable>
         ) : null}
 
-        {/* ── पूर्ण अभ्यासक्रमाची PDF ── */}
-        {data.pdfUrl ? (
-          <Pressable style={styles.promo} onPress={() => Linking.openURL(data.pdfUrl!)}>
-            <View style={styles.promoIcon}>
-              <Icon name="download" size={20} color={A.primary} />
-            </View>
-            <View style={styles.promoText}>
-              <Text style={styles.promoTitle} numberOfLines={2}>
-                अभ्यासक्रम PDF डाउनलोड करा!
-              </Text>
-              <Text style={styles.promoNote} numberOfLines={1}>
-                संपूर्ण अभ्यासक्रम एकाच PDF मध्ये.
-              </Text>
-            </View>
-          </Pressable>
-        ) : null}
       </ScrollView>
     </View>
   );
@@ -226,24 +214,4 @@ const styles = StyleSheet.create({
     paddingVertical: spacing['3xl'],
   },
 
-  // ── पूर्ण PDF ──
-  promo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: A.primaryLight,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-  },
-  promoIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  promoText: { flex: 1, gap: 2 },
-  promoTitle: { ...componentType.cardTitle, ...strong.semibold, color: A.primary },
-  promoNote: { ...componentType.smallLabel, color: colors.textSecondary },
 });
