@@ -66,14 +66,11 @@ const TILES: Tile[] = [
     tint: colors.green,
     href: '/pdf-notes',
   },
-  // ── हे तीन अजून बांधलेले नाहीत ──
-  // अभ्यासक्रम, सरळसेवा आणि दैनिक quiz यांचं schema मध्ये एकही model नाही.
-  // दाबल्यावर रिकामं पान उघडण्यापेक्षा "लवकरच" दाखवणं प्रामाणिक.
   {
     title: 'अभ्यासक्रम',
     icon: 'book',
     tint: colors.orange,
-    href: null,
+    href: '/syllabus',
   },
   {
     title: 'चालू घडामोडी',
@@ -81,6 +78,9 @@ const TILES: Tile[] = [
     tint: colors.purple,
     href: '/current-affairs',
   },
+  // ── हे दोन अजून बांधलेले नाहीत ──
+  // सरळसेवा आणि दैनिक quiz यांचं schema मध्ये एकही model नाही. दाबल्यावर
+  // रिकामं पान उघडण्यापेक्षा "लवकरच" दाखवणं प्रामाणिक.
   {
     title: 'सरळसेवा',
     icon: 'people',
