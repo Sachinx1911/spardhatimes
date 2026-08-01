@@ -46,8 +46,34 @@ const SUBJECT_LOOK: Record<string, { icon: string; color: string }> = {
   'Current Affairs': { icon: 'star', color: colors.teal },
 };
 
+/**
+ * यादीत नसलेल्या विषयांसाठी रंगांचं चाक.
+ *
+ * वरची यादी डिझाइनमधल्या सहा विषयांची आहे. पण विषय **admin बनवतो**, म्हणून
+ * यादीत नसलेले नेहमीच येणार — आणि सगळ्यांना एकच रंग दिला तर डिझाइनमधली
+ * रंगीबेरंगी ओळख नाहीशी होते.
+ *
+ * म्हणून नावावरून रंग ठरवतो. तोच विषय नेहमी त्याच रंगाचा दिसतो आणि यादी
+ * फिरवली तरी रंग उड्या मारत नाहीत — क्रमाने दिलं असतं तर एक विषय काढल्यावर
+ * खालच्या सगळ्यांचे रंग बदलले असते.
+ */
+const FALLBACK_COLORS = [
+  colors.purple,
+  colors.green,
+  colors.orange,
+  colors.info,
+  colors.danger,
+  colors.teal,
+];
+
+function colorFromName(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length];
+}
+
 const lookFor = (name: string) =>
-  SUBJECT_LOOK[name] ?? { icon: 'book', color: A.primary };
+  SUBJECT_LOOK[name] ?? { icon: 'book', color: colorFromName(name) };
 
 /** 390 → "6 तास 30 मिनिटे". शून्य म्हणजे ठरवलेलं नाही, तेव्हा काहीच नाही. */
 function readableTime(minutes: number): string | null {
