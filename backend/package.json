@@ -8,7 +8,8 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "vercel-build": "npm run -w @mahatest/db db:generate --if-present || (cd ../packages/db && npx prisma generate) && npm run -w @mahatest/core build && nest build"
   },
   "dependencies": {
     "@mahatest/core": "*",
