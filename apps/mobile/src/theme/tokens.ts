@@ -176,60 +176,69 @@ export const poppins = {
 } as const;
 
 /**
- * Global design system चा typography scale — जशाच्या तसा.
+ * संपूर्ण app चा मजकूर एका जागी लहान/मोठा करण्याचा घुंडा.
  *
- * नावं जुनीच ठेवली आहेत (screens ती वापरतात), पण आकार आता global spec मधले:
- * Display 34, H2 24, Section 20, Card 18, Subtitle 16, Body 15, Description 14.
+ * ठरलं 2026-08-02: सगळा मजकूर **20% लहान** — screen शीर्षकं खूप मोठी वाटत
+ * होती. Global spec चे आकार (Display 34, H2 24…) आधार म्हणून तसेच ठेवले आहेत;
+ * हा गुणक त्यांना scale करतो. पुढे बदलायचं असेल तर फक्त हा आकडा बदलायचा —
+ * एकही screen ला हात लावावा लागत नाही.
+ */
+export const TEXT_SCALE = 0.8;
+
+/** दिलेला आकार scale करून जवळच्या पूर्णांकात. फक्त इथेच वापरायचा. */
+const sp = (n: number) => Math.round(n * TEXT_SCALE);
+
+/**
+ * Global design system चा typography scale — spec चे आकार, `TEXT_SCALE` ने
+ * लहान केलेले. नावं जुनीच (screens ती वापरतात).
  */
 export const typography = {
-  /** Display / Banner — 34 / ExtraBold */
-  headingXL: { fontSize: 34, fontFamily: fonts.extrabold, lineHeight: 42 },
+  /** Display / Banner — 34 → scaled / ExtraBold */
+  headingXL: { fontSize: sp(34), fontFamily: fonts.extrabold, lineHeight: sp(42) },
   /** H2 — 24 / Bold */
-  headingL: { fontSize: 24, fontFamily: fonts.bold, lineHeight: 32 },
+  headingL: { fontSize: sp(24), fontFamily: fonts.bold, lineHeight: sp(32) },
   /** Card title — 18 / Bold */
-  titleL: { fontSize: 18, fontFamily: fonts.bold, lineHeight: 26 },
+  titleL: { fontSize: sp(18), fontFamily: fonts.bold, lineHeight: sp(26) },
   /** Subtitle — 16 / Medium */
-  bodyL: { fontSize: 16, fontFamily: fonts.medium, lineHeight: 24 },
+  bodyL: { fontSize: sp(16), fontFamily: fonts.medium, lineHeight: sp(24) },
   /** Body — 15 / Regular */
-  bodyM: { fontSize: 15, fontFamily: fonts.regular, lineHeight: 22 },
+  bodyM: { fontSize: sp(15), fontFamily: fonts.regular, lineHeight: sp(22) },
   /** Description — 14 / Regular */
-  bodyS: { fontSize: 14, fontFamily: fonts.regular, lineHeight: 20 },
+  bodyS: { fontSize: sp(14), fontFamily: fonts.regular, lineHeight: sp(20) },
   /** Caption — 12 / Medium */
-  caption: { fontSize: 12, fontFamily: fonts.medium, lineHeight: 18 },
+  caption: { fontSize: sp(12), fontFamily: fonts.medium, lineHeight: sp(18) },
 } as const;
 
 export const componentType = {
-  cardTitle: { fontSize: 18, fontFamily: fonts.bold, lineHeight: 26 },
-  cardDescription: { fontSize: 14, fontFamily: fonts.regular, lineHeight: 20 },
+  cardTitle: { fontSize: sp(18), fontFamily: fonts.bold, lineHeight: sp(26) },
+  cardDescription: { fontSize: sp(14), fontFamily: fonts.regular, lineHeight: sp(20) },
   /**
-   * यादीतल्या ओळीचं शीर्षक — PDF नाव वगैरे. Design sheet नुसार **16 Medium**,
-   * कार्ड-शीर्षकाच्या 18 Bold पेक्षा लहान. मोठी नावं दोन ओळींत बसावीत आणि
-   * ओळ गरजेपेक्षा उंच होऊ नये म्हणून हे वेगळं.
+   * यादीतल्या ओळीचं शीर्षक — PDF नाव वगैरे. Design sheet नुसार 16 Medium,
+   * कार्ड-शीर्षकाच्या 18 Bold पेक्षा लहान.
    */
-  listItemTitle: { fontSize: 16, fontFamily: fonts.medium, lineHeight: 22 },
+  listItemTitle: { fontSize: sp(16), fontFamily: fonts.medium, lineHeight: sp(22) },
   /** Button text — 18 / Bold */
-  buttonText: { fontSize: 18, fontFamily: fonts.bold, lineHeight: 26 },
-  badge: { fontSize: 12, fontFamily: fonts.medium, lineHeight: 16 },
-  smallLabel: { fontSize: 12, fontFamily: fonts.regular, lineHeight: 16 },
-  /** Bottom nav चं label. */
+  buttonText: { fontSize: sp(18), fontFamily: fonts.bold, lineHeight: sp(26) },
+  badge: { fontSize: sp(12), fontFamily: fonts.medium, lineHeight: sp(16) },
+  smallLabel: { fontSize: sp(12), fontFamily: fonts.regular, lineHeight: sp(16) },
   /** रंगीत पट्टीतलं शीर्षक — 20sp SemiBold, पांढरं. */
-  screenHeaderTitle: { fontSize: 20, fontFamily: fonts.semibold, lineHeight: 28 },
+  screenHeaderTitle: { fontSize: sp(20), fontFamily: fonts.semibold, lineHeight: sp(28) },
   /** Banner चं मोठं शीर्षक — 24sp ExtraBold. */
-  bannerHeading: { fontSize: 24, fontFamily: fonts.extrabold, lineHeight: 32 },
+  bannerHeading: { fontSize: sp(24), fontFamily: fonts.extrabold, lineHeight: sp(32) },
   /** ONLINE TEST sheet: आकडा Bold 22sp. */
-  statNumber: { fontSize: 22, fontFamily: fonts.bold, lineHeight: 28 },
+  statNumber: { fontSize: sp(22), fontFamily: fonts.bold, lineHeight: sp(28) },
   /** ONLINE TEST sheet: यादीतल्या ओळीचं शीर्षक — Medium 15sp. */
-  rowTitle: { fontSize: 15, fontFamily: fonts.medium, lineHeight: 22 },
+  rowTitle: { fontSize: sp(15), fontFamily: fonts.medium, lineHeight: sp(22) },
   /** ONLINE TEST sheet: बटणाचा मजकूर — SemiBold 14sp. */
-  buttonSmall: { fontSize: 14, fontFamily: fonts.semibold, lineHeight: 20 },
+  buttonSmall: { fontSize: sp(14), fontFamily: fonts.semibold, lineHeight: sp(20) },
   /** बिल्ल्यातला आकडा — 18dp चौकटीत मावेल एवढा. */
-  badgeSmall: { fontSize: 10, fontFamily: fonts.bold, lineHeight: 14 },
+  badgeSmall: { fontSize: sp(10), fontFamily: fonts.bold, lineHeight: sp(14) },
   /** ओळीखालचा लहान आकडा / क्रिया. */
-  actionLabel: { fontSize: 11, fontFamily: fonts.regular, lineHeight: 16 },
-  navLabel: { fontSize: 12, fontFamily: fonts.medium, lineHeight: 16 },
-  priceCurrent: { fontSize: 22, fontFamily: fonts.bold, lineHeight: 30 },
-  priceOld: { fontSize: 14, fontFamily: fonts.medium, lineHeight: 20 },
-  discount: { fontSize: 12, fontFamily: fonts.semibold, lineHeight: 16 },
+  actionLabel: { fontSize: sp(11), fontFamily: fonts.regular, lineHeight: sp(16) },
+  navLabel: { fontSize: sp(12), fontFamily: fonts.medium, lineHeight: sp(16) },
+  priceCurrent: { fontSize: sp(22), fontFamily: fonts.bold, lineHeight: sp(30) },
+  priceOld: { fontSize: sp(14), fontFamily: fonts.medium, lineHeight: sp(20) },
+  discount: { fontSize: sp(12), fontFamily: fonts.semibold, lineHeight: sp(16) },
 } as const;
 
 /** ठळक करायचं असेल तेव्हा — आकार तोच, family बदलते. */
