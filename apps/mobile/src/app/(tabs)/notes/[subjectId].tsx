@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   },
   pdfLabel: { fontSize: 9, ...strong.bold, color: colors.danger },
   rowText: { flex: 1, gap: 2, minWidth: 0 },
-  rowTitle: { ...componentType.cardTitle, color: colors.text },
+  rowTitle: { ...componentType.listItemTitle, color: colors.text },
   metaRow: { flexDirection: 'row', gap: spacing.md },
   meta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   metaText: { ...componentType.smallLabel, color: colors.textSecondary },

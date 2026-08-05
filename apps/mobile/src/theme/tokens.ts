@@ -201,6 +201,12 @@ export const typography = {
 export const componentType = {
   cardTitle: { fontSize: 18, fontFamily: fonts.bold, lineHeight: 26 },
   cardDescription: { fontSize: 14, fontFamily: fonts.regular, lineHeight: 20 },
+  /**
+   * यादीतल्या ओळीचं शीर्षक — PDF नाव वगैरे. Design sheet नुसार **16 Medium**,
+   * कार्ड-शीर्षकाच्या 18 Bold पेक्षा लहान. मोठी नावं दोन ओळींत बसावीत आणि
+   * ओळ गरजेपेक्षा उंच होऊ नये म्हणून हे वेगळं.
+   */
+  listItemTitle: { fontSize: 16, fontFamily: fonts.medium, lineHeight: 22 },
   /** Button text — 18 / Bold */
   buttonText: { fontSize: 18, fontFamily: fonts.bold, lineHeight: 26 },
   badge: { fontSize: 12, fontFamily: fonts.medium, lineHeight: 16 },
