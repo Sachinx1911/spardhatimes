@@ -59,7 +59,10 @@ export default function SyllabusScreen() {
       <ScreenHeader
         title={data.title}
         background={A.primaryDark}
-        onBack={() => (router.canGoBack() ? router.back() : router.replace('/syllabus'))}
+        // या screens tab-navigator मध्ये सपाट भावंडं आहेत, म्हणून `router.back()`
+        // मागची **screen** नव्हे तर मागचा **tab** (Home) उघडतो. त्यामुळे इतिहासावर
+        // विसंबून न राहता ठरलेल्या parent वर — इथे अभ्यासक्रमांची यादी — नेतो.
+        onBack={() => router.replace('/syllabus')}
         onSearch={() => {}}
       />
 

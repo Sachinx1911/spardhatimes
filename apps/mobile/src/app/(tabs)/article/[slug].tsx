@@ -135,7 +135,7 @@ export default function ArticleScreen() {
       <ScreenHeader
         title="चालू घडामोडी"
         background={A.primaryDark}
-        onBack={() => (router.canGoBack() ? router.back() : router.replace('/current-affairs'))}
+        onBack={() => router.replace('/current-affairs')}
         onBookmark={toggleMark}
         bookmarked={bookmarked}
         onShare={share}

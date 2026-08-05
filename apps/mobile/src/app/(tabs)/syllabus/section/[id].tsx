@@ -44,7 +44,11 @@ export default function SyllabusSectionScreen() {
 
   const { data, loading, error, reload } = useApi(() => api.syllabusSection(id), [id]);
 
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  // `router.back()` इथे मागचा tab (Home) उघडतो, मागची screen नाही. म्हणून
+  // थेट या विभागाच्या **अभ्यासक्रमावर** नेतो. तो अजून लोड झाला नसेल तर
+  // यादीवर — रिकाम्या id ने detail उघडण्यापेक्षा बरं.
+  const goBack = () =>
+    router.replace(data ? `/syllabus/${data.syllabusId}` : '/syllabus');
   const time = data ? readableTime(data.estimatedMinutes) : null;
 
   return (

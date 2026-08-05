@@ -73,7 +73,7 @@ export default function SubjectNotesScreen() {
       <ScreenHeader
         title={`${subjectName} नोट्स`}
         background={accent.primaryDark}
-        onBack={() => (router.canGoBack() ? router.back() : router.replace('/pdf-notes'))}
+        onBack={() => router.replace('/pdf-notes')}
         showBell
         badgeCount={3}
         onSearch={() => {}}
