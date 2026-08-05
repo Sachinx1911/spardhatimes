@@ -1,10 +1,11 @@
-# UI Design Standard — MahaTest student app
+# UI Design Standard — Spardha Times student app
 
 > हा दस्तऐवज **आजची स्थिती** सांगतो, अंतिम निर्णय नाही.
 > संहिता (code): `apps/mobile/src/theme/tokens.ts`. हा दस्तऐवज त्यामागचं **का** सांगतो.
 >
-> 📌 **नवीन design image आली की तीच खरी** — मग हा दस्तऐवज तिच्याप्रमाणे बदलायचा.
-> तपशील §९ मध्ये.
+> 📌 **Global design system v1.0 (2026-08-02) हाच आधार** — Royal Purple `#5B21B6`,
+> सगळे screens एकसारखे. "प्रत्येक screen चा स्वतःचा रंग" हा जुना निर्णय **रद्द**.
+> नवीन design image आली की तिची **मांडणी** घ्यायची, पण रंग/font इथूनच.
 
 ---
 
@@ -25,9 +26,12 @@
 
 | Token | Hex | कुठे |
 |---|---|---|
-| `primary` | `#EF4444` | Buttons, active tab, दुवे |
-| `primaryDark` | `#DC2626` | दाबलेलं बटण |
-| `primaryLight` | `#FFECEC` | Tags, chips, चिन्हामागची पार्श्वभूमी |
+| `primary` | `#5B21B6` | Header, buttons, active tab, चिन्हं, दुवे |
+| `primaryDark` | `#4C1D95` | दाबलेलं बटण |
+| `primaryLight` | `#EDE9FE` | Banner, chips, चिन्हामागची पार्श्वभूमी, निवडलेली कार्डं |
+| `secondary` | `#7C3AED` | ठळक मजकूर, CTA, badges |
+| `accent` | `#8B5CF6` | Active indicator, chips |
+| `error` | `#EF4444` | Delete, चूक, notification बिल्ला (**primary पेक्षा वेगळा**) |
 | `background` | `#F8F9FD` | पडद्याची पार्श्वभूमी |
 | `surface` | `#FFFFFF` | कार्ड |
 | `blue` | `#3B82F6` | Tile चिन्हं |

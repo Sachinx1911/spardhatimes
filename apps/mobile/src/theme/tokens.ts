@@ -28,57 +28,68 @@ import { useWindowDimensions } from 'react-native';
  * - **नष्ट करणारी बटणं कडांची**, भरीव नाहीत
  */
 export const colors = {
-  primary: '#EF4444',
-  primaryDark: '#DC2626',
-  primaryLight: '#FFECEC',
+  // ── Brand — global design system (Royal Purple) ──
+  primary: '#5B21B6',
+  /** दाबलेलं बटण / गडद छटा. */
+  primaryDark: '#4C1D95',
+  /** Banner, चिन्हामागची जागा, निवडलेली कार्डं. */
+  primaryLight: '#EDE9FE',
+  /** ठळक मजकूर, CTA, badges — system चा Secondary. */
+  secondary: '#7C3AED',
+  /** Active indicator, chips — system चा Accent Purple. */
+  accent: '#8B5CF6',
 
-  background: '#F8F9FD',
+  background: '#F8FAFC',
   surface: '#FFFFFF',
 
   blue: '#3B82F6',
-  /** ONLINE TEST sheet मधलं Info — blue सारखाच, पण नावाने वेगळा वापर. */
+  /** Information / test statistics — system मध्ये वेगळा नावाने. */
   info: '#3B82F6',
   green: '#22C55E',
   orange: '#F59E0B',
   purple: '#7C3AED',
-  /** MPSC sheet: चिन्हामागचा फिकट जांभळा. */
+  /** चिन्हामागचा फिकट जांभळा. */
   purpleLight: '#EDE9FE',
   teal: '#14B8A6',
   pink: '#DB2777',
 
   text: '#111827',
   textSecondary: '#64748B',
-  border: '#E5E7EB',
-  /** याद्यांमधली फिकट रेघ — sheet मध्ये कडेपेक्षा फिकट. */
-  divider: '#F1F5F9',
-  /** अभ्यासक्रम विभाग — sheet मधला फिकट हिरवा आणि गडद हिरवा मजकूर. */
+  /** इशारे / अंधुक मजकूर — system चा Text Light. */
+  textLight: '#94A3B8',
+  border: '#E2E8F0',
+  /** याद्यांमधली रेघ — system चा Divider. */
+  divider: '#E5E7EB',
+  /** अभ्यासक्रम विभाग — फिकट हिरवा आणि गडद हिरवा मजकूर. */
   syllabusBg: '#F0FDF4',
   syllabusBadgeBg: '#DCFCE7',
   syllabusText: '#15803D',
 
   success: '#22C55E',
   /**
-   * ⚠️ `error` आणि `primary` **एकच रंग आहेत** — sheet मध्ये दोन्ही #EF4444.
-   * म्हणून: **भरीव लाल = पुढे जा** (CTA, active tab). चूक कधीच भरीव बटण म्हणून
-   * दाखवायची नाही — चिन्ह + मजकूर + फिकट पार्श्वभूमी, एवढंच.
+   * Error आता primary पेक्षा **वेगळा रंग आहे** (लाल vs जांभळा) — global
+   * system मध्ये तसं ठरलं. त्यामुळे जुनी "लाल = दोन्ही" ची अडचण संपली:
+   * जांभळं = पुढे जा, लाल = चूक/delete/notification बिल्ला.
    */
   error: '#EF4444',
   danger: '#EF4444',
   warning: '#F59E0B',
 
   textInverse: '#FFFFFF',
-  /** Bottom nav मधला निष्क्रिय रंग — sheet मध्ये वेगळा दिलेला आहे. */
+  /** Bottom nav मधला निष्क्रिय रंग — system मध्ये वेगळा. */
   navInactive: '#6B7280',
-  /** Logo मधला गडद निळा ("TIMES"). Palette मध्ये सुटा नाही, पण logo शिवाय
-   *  दुसरीकडे वापरायचा नाही. */
+  /** Logo मधला गडद निळा ("TIMES"). logo शिवाय दुसरीकडे वापरायचा नाही. */
   navy: '#12277D',
 
-  // फिकट छटा — status chips आणि चिन्हांच्या मागे.
-  successLight: '#F0FDF4',
-  dangerLight: '#FFECEC',
-  errorLight: '#FFECEC',
-  warningLight: '#FFFBEB',
-  primarySoft: '#FFF5F5',
+  // फिकट छटा — status chips आणि चिन्हांच्या मागे (system चे Icon Backgrounds).
+  successLight: '#DCFCE7',
+  dangerLight: '#FEE2E2',
+  errorLight: '#FEE2E2',
+  warningLight: '#FEF3C7',
+  blueLight: '#DBEAFE',
+  tealLight: '#CCFBF1',
+  orangeLight: '#FEF3C7',
+  primarySoft: '#F5F3FF',
 } as const;
 
 /**
@@ -103,52 +114,36 @@ export const colors = {
  */
 export const categoryColors = ['#8B5CF6', '#3882F6', '#22C55E', '#F97316'] as const;
 
+/**
+ * ⚠️ **एकच global रंग — सगळे screens एकसारखे (ठरलं 2026-08-02).**
+ *
+ * आधी प्रत्येक screen ला स्वतःचा primary होता (Home लाल, PDF Notes जांभळा).
+ * Global design system आल्यावर तो निर्णय **रद्द** — आता सगळीकडे Royal Purple.
+ *
+ * हा object तसाच ठेवला आहे (काढला नाही) कारण ९ screens `screenAccent.<name>`
+ * वापरतात; त्या सगळ्यांना हात न लावता इथे एकच संच दिला की पूर्ण app जांभळं
+ * होतं. पुढे कधी खरंच screen-निहाय रंग हवा असेल तरच हे वेगळे करायचे.
+ */
+const BRAND = {
+  primary: colors.primary, // #5B21B6 Royal Purple
+  primaryDark: '#4C1D95',
+  primaryLight: colors.primaryLight, // #EDE9FE
+} as const;
+
 export const screenAccent = {
-  /** ONLINE TEST — PDF Notes सारखाच जांभळा संच. */
-  /** MPSC / कुठलीही परीक्षा — तोच जांभळा संच. */
-  exam: {
-    primary: '#5B3DF5',
-    primaryDark: '#4427D6',
-    primaryLight: '#F3F0FF',
-  },
-  onlineTest: {
-    primary: '#5B3DF5',
-    primaryDark: '#4427D6',
-    primaryLight: '#F3F0FF',
-  },
-  /** Home — Home design sheet मधून. */
-  home: {
-    primary: '#EF4444',
-    primaryDark: '#DC2626',
-    primaryLight: '#FFECEC',
-  },
-  /** चालू घडामोडी — त्याच्या sheet मधून (PDF Notes सारखेच). */
-  currentAffairs: {
-    primary: '#5B3DF5',
-    primaryDark: '#4427D6',
-    primaryLight: '#F3F0FF',
-  },
-  /** अभ्यासक्रम — त्याच्या sheet मधून. गडद जांभळा, PDF Notes पेक्षा वेगळा. */
-  syllabus: {
-    primary: '#5B21B6',
-    primaryDark: '#4C1D95',
-    primaryLight: '#EDE9FE',
-  },
-  /** PDF Notes — त्याच्या sheet मधून. */
-  pdfNotes: {
-    primary: '#5B3DF5',
-    primaryDark: '#4427D6',
-    primaryLight: '#F3F0FF',
-  },
+  exam: BRAND,
+  onlineTest: BRAND,
+  home: BRAND,
+  currentAffairs: BRAND,
+  syllabus: BRAND,
+  pdfNotes: BRAND,
 } as const;
 
 export const gradients = {
-  /** Home च्या banner ची पार्श्वभूमी. */
-  banner: ['#FFECEC', '#FFF5F5'] as const,
-  /** PDF Notes च्या banner ची — त्याच्या sheet मधून. */
-  notesBanner: ['#F5F0FF', '#FFFFFF'] as const,
-  /** Syllabus sheet चा hero — 135° जांभळा. */
-  heroPurple: ['#F6F3FF', '#EEE9FF'] as const,
+  /** Banner ची पार्श्वभूमी — global system चा #F5F3FF. सगळ्या screens वर तीच. */
+  banner: ['#F5F3FF', '#FFFFFF'] as const,
+  notesBanner: ['#F5F3FF', '#FFFFFF'] as const,
+  heroPurple: ['#F5F3FF', '#EDE9FE'] as const,
 } as const;
 
 // ─── 2. TYPOGRAPHY (Mukta) ───────────────────────────────────────────────────
@@ -180,20 +175,27 @@ export const poppins = {
   bold: 'Poppins_700Bold',
 } as const;
 
-/** Sheet मधल्या सहा शैली, जशाच्या तशा. */
+/**
+ * Global design system चा typography scale — जशाच्या तसा.
+ *
+ * नावं जुनीच ठेवली आहेत (screens ती वापरतात), पण आकार आता global spec मधले:
+ * Display 34, H2 24, Section 20, Card 18, Subtitle 16, Body 15, Description 14.
+ */
 export const typography = {
-  /** Screen title — 34 / ExtraBold */
-  headingXL: { fontSize: 34, fontFamily: fonts.extrabold, lineHeight: 44 },
-  /** Section title — 22 / SemiBold */
-  headingL: { fontSize: 22, fontFamily: fonts.semibold, lineHeight: 30 },
+  /** Display / Banner — 34 / ExtraBold */
+  headingXL: { fontSize: 34, fontFamily: fonts.extrabold, lineHeight: 42 },
+  /** H2 — 24 / Bold */
+  headingL: { fontSize: 24, fontFamily: fonts.bold, lineHeight: 32 },
   /** Card title — 18 / Bold */
   titleL: { fontSize: 18, fontFamily: fonts.bold, lineHeight: 26 },
-  /** Body — 16 / Regular */
-  bodyL: { fontSize: 16, fontFamily: fonts.regular, lineHeight: 24 },
-  bodyM: { fontSize: 16, fontFamily: fonts.regular, lineHeight: 24 },
-  /** Caption — 14 / Regular */
+  /** Subtitle — 16 / Medium */
+  bodyL: { fontSize: 16, fontFamily: fonts.medium, lineHeight: 24 },
+  /** Body — 15 / Regular */
+  bodyM: { fontSize: 15, fontFamily: fonts.regular, lineHeight: 22 },
+  /** Description — 14 / Regular */
   bodyS: { fontSize: 14, fontFamily: fonts.regular, lineHeight: 20 },
-  caption: { fontSize: 14, fontFamily: fonts.regular, lineHeight: 20 },
+  /** Caption — 12 / Medium */
+  caption: { fontSize: 12, fontFamily: fonts.medium, lineHeight: 18 },
 } as const;
 
 export const componentType = {
