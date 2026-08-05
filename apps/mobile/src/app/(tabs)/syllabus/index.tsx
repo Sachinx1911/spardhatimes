@@ -62,7 +62,7 @@ export default function SyllabusListScreen() {
       <ScreenHeader
         title="Syllabus"
         background={A.primaryDark}
-        onMenu={() => router.replace('/')}
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         onSearch={() => {}}
       />
 

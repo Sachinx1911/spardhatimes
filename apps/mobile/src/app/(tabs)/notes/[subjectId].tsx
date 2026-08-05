@@ -149,19 +149,12 @@ export default function SubjectNotesScreen() {
                     </View>
                   </View>
 
-                  {/* डाउनलोड आणि पहा — दोन्ही तीच URL उघडतात. App मध्ये file
-                      साठवण्याची सोय अजून नाही, म्हणून "डाउनलोड" browser कडे
-                      सोपवतो; तो स्वतः जतन करू देतो. */}
+                  {/* फक्त डाउनलोड — "पहा" आणि उजवा बाण काढले (तिन्ही तीच URL
+                      उघडत होते, त्यामुळे तेच काम तीनदा). ओळ दाबली तरी उघडतेच. */}
                   <Pressable style={styles.action} hitSlop={6} onPress={() => open(n.url)}>
                     <Icon name="download" size={20} color={accent.primary} />
                     <Text style={styles.actionText}>डाउनलोड</Text>
                   </Pressable>
-                  <Pressable style={styles.action} hitSlop={6} onPress={() => open(n.url)}>
-                    <Icon name="eye" size={20} color={accent.primary} />
-                    <Text style={styles.actionText}>पहा</Text>
-                  </Pressable>
-
-                  <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
                 </Pressable>
               );
             })}
