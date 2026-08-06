@@ -87,16 +87,6 @@ export default function MyTestSeriesScreen() {
 
       <FilterChips chips={chips} active={activeCategory} onChange={setActiveCategory} />
 
-      {/* ── banner ── */}
-      <View style={styles.banner}>
-        <Text style={styles.bannerTitle}>Practice More.{'\n'}Score Higher.</Text>
-        <Text style={styles.bannerNote}>High quality tests designed as per latest pattern.</Text>
-        <Pressable style={styles.bannerButton} onPress={() => router.push('/')}>
-          <Text style={styles.bannerButtonText}>Explore Test Series</Text>
-          <Icon name="chevron-forward" size={16} color={colors.primary} />
-        </Pressable>
-      </View>
-
       {/* ── अर्धवट राहिलेला test ── */}
       {current ? (
         <View style={styles.continueCard}>
@@ -355,39 +345,6 @@ const styles = StyleSheet.create({
   },
 
   // ── banner ──
-  banner: {
-    minHeight: 170,
-    backgroundColor: colors.primary,
-    borderRadius: radius.xxl,
-    padding: spacing.xl,
-    justifyContent: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  bannerTitle: {
-    ...typography.headingL,
-    color: colors.textInverse,
-  },
-  bannerNote: {
-    ...typography.bodyM,
-    color: 'rgba(255,255,255,0.85)',
-  },
-  bannerButton: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    height: layout.buttonHeight,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    marginTop: spacing.sm,
-  },
-  bannerButtonText: {
-    ...componentType.buttonText,
-    color: colors.primary,
-  },
-
   // ── continue ──
   continueCard: {
     minHeight: 150,
