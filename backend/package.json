@@ -9,7 +9,7 @@
     "start:prod": "node dist/main",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "vercel-build": "npm run -w @mahatest/db db:generate --if-present || (cd ../packages/db && npx prisma generate) && npm run -w @mahatest/core build && nest build"
+    "vercel-build": "cd ../.. && npm run db:generate && npm run build:packages && cd backend && nest build"
   },
   "dependencies": {
     "@mahatest/core": "*",

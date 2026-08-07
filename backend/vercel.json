@@ -13,5 +13,5 @@
     }
   ],
   "buildCommand": "npm run vercel-build",
-  "installCommand": "npm install --workspaces --include-workspace-root"
+  "installCommand": "cd ../.. && npm install"
 }
