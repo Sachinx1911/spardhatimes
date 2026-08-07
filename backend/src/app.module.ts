@@ -7,6 +7,7 @@ import { ArticlesModule } from './articles/articles.module';
 import { AuthModule } from './auth/auth.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
 import { MaterialsModule } from './materials/materials.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TestsModule } from './tests/tests.module';
@@ -30,6 +31,7 @@ import { TestsModule } from './tests/tests.module';
     MaterialsModule,
     BookmarksModule,
     ArticlesModule,
+    NotificationsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -40,6 +40,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="syllabus/section/[id]" />
       <Tabs.Screen name="bookmarks" />
       <Tabs.Screen name="article/[slug]" />
+      <Tabs.Screen name="notifications" />
     </Tabs>
   );
 }

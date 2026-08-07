@@ -30,6 +30,7 @@ export function ScreenHeader({
   onBookmark,
   bookmarked = false,
   showBell = false,
+  onBell,
   badgeCount,
 }: {
   title: string;
@@ -44,6 +45,7 @@ export function ScreenHeader({
   onBookmark?: () => void;
   bookmarked?: boolean;
   showBell?: boolean;
+  onBell?: () => void;
   badgeCount?: number;
 }) {
   const insets = useSafeAreaInsets();
@@ -88,7 +90,7 @@ export function ScreenHeader({
         ) : null}
 
         {showBell ? (
-          <Pressable hitSlop={8} style={styles.bell}>
+          <Pressable hitSlop={8} style={styles.bell} onPress={onBell}>
             <Icon name="notifications" size={24} color={colors.textInverse} />
             {badgeCount && badgeCount > 0 ? (
               <View style={styles.badge}>

@@ -108,6 +108,8 @@ export default function HomeScreen() {
   const { halfCardWidth } = useCardWidths();
   const { data, loading, error, reload } = useApi(() => api.dashboard(), []);
   const { data: exams } = useApi(() => api.exams(), []);
+  // घंटेवरचा आकडा — खरा, न वाचलेल्या सूचनांचा. आधी "3" hardcoded होता.
+  const { data: unread } = useApi(() => api.unreadCount(), []);
 
   /**
    * Tile कुठे नेतो ते ठरवतो.
@@ -137,12 +139,14 @@ export default function HomeScreen() {
           <Text style={styles.brandBottom}>TIMES</Text>
         </View>
 
-        <Pressable hitSlop={8}>
+        <Pressable hitSlop={8} onPress={() => router.push('/notifications')}>
           <Icon name="notifications" size={24} color={colors.text} />
-          {/* आकडा अजून API मधून येत नाही — तो आल्यावर इथे जोडायचा. */}
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>3</Text>
-          </View>
+          {/* न वाचलेल्या असतील तरच बिल्ला; 9 पेक्षा जास्त "9+". */}
+          {unread && unread.count > 0 ? (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{unread.count > 9 ? '9+' : unread.count}</Text>
+            </View>
+          ) : null}
         </Pressable>
       </View>
 

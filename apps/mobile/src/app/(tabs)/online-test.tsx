@@ -59,7 +59,7 @@ export default function OnlineTestScreen() {
 
           <Text style={styles.headerTitle}>ONLINE TEST</Text>
 
-          <Pressable hitSlop={8} style={styles.bell}>
+          <Pressable hitSlop={8} style={styles.bell} onPress={() => router.push('/notifications')}>
             <Icon name="notifications" size={24} color={colors.textInverse} />
             <View style={styles.badge}>
               <Text style={styles.badgeText}>3</Text>

@@ -372,6 +372,22 @@ export interface ApiNotes {
   subjects: { id: string; name: string; noteCount: number }[];
 }
 
+/**
+ * `GET /notifications` — माझ्या सूचना.
+ *
+ * या grading/certificate/release यंत्रणा आधीच बनवतात; app फक्त वाचतो.
+ * `type` वरून चिन्ह ठरतं — "test_completed", "certificate_generated",
+ * "test_released" वगैरे.
+ */
+export interface ApiNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  createdAt: string;
+}
+
 /** `GET /materials` — प्रकार आणि विषयानुसार गाळता येते. */
 export interface ApiMaterial {
   id: string;
@@ -675,6 +691,11 @@ export const api = {
 
   /** `GET /notes` — PDF Notes चा पडदा. */
   notes: () => request<ApiNotes>('/notes'),
+
+  notifications: () => request<ApiNotification[]>('/notifications'),
+  unreadCount: () => request<{ count: number }>('/notifications/unread-count'),
+  markAllRead: () =>
+    request<{ updated: number }>('/notifications/read-all', { method: 'PATCH' }),
 
   onlineTests: () => request<ApiOnlineTests>('/online-tests'),
 
