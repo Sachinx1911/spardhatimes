@@ -15,13 +15,13 @@ import {
   Mukta_700Bold,
   Mukta_800ExtraBold,
 } from '@expo-google-fonts/mukta';
-import { Stack, ThemeProvider, DefaultTheme } from 'expo-router';
+import { Stack, ThemeProvider, DefaultTheme, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { SessionProvider } from '@/lib/session';
+import { SessionProvider, useSession } from '@/lib/session';
 import { colors } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
@@ -41,6 +41,36 @@ const theme = {
     primary: colors.primary,
   },
 };
+
+/**
+ * Login चा पहारा.
+ *
+ * `SessionProvider` सुरू होताना साठवलेला token तपासतो. तो निकाल येईपर्यंत
+ * (`loading`) काहीही हलवायचं नाही — नाहीतर login असूनही क्षणभर login screen
+ * चमकतो. निकाल आल्यावर: **user नाही → login कडे, user आहे → tabs कडे.**
+ *
+ * हा gate असल्याशिवाय app थेट tabs उघडायचा आणि प्रत्येक API "Login आवश्यक"
+ * म्हणायची, पण login करायला मार्गच नव्हता.
+ */
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useSession();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+
+    const onLogin = segments[0] === 'login';
+
+    if (!user && !onLogin) {
+      router.replace('/login');
+    } else if (user && onLogin) {
+      router.replace('/');
+    }
+  }, [user, loading, segments, router]);
+
+  return <>{children}</>;
+}
 
 export default function RootLayout() {
   // Design system Poppins वर आहे, आणि **मराठीसाठी Mukta** — Poppins मध्ये
@@ -71,10 +101,12 @@ export default function RootLayout() {
       <ThemeProvider value={theme}>
         <SessionProvider>
           <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
-            <Stack.Screen name="login" />
-            <Stack.Screen name="(tabs)" />
-          </Stack>
+          <AuthGate>
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+              <Stack.Screen name="login" />
+              <Stack.Screen name="(tabs)" />
+            </Stack>
+          </AuthGate>
         </SessionProvider>
       </ThemeProvider>
     </SafeAreaProvider>
